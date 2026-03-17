@@ -1,0 +1,691 @@
+/* Gov UI Tokens - Globals CSS
+ * Tailwind theme integration with design tokens
+ * Import AFTER tokens.css and typography.css
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* shadcn/ui base variables */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --radius: 0.625rem;
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-inter), "Kanit", "sans-serif" !important;
+  }
+}
+
+/* Mapbox GL Popup – force app font.
+   mapbox-gl.css uses `font:` shorthand on .mapboxgl-popup-content
+   which resets font-family even with !important on font-family alone.
+   We must reset `font` first, then set font-family. */
+.mapboxgl-popup .mapboxgl-popup-content {
+  font: unset !important;
+  font-family: var(--font-kanit), "Kanit", sans-serif !important;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+@theme inline {
+  /* ========================================
+     SHADCN/UI BASE VARIABLES
+     ======================================== */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-kanit);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* ========================================
+     DESIGN TOKENS - BORDER RADIUS
+     ======================================== */
+  --radius-circle: var(--border-radius-circle);
+  --radius-square: var(--border-radius-square);
+  --radius-square-hard: var(--border-radius-square-hard);
+
+  /* ========================================
+     DESIGN TOKENS - SPACING
+     ======================================== */
+  --spacing-1x: var(--spacing-space1x);
+  --spacing-2x: var(--spacing-space2x);
+  --spacing-3x: var(--spacing-space3x);
+  --spacing-4x: var(--spacing-space4x);
+
+  /* ========================================
+     DESIGN TOKENS - BRAND COLORS
+     ======================================== */
+  --color-brand-primary: var(--color-alias-color-brand-primary);
+  --color-brand-secondary: var(--color-alias-color-brand-secondary);
+  --color-brand-surface: var(--color-alias-color-brand-surface);
+  --color-brand-text-dark: var(--color-alias-color-brand-text-dark);
+
+  /* ========================================
+     DESIGN TOKENS - SEMANTIC COLORS
+     ======================================== */
+  --color-semantic-critical: var(--color-alias-semantic-critical);
+  --color-semantic-critical-dark: var(--color-alias-semantic-critical-dark);
+  --color-semantic-critical-dark-hover: var(
+    --color-alias-semantic-critical-dark-hover
+  );
+  --color-semantic-critical-hover: var(--color-alias-semantic-critical-hover);
+  --color-semantic-neutral: var(--color-alias-semantic-neutral);
+  --color-semantic-success: var(--color-alias-semantic-success);
+  --color-semantic-success-hover: var(--color-alias-semantic-success-hover);
+  --color-semantic-verified: var(--color-alias-semantic-verifed);
+  --color-semantic-warning: var(--color-alias-semantic-warning);
+  --color-semantic-warning-hover: var(--color-alias-semantic-warning-hover);
+
+  /* ========================================
+     DESIGN TOKENS - STATUS COLORS
+     ======================================== */
+  --color-status-danger: var(--color-alias-status-danger);
+  --color-status-default: var(--color-alias-status-default);
+  --color-status-stable: var(--color-alias-status-stable);
+  --color-status-warning: var(--color-alias-status-warning);
+
+  /* ========================================
+     DESIGN TOKENS - TEXT COLORS
+     ======================================== */
+  --color-text-critical: var(--color-alias-text-colors-critical);
+  --color-text-critical-dark: var(--color-alias-text-colors-critical-dark);
+  --color-text-disable: var(--color-alias-text-colors-disable);
+  --color-text-disable-dark: var(--color-alias-text-colors-disable-dark);
+  --color-text-placeholder: var(--color-alias-text-colors-placeholder);
+  --color-text-primary: var(--color-alias-text-colors-primary);
+  --color-text-primary-dark: var(--color-alias-text-colors-primary-dark);
+  --color-text-secondary: var(--color-alias-text-colors-secondary);
+  --color-text-secondary-dark: var(--color-alias-text-colors-secondary-dark);
+  --color-text-tags: var(--color-alias-text-colors-tags);
+  --color-text-tertiary: var(--color-alias-text-colors-tertirary);
+  --color-text-tertiary-dark: var(--color-alias-text-colors-tertiary-dark);
+
+  /* ========================================
+     DESIGN TOKENS - BORDER COLORS
+     ======================================== */
+  --color-border-disable: var(--color-border-colors-border-color-disable);
+  --color-border-disable-dark: var(
+    --color-border-colors-border-color-disable-dark
+  );
+  --color-border-critical: var(--color-border-colors-critical);
+  --color-border-default: var(--color-border-colors-default);
+  --color-border-default-dark: var(--color-border-colors-default-dark);
+  --color-border-hover: var(--color-border-colors-hover);
+  --color-border-neutral: var(--color-border-colors-neutral);
+  --color-border-tags: var(--color-border-colors-tags);
+  --color-border-tags-dark: var(--color-border-colors-tags-dark);
+
+  /* ========================================
+     DESIGN TOKENS - BUTTON COLORS
+     ======================================== */
+  --color-btn-default: var(--color-btn-default);
+  --color-btn-hover: var(--color-btn-hover);
+  --color-btn-primary: var(--color-btn-primary);
+
+  /* ========================================
+     DESIGN TOKENS - TEXT FIELD COLORS
+     ======================================== */
+  --color-field-default: var(--color-text-field-default);
+  --color-field-default-dark: var(--color-text-field-default-dark);
+  --color-field-disable: var(--color-text-field-disable);
+
+  /* ========================================
+     DESIGN TOKENS - ICON COLORS
+     ======================================== */
+  --color-icon-default: var(--color-icon-color-default);
+  --color-icon-default-dark: var(--color-icon-color-default-dark);
+  --color-icon-hover: var(--color-icon-color-hover-active);
+  --color-icon-security: var(--color-icon-color-security);
+  --color-icon-security-hover: var(--color-icon-color-security-hover-active);
+  --color-icon-success: var(--color-icon-color-success);
+  --color-icon-success-hover: var(--color-icon-color-success-hover);
+  --color-icon-tax: var(--color-icon-color-tax);
+  --color-icon-tax-hover: var(--color-icon-color-tax-hover-active);
+  --color-icon-warning: var(--color-icon-color-warning);
+  --color-icon-warning-hover: var(--color-icon-color-warning-hover);
+  --color-icon-water: var(--color-icon-color-water);
+  --color-icon-water-hover: var(--color-icon-color-water-hover-active);
+  --color-icon-critical: var(--color-icon-color-critical);
+  --color-icon-critical-hover: var(--color-icon-color-critical-hover);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: APPLE PALLET
+     ======================================== */
+  --color-apple-dark: var(--color-foundations-apple-pallet-dark);
+  --color-apple-darker: var(--color-foundations-apple-pallet-darker);
+  --color-apple-light: var(--color-foundations-apple-pallet-light);
+  --color-apple-medium: var(--color-foundations-apple-pallet-medium);
+  --color-apple-soft: var(--color-foundations-apple-pallet-soft);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: BLUE PALLET
+     ======================================== */
+  --color-blue-dark: var(--color-foundations-blue-pallet-dark);
+  --color-blue-darker: var(--color-foundations-blue-pallet-darker);
+  --color-blue-medium: var(--color-foundations-blue-pallet-medium);
+  --color-blue-medium-dark: var(--color-foundations-blue-pallet-medium-dark);
+  --color-blue-soft: var(--color-foundations-blue-pallet-soft);
+  --color-blue-soft-medium: var(--color-foundations-blue-pallet-soft-medium);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: CRUSTAE PALLET
+     ======================================== */
+  --color-crustae-dark: var(--color-foundations-crustae-pallet-dark);
+  --color-crustae-light: var(--color-foundations-crustae-pallet-light);
+  --color-crustae-light-soft: var(
+    --color-foundations-crustae-pallet-light-soft
+  );
+  --color-crustae-medium: var(--color-foundations-crustae-pallet-medium);
+  --color-crustae-medium-dark: var(
+    --color-foundations-crustae-pallet-medium-dark
+  );
+  --color-crustae-soft: var(--color-foundations-crustae-pallet-soft);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: FUAN PALLET (RED)
+     ======================================== */
+  --color-fuan-dark: var(--color-foundations-fuan-pallet-dark);
+  --color-fuan-darker: var(--color-foundations-fuan-pallet-darker);
+  --color-fuan-light: var(--color-foundations-fuan-pallet-light);
+  --color-fuan-medium: var(--color-foundations-fuan-pallet-medium);
+  --color-fuan-medium-dark: var(--color-foundations-fuan-pallet-medium-dark);
+  --color-fuan-soft: var(--color-foundations-fuan-pallet-soft);
+  --color-fuan-soft-medium: var(--color-foundations-fuan-pallet-soft-medium);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: FUJI PALLET (GRAY)
+     ======================================== */
+  --color-fuji-bright: var(--color-foundations-fuji-pallet-bright);
+  --color-fuji-dark: var(--color-foundations-fuji-pallet-dark);
+  --color-fuji-darker: var(--color-foundations-fuji-pallet-darker);
+  --color-fuji-light: var(--color-foundations-fuji-pallet-light);
+  --color-fuji-medium: var(--color-foundations-fuji-pallet-medium);
+  --color-fuji-medium-dark: var(--color-foundations-fuji-pallet-medium-dark);
+  --color-fuji-soft: var(--color-foundations-fuji-pallet-soft);
+  --color-fuji-soft-medium: var(--color-foundations-fuji-pallet-soft-medium);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: GLACIER PALLET
+     ======================================== */
+  --color-glacier-bright: var(--color-foundations-galcier-pallet-bright);
+  --color-glacier-dark: var(--color-foundations-galcier-pallet-dark);
+  --color-glacier-dark-darker: var(
+    --color-foundations-galcier-pallet-dark-darker
+  );
+  --color-glacier-darker: var(--color-foundations-galcier-pallet-darker);
+  --color-glacier-light: var(--color-foundations-galcier-pallet-light);
+  --color-glacier-light-soft: var(
+    --color-foundations-galcier-pallet-light-soft
+  );
+  --color-glacier-medium: var(--color-foundations-galcier-pallet-medium);
+  --color-glacier-medium-dark: var(
+    --color-foundations-galcier-pallet-medium-dark
+  );
+  --color-glacier-soft: var(--color-foundations-galcier-pallet-soft);
+  --color-glacier-soft-medium: var(
+    --color-foundations-galcier-pallet-soft-medium
+  );
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: MOODY BLUE PALLET
+     ======================================== */
+  --color-moody-bright: var(--color-foundations-moody-blue-pallet-bright);
+  --color-moody-dark: var(--color-foundations-moody-blue-pallet-dark);
+  --color-moody-dark-darker: var(
+    --color-foundations-moody-blue-pallet-dark-darker
+  );
+  --color-moody-darker: var(--color-foundations-moody-blue-pallet-darker);
+  --color-moody-light: var(--color-foundations-moody-blue-pallet-light);
+  --color-moody-light-soft: var(
+    --color-foundations-moody-blue-pallet-light-soft
+  );
+  --color-moody-medium: var(--color-foundations-moody-blue-pallet-medium);
+  --color-moody-medium-dark: var(
+    --color-foundations-moody-blue-pallet-medium-dark
+  );
+  --color-moody-soft: var(--color-foundations-moody-blue-pallet-soft);
+  --color-moody-soft-medium: var(
+    --color-foundations-moody-blue-pallet-soft-medium
+  );
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: ORANGE PALLET
+     ======================================== */
+  --color-orange-light: var(--color-foundations-orange-pallet-light);
+  --color-orange-medium: var(--color-foundations-orange-pallet-medium);
+  --color-orange-pink: var(--color-foundations-orange-pallet-pink);
+  --color-orange-red: var(--color-foundations-orange-pallet-red);
+  --color-orange-soft: var(--color-foundations-orange-pallet-soft);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: PURPLE PALLET
+     ======================================== */
+  --color-purple-dark: var(--color-foundations-purple-pallet-dark);
+  --color-purple-medium: var(--color-foundations-purple-pallet-medium);
+  --color-purple-soft: var(--color-foundations-purple-pallet-soft);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: SAFFRON PALLET
+     ======================================== */
+  --color-saffron-dark: var(--color-foundations-saffron-pallet-dark);
+  --color-saffron-light: var(--color-foundations-saffron-pallet-light);
+  --color-saffron-light-soft: var(
+    --color-foundations-saffron-pallet-light-soft
+  );
+  --color-saffron-medium: var(--color-foundations-saffron-pallet-medium);
+  --color-saffron-medium-dark: var(
+    --color-foundations-saffron-pallet-medium-dark
+  );
+  --color-saffron-soft: var(--color-foundations-saffron-pallet-soft);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: SKY BLUE PALLET
+     ======================================== */
+  --color-sky-bright: var(--color-foundations-sky-blue-pallet-bright);
+  --color-sky-dark: var(--color-foundations-sky-blue-pallet-dark);
+  --color-sky-dark-darker: var(--color-foundations-sky-blue-pallet-dark-darker);
+  --color-sky-darker: var(--color-foundations-sky-blue-pallet-darker);
+  --color-sky-light: var(--color-foundations-sky-blue-pallet-light);
+  --color-sky-light-soft: var(--color-foundations-sky-blue-pallet-light-soft);
+  --color-sky-medium: var(--color-foundations-sky-blue-pallet-medium);
+  --color-sky-medium-dark: var(--color-foundations-sky-blue-pallet-medium-dark);
+  --color-sky-soft: var(--color-foundations-sky-blue-pallet-soft);
+  --color-sky-soft-medium: var(--color-foundations-sky-blue-pallet-soft-medium);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: TAKE PALLET (GREEN)
+     ======================================== */
+  --color-take-dark: var(--color-foundations-take-pallet-dark);
+  --color-take-darker: var(--color-foundations-take-pallet-darker);
+  --color-take-light: var(--color-foundations-take-pallet-light);
+  --color-take-medium: var(--color-foundations-take-pallet-medium);
+  --color-take-medium-dark: var(--color-foundations-take-pallet-medium-dark);
+  --color-take-soft: var(--color-foundations-take-pallet-soft);
+  --color-take-soft-medium: var(--color-foundations-take-pallet-soft-medium);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: WISTERIA PALLET (PURPLE)
+     ======================================== */
+  --color-wisteria-dark: var(--color-foundations-wisteria-pallet-dark);
+  --color-wisteria-light: var(--color-foundations-wisteria-pallet-light);
+  --color-wisteria-light-soft: var(
+    --color-foundations-wisteria-pallet-light-soft
+  );
+  --color-wisteria-medium: var(--color-foundations-wisteria-pallet-medium);
+  --color-wisteria-medium-dark: var(
+    --color-foundations-wisteria-pallet-medium-dark
+  );
+  --color-wisteria-soft: var(--color-foundations-wisteria-pallet-soft);
+
+  /* ========================================
+     DESIGN TOKENS - FOUNDATIONS: YELLOW PALLET
+     ======================================== */
+  --color-yellow-light: var(--color-foundations-yellow-pallet-light);
+  --color-yellow-medium: var(--color-foundations-yellow-pallet-medium);
+  --color-yellow-medium-dark: var(
+    --color-foundations-yellow-pallet-medium-dark
+  );
+  --color-yellow-soft: var(--color-foundations-yellow-pallet-soft);
+  --color-yellow-soft-medium: var(
+    --color-foundations-yellow-pallet-soft-medium
+  );
+
+  /* ========================================
+     DESIGN TOKENS - SHADOWS (Composites)
+     ======================================== */
+  --shadow-smooth-low:
+    var(--effect-shadow-smooth-low-0-offsetx)
+      var(--effect-shadow-smooth-low-0-offsety)
+      var(--effect-shadow-smooth-low-0-radius)
+      var(--effect-shadow-smooth-low-0-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-low-0-color) 10%,
+        transparent
+      ),
+    var(--effect-shadow-smooth-low-1-offsetx)
+      var(--effect-shadow-smooth-low-1-offsety)
+      var(--effect-shadow-smooth-low-1-radius)
+      var(--effect-shadow-smooth-low-1-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-low-1-color) 8%,
+        transparent
+      );
+
+  --shadow-smooth-medium:
+    var(--effect-shadow-smooth-medium-0-offsetx)
+      var(--effect-shadow-smooth-medium-0-offsety)
+      var(--effect-shadow-smooth-medium-0-radius)
+      var(--effect-shadow-smooth-medium-0-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-medium-0-color) 12%,
+        transparent
+      ),
+    var(--effect-shadow-smooth-medium-1-offsetx)
+      var(--effect-shadow-smooth-medium-1-offsety)
+      var(--effect-shadow-smooth-medium-1-radius)
+      var(--effect-shadow-smooth-medium-1-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-medium-1-color) 8%,
+        transparent
+      );
+
+  --shadow-smooth-high:
+    var(--effect-shadow-smooth-high-0-offsetx)
+      var(--effect-shadow-smooth-high-0-offsety)
+      var(--effect-shadow-smooth-high-0-radius)
+      var(--effect-shadow-smooth-high-0-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-high-0-color) 15%,
+        transparent
+      ),
+    var(--effect-shadow-smooth-high-1-offsetx)
+      var(--effect-shadow-smooth-high-1-offsety)
+      var(--effect-shadow-smooth-high-1-radius)
+      var(--effect-shadow-smooth-high-1-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-high-1-color) 8%,
+        transparent
+      );
+}
+
+@theme {
+  /* Motions spring */
+  --ease-spring-snappy: linear(
+    0,
+    0.2375,
+    0.5904,
+    0.8358,
+    0.9599,
+    1.0061,
+    1.0152,
+    1.0116,
+    1.0062,
+    1.0025,
+    1.0006,
+    0.9999,
+    1
+  );
+  --ease-spring: linear(
+    0,
+    0.0942,
+    0.2989,
+    0.5275,
+    0.73,
+    0.8839,
+    0.9858,
+    1.0425,
+    1.0655,
+    1.0666,
+    1.0558,
+    1.0405,
+    1.0255,
+    1.0131,
+    1.0043,
+    0.9989,
+    0.9962,
+    1
+  );
+  --ease-spring-soft: linear(
+    0,
+    0.0332,
+    0.1241,
+    0.2583,
+    0.4207,
+    0.5967,
+    0.7729,
+    0.9379,
+    1.0826,
+    1.2006,
+    1.2883,
+    1.3445,
+    1.3701,
+    1.3679,
+    1.3423,
+    1.2983,
+    1.2415,
+    1.1774,
+    1.1113,
+    1.0477,
+    0.9904,
+    0.9421,
+    0.9047,
+    0.8789,
+    0.8648,
+    0.8615,
+    0.8677,
+    0.8815,
+    0.9009,
+    0.9239,
+    0.9485,
+    0.9727,
+    0.9952,
+    1.0146,
+    1.0303,
+    1.0417,
+    1.0487,
+    1.0515,
+    1.0506,
+    1.0465,
+    1.0401,
+    1.032,
+    1.023,
+    1.0138,
+    1.0051,
+    0.9974,
+    0.9909,
+    0.986,
+    0.9828,
+    0.9811,
+    0.9809,
+    0.9819,
+    0.984,
+    0.9868,
+    0.99,
+    0.9935,
+    0.9968,
+    0.9998,
+    1.0025,
+    1.0045,
+    1.006,
+    1.0069,
+    1.0072,
+    1.0069,
+    1.0063,
+    1.0054,
+    1.0042,
+    1.003,
+    1.0017,
+    1.0005,
+    0.9995,
+    0.9986,
+    0.998,
+    0.9976,
+    1
+  );
+}
+
+/* ========================================
+   DARK MODE - Override with dark variants
+   ======================================== */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+
+  /* Design Token Dark Mode Overrides */
+  --color-text-primary: var(--color-alias-text-colors-primary-dark);
+  --color-text-secondary: var(--color-alias-text-colors-secondary-dark);
+  --color-text-tertiary: var(--color-alias-text-colors-tertiary-dark);
+  --color-text-critical: var(--color-alias-text-colors-critical-dark);
+  --color-border-default: var(--color-border-colors-default-dark);
+  --color-border-tags: var(--color-border-colors-tags-dark);
+  --color-icon-default: var(--color-icon-color-default-dark);
+  --color-field-default: var(--color-text-field-default-dark);
+
+  /* Dark mode shadows */
+  --shadow-smooth-low:
+    var(--effect-shadow-smooth-low-dark-0-offsetx)
+      var(--effect-shadow-smooth-low-dark-0-offsety)
+      var(--effect-shadow-smooth-low-dark-0-radius)
+      var(--effect-shadow-smooth-low-dark-0-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-low-dark-0-color) 25%,
+        transparent
+      ),
+    var(--effect-shadow-smooth-low-dark-1-offsetx)
+      var(--effect-shadow-smooth-low-dark-1-offsety)
+      var(--effect-shadow-smooth-low-dark-1-radius)
+      var(--effect-shadow-smooth-low-dark-1-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-low-dark-1-color) 20%,
+        transparent
+      );
+
+  --shadow-smooth-medium:
+    var(--effect-shadow-smooth-medium-dark-0-offsetx)
+      var(--effect-shadow-smooth-medium-dark-0-offsety)
+      var(--effect-shadow-smooth-medium-dark-0-radius)
+      var(--effect-shadow-smooth-medium-dark-0-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-medium-dark-0-color) 30%,
+        transparent
+      ),
+    var(--effect-shadow-smooth-medium-dark-1-offsetx)
+      var(--effect-shadow-smooth-medium-dark-1-offsety)
+      var(--effect-shadow-smooth-medium-dark-1-radius)
+      var(--effect-shadow-smooth-medium-dark-1-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-medium-dark-1-color) 20%,
+        transparent
+      );
+
+  --shadow-smooth-high:
+    var(--effect-shadow-smooth-high-dark-0-offsetx)
+      var(--effect-shadow-smooth-high-dark-0-offsety)
+      var(--effect-shadow-smooth-high-dark-0-radius)
+      var(--effect-shadow-smooth-high-dark-0-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-high-dark-0-color) 35%,
+        transparent
+      ),
+    var(--effect-shadow-smooth-high-dark-1-offsetx)
+      var(--effect-shadow-smooth-high-dark-1-offsety)
+      var(--effect-shadow-smooth-high-dark-1-radius)
+      var(--effect-shadow-smooth-high-dark-1-spread)
+      color-mix(
+        in srgb,
+        var(--effect-shadow-smooth-high-dark-1-color) 20%,
+        transparent
+      );
+}

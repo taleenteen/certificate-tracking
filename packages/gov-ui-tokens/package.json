@@ -1,0 +1,29 @@
+{
+  "name": "@gov-ui/tokens",
+  "version": "1.0.0",
+  "description": "Gov Design System Tokens for e-services",
+  "exports": {
+    "./styles.css": "./src/index.css",
+    "./tokens.css": "./src/tokens.css",
+    "./typography.css": "./src/typography.css",
+    "./globals.css": "./src/globals.css"
+  },
+  "files": [
+    "src",
+    "design-tokens.tokens.json"
+  ],
+  "peerDependencies": {
+    "tailwindcss": ">=4"
+  },
+  "scripts": {
+    "build:tokens": "node scripts/generate-tokens.mjs"
+  },
+  "keywords": [
+    "design-tokens",
+    "tailwind",
+    "gov",
+    "ui"
+  ],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,624 @@
+/* ========== 1) BASE: map tag → design tokens ========== */
+@layer base {
+  /* BODY TEXT: <p> */
+  p {
+    font-family: var(--font-alias-mobile-body-fontfamily);
+    font-size: var(--font-alias-mobile-body-fontsize);
+    line-height: var(--font-alias-mobile-body-lineheight);
+    font-weight: var(--font-alias-mobile-body-fontweight);
+    letter-spacing: var(--font-alias-mobile-body-letterspacing);
+    text-transform: var(--font-alias-mobile-body-textcase);
+    text-decoration: var(--font-alias-mobile-body-textdecoration);
+  }
+  @media (min-width: 768px) {
+    p {
+      font-family: var(--font-alias-tablet-body-fontfamily);
+      font-size: var(--font-alias-tablet-body-fontsize);
+      line-height: var(--font-alias-tablet-body-lineheight);
+      font-weight: var(--font-alias-tablet-body-fontweight);
+      letter-spacing: var(--font-alias-tablet-body-letterspacing);
+      text-transform: var(--font-alias-tablet-body-textcase);
+      text-decoration: var(--font-alias-tablet-body-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    p {
+      font-family: var(--font-alias-desktop-body-fontfamily);
+      font-size: var(--font-alias-desktop-body-fontsize);
+      line-height: var(--font-alias-desktop-body-lineheight);
+      font-weight: var(--font-alias-desktop-body-fontweight);
+      letter-spacing: var(--font-alias-desktop-body-letterspacing);
+      text-transform: var(--font-alias-desktop-body-textcase);
+      text-decoration: var(--font-alias-desktop-body-textdecoration);
+    }
+  }
+
+  /* H1 */
+  h1 {
+    font-family: var(--font-alias-mobile-h1-fontfamily);
+    font-size: var(--font-alias-mobile-h1-fontsize);
+    line-height: var(--font-alias-mobile-h1-lineheight);
+    font-weight: var(--font-alias-mobile-h1-fontweight);
+    letter-spacing: var(--font-alias-mobile-h1-letterspacing);
+    text-transform: var(--font-alias-mobile-h1-textcase);
+    text-decoration: var(--font-alias-mobile-h1-textdecoration);
+  }
+  @media (min-width: 768px) {
+    h1 {
+      font-family: var(--font-alias-tablet-h1-fontfamily);
+      font-size: var(--font-alias-tablet-h1-fontsize);
+      line-height: var(--font-alias-tablet-h1-lineheight);
+      font-weight: var(--font-alias-tablet-h1-fontweight);
+      letter-spacing: var(--font-alias-tablet-h1-letterspacing);
+      text-transform: var(--font-alias-tablet-h1-textcase);
+      text-decoration: var(--font-alias-tablet-h1-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    h1 {
+      font-family: var(--font-alias-desktop-h1-fontfamily);
+      font-size: var(--font-alias-desktop-h1-fontsize);
+      line-height: var(--font-alias-desktop-h1-lineheight);
+      font-weight: var(--font-alias-desktop-h1-fontweight);
+      letter-spacing: var(--font-alias-desktop-h1-letterspacing);
+      text-transform: var(--font-alias-desktop-h1-textcase);
+      text-decoration: var(--font-alias-desktop-h1-textdecoration);
+    }
+  }
+
+  /* H2 */
+  h2 {
+    font-family: var(--font-alias-mobile-h2-fontfamily);
+    font-size: var(--font-alias-mobile-h2-fontsize);
+    line-height: var(--font-alias-mobile-h2-lineheight);
+    font-weight: var(--font-alias-mobile-h2-fontweight);
+    letter-spacing: var(--font-alias-mobile-h2-letterspacing);
+    text-transform: var(--font-alias-mobile-h2-textcase);
+    text-decoration: var(--font-alias-mobile-h2-textdecoration);
+  }
+  @media (min-width: 768px) {
+    h2 {
+      font-family: var(--font-alias-tablet-h2-fontfamily);
+      font-size: var(--font-alias-tablet-h2-fontsize);
+      line-height: var(--font-alias-tablet-h2-lineheight);
+      font-weight: var(--font-alias-tablet-h2-fontweight);
+      letter-spacing: var(--font-alias-tablet-h2-letterspacing);
+      text-transform: var(--font-alias-tablet-h2-textcase);
+      text-decoration: var(--font-alias-tablet-h2-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    h2 {
+      font-family: var(--font-alias-desktop-h2-fontfamily);
+      font-size: var(--font-alias-desktop-h2-fontsize);
+      line-height: var(--font-alias-desktop-h2-lineheight);
+      font-weight: var(--font-alias-desktop-h2-fontweight);
+      letter-spacing: var(--font-alias-desktop-h2-letterspacing);
+      text-transform: var(--font-alias-desktop-h2-textcase);
+      text-decoration: var(--font-alias-desktop-h2-textdecoration);
+    }
+  }
+
+  /* H3 */
+  h3 {
+    font-family: var(--font-alias-mobile-h3-fontfamily);
+    font-size: var(--font-alias-mobile-h3-fontsize);
+    line-height: var(--font-alias-mobile-h3-lineheight);
+    font-weight: var(--font-alias-mobile-h3-fontweight);
+    letter-spacing: var(--font-alias-mobile-h3-letterspacing);
+    text-transform: var(--font-alias-mobile-h3-textcase);
+    text-decoration: var(--font-alias-mobile-h3-textdecoration);
+  }
+  @media (min-width: 768px) {
+    h3 {
+      font-family: var(--font-alias-tablet-h3-fontfamily);
+      font-size: var(--font-alias-tablet-h3-fontsize);
+      line-height: var(--font-alias-tablet-h3-lineheight);
+      font-weight: var(--font-alias-tablet-h3-fontweight);
+      letter-spacing: var(--font-alias-tablet-h3-letterspacing);
+      text-transform: var(--font-alias-tablet-h3-textcase);
+      text-decoration: var(--font-alias-tablet-h3-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    h3 {
+      font-family: var(--font-alias-desktop-h3-fontfamily);
+      font-size: var(--font-alias-desktop-h3-fontsize);
+      line-height: var(--font-alias-desktop-h3-lineheight);
+      font-weight: var(--font-alias-desktop-h3-fontweight);
+      letter-spacing: var(--font-alias-desktop-h3-letterspacing);
+      text-transform: var(--font-alias-desktop-h3-textcase);
+      text-decoration: var(--font-alias-desktop-h3-textdecoration);
+    }
+  }
+
+  /* SUBTITLE: ใช้กับ <small> หรือ tag ที่คุณอยากกำหนด */
+  small {
+    font-family: var(--font-alias-mobile-sub-fontfamily);
+    font-size: var(--font-alias-mobile-sub-fontsize);
+    line-height: var(--font-alias-mobile-sub-lineheight);
+    font-weight: var(--font-alias-mobile-sub-fontweight);
+    letter-spacing: var(--font-alias-mobile-sub-letterspacing);
+    text-transform: var(--font-alias-mobile-sub-textcase);
+    text-decoration: var(--font-alias-mobile-sub-textdecoration);
+  }
+  @media (min-width: 768px) {
+    small {
+      font-family: var(--font-alias-tablet-sub-fontfamily);
+      font-size: var(--font-alias-tablet-sub-fontsize);
+      line-height: var(--font-alias-tablet-sub-lineheight);
+      font-weight: var(--font-alias-tablet-sub-fontweight);
+      letter-spacing: var(--font-alias-tablet-sub-letterspacing);
+      text-transform: var(--font-alias-tablet-sub-textcase);
+      text-decoration: var(--font-alias-tablet-sub-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    small {
+      font-family: var(--font-alias-desktop-sub-fontfamily);
+      font-size: var(--font-alias-desktop-sub-fontsize);
+      line-height: var(--font-alias-desktop-sub-lineheight);
+      font-weight: var(--font-alias-desktop-sub-fontweight);
+      letter-spacing: var(--font-alias-desktop-sub-letterspacing);
+      text-transform: var(--font-alias-desktop-sub-textcase);
+      text-decoration: var(--font-alias-desktop-sub-textdecoration);
+    }
+  }
+
+  /* BUTTON TEXT: ปุ่มทั่วไป */
+  button {
+    font-family: var(--font-alias-mobile-button-fontfamily);
+    font-size: var(--font-alias-mobile-button-fontsize);
+    line-height: var(--font-alias-mobile-button-lineheight);
+    font-weight: var(--font-alias-mobile-button-fontweight);
+    letter-spacing: var(--font-alias-mobile-button-letterspacing);
+    text-transform: var(--font-alias-mobile-button-textcase);
+    text-decoration: var(--font-alias-mobile-button-textdecoration);
+  }
+  @media (min-width: 768px) {
+    button {
+      font-family: var(--font-alias-tablet-button-fontfamily);
+      font-size: var(--font-alias-tablet-button-fontsize);
+      line-height: var(--font-alias-tablet-button-lineheight);
+      font-weight: var(--font-alias-tablet-button-fontweight);
+      letter-spacing: var(--font-alias-tablet-button-letterspacing);
+      text-transform: var(--font-alias-tablet-button-textcase);
+      text-decoration: var(--font-alias-tablet-button-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    button {
+      font-family: var(--font-alias-desktop-button-fontfamily);
+      font-size: var(--font-alias-desktop-button-fontsize);
+      line-height: var(--font-alias-desktop-button-lineheight);
+      font-weight: var(--font-alias-desktop-button-fontweight);
+      letter-spacing: var(--font-alias-desktop-button-letterspacing);
+      text-transform: var(--font-alias-desktop-button-textcase);
+      text-decoration: var(--font-alias-desktop-button-textdecoration);
+    }
+  }
+}
+
+/* ========== 2) COMPONENTS: เก็บ .typo-* ไว้ใช้ในเคสพิเศษ (อยากใช้ก็ใช้, ไม่ใช้ก็ลบทิ้งได้) ========== */
+
+@layer components {
+  /* ========== BODY ========== */
+  .typo-body {
+    font-family: var(--font-alias-mobile-body-fontfamily);
+    font-size: var(--font-alias-mobile-body-fontsize);
+    line-height: var(--font-alias-mobile-body-lineheight);
+    font-weight: var(--font-alias-mobile-body-fontweight);
+    letter-spacing: var(--font-alias-mobile-body-letterspacing);
+    text-transform: var(--font-alias-mobile-body-textcase);
+    text-decoration: var(--font-alias-mobile-body-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-body {
+      font-family: var(--font-alias-tablet-body-fontfamily);
+      font-size: var(--font-alias-tablet-body-fontsize);
+      line-height: var(--font-alias-tablet-body-lineheight);
+      font-weight: var(--font-alias-tablet-body-fontweight);
+      letter-spacing: var(--font-alias-tablet-body-letterspacing);
+      text-transform: var(--font-alias-tablet-body-textcase);
+      text-decoration: var(--font-alias-tablet-body-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-body {
+      font-family: var(--font-alias-desktop-body-fontfamily);
+      font-size: var(--font-alias-desktop-body-fontsize);
+      line-height: var(--font-alias-desktop-body-lineheight);
+      font-weight: var(--font-alias-desktop-body-fontweight);
+      letter-spacing: var(--font-alias-desktop-body-letterspacing);
+      text-transform: var(--font-alias-desktop-body-textcase);
+      text-decoration: var(--font-alias-desktop-body-textdecoration);
+    }
+  }
+
+  /* ========== H1 ========== */
+  .typo-h1 {
+    font-family: var(--font-alias-mobile-h1-fontfamily);
+    font-size: var(--font-alias-mobile-h1-fontsize);
+    line-height: var(--font-alias-mobile-h1-lineheight);
+    font-weight: var(--font-alias-mobile-h1-fontweight);
+    letter-spacing: var(--font-alias-mobile-h1-letterspacing);
+    text-transform: var(--font-alias-mobile-h1-textcase);
+    text-decoration: var(--font-alias-mobile-h1-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-h1 {
+      font-family: var(--font-alias-tablet-h1-fontfamily);
+      font-size: var(--font-alias-tablet-h1-fontsize);
+      line-height: var(--font-alias-tablet-h1-lineheight);
+      font-weight: var(--font-alias-tablet-h1-fontweight);
+      letter-spacing: var(--font-alias-tablet-h1-letterspacing);
+      text-transform: var(--font-alias-tablet-h1-textcase);
+      text-decoration: var(--font-alias-tablet-h1-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-h1 {
+      font-family: var(--font-alias-desktop-h1-fontfamily);
+      font-size: var(--font-alias-desktop-h1-fontsize);
+      line-height: var(--font-alias-desktop-h1-lineheight);
+      font-weight: var(--font-alias-desktop-h1-fontweight);
+      letter-spacing: var(--font-alias-desktop-h1-letterspacing);
+      text-transform: var(--font-alias-desktop-h1-textcase);
+      text-decoration: var(--font-alias-desktop-h1-textdecoration);
+    }
+  }
+
+  /* ========== H2 ========== */
+  .typo-h2 {
+    font-family: var(--font-alias-mobile-h2-fontfamily);
+    font-size: var(--font-alias-mobile-h2-fontsize);
+    line-height: var(--font-alias-mobile-h2-lineheight);
+    font-weight: var(--font-alias-mobile-h2-fontweight);
+    letter-spacing: var(--font-alias-mobile-h2-letterspacing);
+    text-transform: var(--font-alias-mobile-h2-textcase);
+    text-decoration: var(--font-alias-mobile-h2-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-h2 {
+      font-family: var(--font-alias-tablet-h2-fontfamily);
+      font-size: var(--font-alias-tablet-h2-fontsize);
+      line-height: var(--font-alias-tablet-h2-lineheight);
+      font-weight: var(--font-alias-tablet-h2-fontweight);
+      letter-spacing: var(--font-alias-tablet-h2-letterspacing);
+      text-transform: var(--font-alias-tablet-h2-textcase);
+      text-decoration: var(--font-alias-tablet-h2-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-h2 {
+      font-family: var(--font-alias-desktop-h2-fontfamily);
+      font-size: var(--font-alias-desktop-h2-fontsize);
+      line-height: var(--font-alias-desktop-h2-lineheight);
+      font-weight: var(--font-alias-desktop-h2-fontweight);
+      letter-spacing: var(--font-alias-desktop-h2-letterspacing);
+      text-transform: var(--font-alias-desktop-h2-textcase);
+      text-decoration: var(--font-alias-desktop-h2-textdecoration);
+    }
+  }
+
+  /* ========== H3 ========== */
+  .typo-h3 {
+    font-family: var(--font-alias-mobile-h3-fontfamily);
+    font-size: var(--font-alias-mobile-h3-fontsize);
+    line-height: var(--font-alias-mobile-h3-lineheight);
+    font-weight: var(--font-alias-mobile-h3-fontweight);
+    letter-spacing: var(--font-alias-mobile-h3-letterspacing);
+    text-transform: var(--font-alias-mobile-h3-textcase);
+    text-decoration: var(--font-alias-mobile-h3-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-h3 {
+      font-family: var(--font-alias-tablet-h3-fontfamily);
+      font-size: var(--font-alias-tablet-h3-fontsize);
+      line-height: var(--font-alias-tablet-h3-lineheight);
+      font-weight: var(--font-alias-tablet-h3-fontweight);
+      letter-spacing: var(--font-alias-tablet-h3-letterspacing);
+      text-transform: var(--font-alias-tablet-h3-textcase);
+      text-decoration: var(--font-alias-tablet-h3-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-h3 {
+      font-family: var(--font-alias-desktop-h3-fontfamily);
+      font-size: var(--font-alias-desktop-h3-fontsize);
+      line-height: var(--font-alias-desktop-h3-lineheight);
+      font-weight: var(--font-alias-desktop-h3-fontweight);
+      letter-spacing: var(--font-alias-desktop-h3-letterspacing);
+      text-transform: var(--font-alias-desktop-h3-textcase);
+      text-decoration: var(--font-alias-desktop-h3-textdecoration);
+    }
+  }
+
+  /* ========== SUBTITLE ========== */
+  .typo-sub {
+    font-family: var(--font-alias-mobile-sub-fontfamily);
+    font-size: var(--font-alias-mobile-sub-fontsize);
+    line-height: var(--font-alias-mobile-sub-lineheight);
+    font-weight: var(--font-alias-mobile-sub-fontweight);
+    letter-spacing: var(--font-alias-mobile-sub-letterspacing);
+    text-transform: var(--font-alias-mobile-sub-textcase);
+    text-decoration: var(--font-alias-mobile-sub-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-sub {
+      font-family: var(--font-alias-tablet-sub-fontfamily);
+      font-size: var(--font-alias-tablet-sub-fontsize);
+      line-height: var(--font-alias-tablet-sub-lineheight);
+      font-weight: var(--font-alias-tablet-sub-fontweight);
+      letter-spacing: var(--font-alias-tablet-sub-letterspacing);
+      text-transform: var(--font-alias-tablet-sub-textcase);
+      text-decoration: var(--font-alias-tablet-sub-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-sub {
+      font-family: var(--font-alias-desktop-sub-fontfamily);
+      font-size: var(--font-alias-desktop-sub-fontsize);
+      line-height: var(--font-alias-desktop-sub-lineheight);
+      font-weight: var(--font-alias-desktop-sub-fontweight);
+      letter-spacing: var(--font-alias-desktop-sub-letterspacing);
+      text-transform: var(--font-alias-desktop-sub-textcase);
+      text-decoration: var(--font-alias-desktop-sub-textdecoration);
+    }
+  }
+
+  /* ========== DISCOUNT BADGE TEXT ========== */
+  .typo-discount {
+    font-family: var(--font-alias-mobile-discount-fontfamily);
+    font-size: var(--font-alias-mobile-discount-fontsize);
+    line-height: var(--font-alias-mobile-discount-lineheight);
+    font-weight: var(--font-alias-mobile-discount-fontweight);
+    letter-spacing: var(--font-alias-mobile-discount-letterspacing);
+    text-transform: var(--font-alias-mobile-discount-textcase);
+    text-decoration: var(--font-alias-mobile-discount-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-discount {
+      font-family: var(--font-alias-tablet-discount-fontfamily);
+      font-size: var(--font-alias-tablet-discount-fontsize);
+      line-height: var(--font-alias-tablet-discount-lineheight);
+      font-weight: var(--font-alias-tablet-discount-fontweight);
+      letter-spacing: var(--font-alias-tablet-discount-letterspacing);
+      text-transform: var(--font-alias-tablet-discount-textcase);
+      text-decoration: var(--font-alias-tablet-discount-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-discount {
+      font-family: var(--font-alias-desktop-discount-fontfamily);
+      font-size: var(--font-alias-desktop-discount-fontsize);
+      line-height: var(--font-alias-desktop-discount-lineheight);
+      font-weight: var(--font-alias-desktop-discount-fontweight);
+      letter-spacing: var(--font-alias-desktop-discount-letterspacing);
+      text-transform: var(--font-alias-desktop-discount-textcase);
+      text-decoration: var(--font-alias-desktop-discount-textdecoration);
+    }
+  }
+
+  /* ========== TAGS / LABELS ========== */
+  .typo-tags {
+    font-family: var(--font-alias-mobile-tags-fontfamily);
+    font-size: var(--font-alias-mobile-tags-fontsize);
+    line-height: var(--font-alias-mobile-tags-lineheight);
+    font-weight: var(--font-alias-mobile-tags-fontweight);
+    letter-spacing: var(--font-alias-mobile-tags-letterspacing);
+    text-transform: var(--font-alias-mobile-tags-textcase);
+    text-decoration: var(--font-alias-mobile-tags-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-tags {
+      font-family: var(--font-alias-tablet-tags-fontfamily);
+      font-size: var(--font-alias-tablet-tags-fontsize);
+      line-height: var(--font-alias-tablet-tags-lineheight);
+      font-weight: var(--font-alias-tablet-tags-fontweight);
+      letter-spacing: var(--font-alias-tablet-tags-letterspacing);
+      text-transform: var(--font-alias-tablet-tags-textcase);
+      text-decoration: var(--font-alias-tablet-tags-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-tags {
+      font-family: var(--font-alias-desktop-tags-fontfamily);
+      font-size: var(--font-alias-desktop-tags-fontsize);
+      line-height: var(--font-alias-desktop-tags-lineheight);
+      font-weight: var(--font-alias-desktop-tags-fontweight);
+      letter-spacing: var(--font-alias-desktop-tags-letterspacing);
+      text-transform: var(--font-alias-desktop-tags-textcase);
+      text-decoration: var(--font-alias-desktop-tags-textdecoration);
+    }
+  }
+
+  /* ========== MENU / NAV TEXT ========== */
+  .typo-menu {
+    font-family: var(--font-alias-mobile-menu-fontfamily);
+    font-size: var(--font-alias-mobile-menu-fontsize);
+    line-height: var(--font-alias-mobile-menu-lineheight);
+    font-weight: var(--font-alias-mobile-menu-fontweight);
+    letter-spacing: var(--font-alias-mobile-menu-letterspacing);
+    text-transform: var(--font-alias-mobile-menu-textcase);
+    text-decoration: var(--font-alias-mobile-menu-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-menu {
+      font-family: var(--font-alias-tablet-menu-fontfamily);
+      font-size: var(--font-alias-tablet-menu-fontsize);
+      line-height: var(--font-alias-tablet-menu-lineheight);
+      font-weight: var(--font-alias-tablet-menu-fontweight);
+      letter-spacing: var(--font-alias-tablet-menu-letterspacing);
+      text-transform: var(--font-alias-tablet-menu-textcase);
+      text-decoration: var(--font-alias-tablet-menu-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-menu {
+      font-family: var(--font-alias-desktop-menu-fontfamily);
+      font-size: var(--font-alias-desktop-menu-fontsize);
+      line-height: var(--font-alias-desktop-menu-lineheight);
+      font-weight: var(--font-alias-desktop-menu-fontweight);
+      letter-spacing: var(--font-alias-desktop-menu-letterspacing);
+      text-transform: var(--font-alias-desktop-menu-textcase);
+      text-decoration: var(--font-alias-desktop-menu-textdecoration);
+    }
+  }
+
+  /* ========== TEXT BUTTON (เช่น ลิงก์) ========== */
+  .typo-text-button {
+    font-family: var(--font-alias-mobile-text-button-fontfamily);
+    font-size: var(--font-alias-mobile-text-button-fontsize);
+    line-height: var(--font-alias-mobile-text-button-lineheight);
+    font-weight: var(--font-alias-mobile-text-button-fontweight);
+    letter-spacing: var(--font-alias-mobile-text-button-letterspacing);
+    text-transform: var(--font-alias-mobile-text-button-textcase);
+    text-decoration: var(--font-alias-mobile-text-button-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-text-button {
+      font-family: var(--font-alias-tablet-text-button-fontfamily);
+      font-size: var(--font-alias-tablet-text-button-fontsize);
+      line-height: var(--font-alias-tablet-text-button-lineheight);
+      font-weight: var(--font-alias-tablet-text-button-fontweight);
+      letter-spacing: var(--font-alias-tablet-text-button-letterspacing);
+      text-transform: var(--font-alias-tablet-text-button-textcase);
+      text-decoration: var(--font-alias-tablet-text-button-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-text-button {
+      font-family: var(--font-alias-desktop-text-button-fontfamily);
+      font-size: var(--font-alias-desktop-text-button-fontsize);
+      line-height: var(--font-alias-desktop-text-button-lineheight);
+      font-weight: var(--font-alias-desktop-text-button-fontweight);
+      letter-spacing: var(--font-alias-desktop-text-button-letterspacing);
+      text-transform: var(--font-alias-desktop-text-button-textcase);
+      text-decoration: var(--font-alias-desktop-text-button-textdecoration);
+    }
+  }
+
+  /* ========== TEXT BUTTON + UNDERLINE LINE ========== */
+  .typo-text-button-line {
+    font-family: var(--font-alias-mobile-text-button-line-fontfamily);
+    font-size: var(--font-alias-mobile-text-button-line-fontsize);
+    line-height: var(--font-alias-mobile-text-button-line-lineheight);
+    font-weight: var(--font-alias-mobile-text-button-line-fontweight);
+    letter-spacing: var(--font-alias-mobile-text-button-line-letterspacing);
+    text-transform: var(--font-alias-mobile-text-button-line-textcase);
+    text-decoration: var(--font-alias-mobile-text-button-line-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-text-button-line {
+      font-family: var(--font-alias-tablet-text-button-line-fontfamily);
+      font-size: var(--font-alias-tablet-text-button-line-fontsize);
+      line-height: var(--font-alias-tablet-text-button-line-lineheight);
+      font-weight: var(--font-alias-tablet-text-button-line-fontweight);
+      letter-spacing: var(--font-alias-tablet-text-button-line-letterspacing);
+      text-transform: var(--font-alias-tablet-text-button-line-textcase);
+      text-decoration: var(--font-alias-tablet-text-button-line-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-text-button-line {
+      font-family: var(--font-alias-desktop-text-button-line-fontfamily);
+      font-size: var(--font-alias-desktop-text-button-line-fontsize);
+      line-height: var(--font-alias-desktop-text-button-line-lineheight);
+      font-weight: var(--font-alias-desktop-text-button-line-fontweight);
+      letter-spacing: var(--font-alias-desktop-text-button-line-letterspacing);
+      text-transform: var(--font-alias-desktop-text-button-line-textcase);
+      text-decoration: var(
+        --font-alias-desktop-text-button-line-textdecoration
+      );
+    }
+  }
+
+  /* ========== BUTTON (หลัก) ========== */
+  .typo-button {
+    font-family: var(--font-alias-mobile-button-fontfamily);
+    font-size: var(--font-alias-mobile-button-fontsize);
+    line-height: var(--font-alias-mobile-button-lineheight);
+    font-weight: var(--font-alias-mobile-button-fontweight);
+    letter-spacing: var(--font-alias-mobile-button-letterspacing);
+    text-transform: var(--font-alias-mobile-button-textcase);
+    text-decoration: var(--font-alias-mobile-button-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-button {
+      font-family: var(--font-alias-tablet-button-fontfamily);
+      font-size: var(--font-alias-tablet-button-fontsize);
+      line-height: var(--font-alias-tablet-button-lineheight);
+      font-weight: var(--font-alias-tablet-button-fontweight);
+      letter-spacing: var(--font-alias-tablet-button-letterspacing);
+      text-transform: var(--font-alias-tablet-button-textcase);
+      text-decoration: var(--font-alias-tablet-button-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-button {
+      font-family: var(--font-alias-desktop-button-fontfamily);
+      font-size: var(--font-alias-desktop-button-fontsize);
+      line-height: var(--font-alias-desktop-button-lineheight);
+      font-weight: var(--font-alias-desktop-button-fontweight);
+      letter-spacing: var(--font-alias-desktop-button-letterspacing);
+      text-transform: var(--font-alias-desktop-button-textcase);
+      text-decoration: var(--font-alias-desktop-button-textdecoration);
+    }
+  }
+
+  /* ========== BUTTON SMALL (ไม่มี mobile, ใช้ tablet เป็น base) ========== */
+  .typo-button-sm {
+    font-family: var(--font-alias-tablet-button-sm-fontfamily);
+    font-size: var(--font-alias-tablet-button-sm-fontsize);
+    line-height: var(--font-alias-tablet-button-sm-lineheight);
+    font-weight: var(--font-alias-tablet-button-sm-fontweight);
+    letter-spacing: var(--font-alias-tablet-button-sm-letterspacing);
+    text-transform: var(--font-alias-tablet-button-sm-textcase);
+    text-decoration: var(--font-alias-tablet-button-sm-textdecoration);
+  }
+  @media (min-width: 1024px) {
+    .typo-button-sm {
+      font-family: var(--font-alias-desktop-button-sm-fontfamily);
+      font-size: var(--font-alias-desktop-button-sm-fontsize);
+      line-height: var(--font-alias-desktop-button-sm-lineheight);
+      font-weight: var(--font-alias-desktop-button-sm-fontweight);
+      letter-spacing: var(--font-alias-desktop-button-sm-letterspacing);
+      text-transform: var(--font-alias-desktop-button-sm-textcase);
+      text-decoration: var(--font-alias-desktop-button-sm-textdecoration);
+    }
+  }
+
+  /* ========== LOGO TYPE ========== */
+  .typo-logo {
+    font-family: var(--font-alias-mobile-logo-fontfamily);
+    font-size: var(--font-alias-mobile-logo-fontsize);
+    line-height: var(--font-alias-mobile-logo-lineheight);
+    font-weight: var(--font-alias-mobile-logo-fontweight);
+    letter-spacing: var(--font-alias-mobile-logo-letterspacing);
+    text-transform: var(--font-alias-mobile-logo-textcase);
+    text-decoration: var(--font-alias-mobile-logo-textdecoration);
+  }
+  @media (min-width: 768px) {
+    .typo-logo {
+      font-family: var(--font-alias-tablet-logo-fontfamily);
+      font-size: var(--font-alias-tablet-logo-fontsize);
+      line-height: var(--font-alias-tablet-logo-lineheight);
+      font-weight: var(--font-alias-tablet-logo-fontweight);
+      letter-spacing: var(--font-alias-tablet-logo-letterspacing);
+      text-transform: var(--font-alias-tablet-logo-textcase);
+      text-decoration: var(--font-alias-tablet-logo-textdecoration);
+    }
+  }
+  @media (min-width: 1024px) {
+    .typo-logo {
+      font-family: var(--font-alias-desktop-logo-fontfamily);
+      font-size: var(--font-alias-desktop-logo-fontsize);
+      line-height: var(--font-alias-desktop-logo-lineheight);
+      font-weight: var(--font-alias-desktop-logo-fontweight);
+      letter-spacing: var(--font-alias-desktop-logo-letterspacing);
+      text-transform: var(--font-alias-desktop-logo-textcase);
+      text-decoration: var(--font-alias-desktop-logo-textdecoration);
+    }
+  }
+}

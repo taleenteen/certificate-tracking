@@ -1,0 +1,72 @@
+# =================================================
+# Smart City - Full Stack Docker Compose
+# Backend + Frontend + Database
+# รัน: docker compose up -d --build
+# =================================================
+
+services:
+  # ==================== Database ====================
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: smartcity-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: smartcity
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d smartcity"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - smartcity
+
+  # ==================== Backend (NestJS) ====================
+  backend:
+    build: ./gov-backend-prisma-v7
+    container_name: smartcity-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://admin:123456@db:5432/smartcity?schema=public
+      - PORT=3001
+      - RUN_SEED=true
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - smartcity
+
+  # ==================== Frontend (Next.js) ====================
+  frontend:
+    build:
+      context: ./gov-map
+      args:
+        # ใส่ IP จริงของ Server แทนที่ <YOUR_SERVER_IP>
+        - NEXT_PUBLIC_API_URL=http://<YOUR_SERVER_IP>:3001
+        - NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1IjoidGVlbnRlZW4iLCJhIjoiY200bmp6Y2p3MDJ2NTJqcHVsM3Bwd3Y4MyJ9.A90i6S7P94p_yYj296M26w
+    container_name: smartcity-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://<YOUR_SERVER_IP>:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - smartcity
+
+volumes:
+  postgres_data:
+
+networks:
+  smartcity:
+    driver: bridge

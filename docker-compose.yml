@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  # 1. Frontend Service (This Project)
+  frontend:
+    container_name: gov-nextjs-frontend
+    build:
+      context: . # Point to your frontend folder
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+
+  # 2. Backend Service (Your separate repo)
+  backend:
+    container_name: gov-nextjs-backend
+    build:
+      context: ./your-backend-folder # Point to your backend folder
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    networks:
+      - app-network
+
+  # 3. Nginx Proxy Manager
+  npm:
+    image: "jc21/nginx-proxy-manager:latest"
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80" # HTTP
+      - "81:81" # Admin UI (Access via http://localhost:81)
+      - "443:443" # HTTPS
+    volumes:
+      - ./npm-data:/data
+      - ./npm-letsencrypt:/etc/letsencrypt
+    networks:
+      - app-network
+    depends_on:
+      - frontend
+      - backend
+
+networks:
+  app-network:
+    driver: bridge

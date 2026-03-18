@@ -1,0 +1,36 @@
+<svg width="45" height="53" viewBox="0 0 45 53" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_374_3659)">
+<rect width="32.1242" height="45.283" rx="2" transform="matrix(0.955129 -0.296191 0.296199 0.955126 0 9.51492)" fill="#EFEFF7"/>
+</g>
+<rect width="25.2482" height="2.37627" rx="1.18813" transform="matrix(0.955129 -0.296191 0.296199 0.955126 4.3186 11.9085)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 6.16602 17.8655)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 7.13403 20.9886)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 8.10156 24.1087)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 9.06934 27.2288)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 10.0369 30.3489)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 11.0049 33.47)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 11.9727 36.5901)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 12.9407 39.7102)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="8.91111" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 13.9084 42.8333)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 15.9539 14.8313)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 16.9219 17.9514)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 17.8896 21.0716)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 18.8574 24.1946)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 19.8254 27.3128)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 20.793 30.4358)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 21.7607 33.5559)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 22.7288 36.6761)" fill="#B1B2B1" fill-opacity="0.5"/>
+<rect width="15.0004" height="1.33665" rx="0.668325" transform="matrix(0.955129 -0.296191 0.296199 0.955126 23.6963 39.7971)" fill="#B1B2B1" fill-opacity="0.5"/>
+<defs>
+<filter id="filter0_i_374_3659" x="-0.798474" y="0.502227" width="44.392" height="54.3631" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dx="-1.30067" dy="2.60134"/>
+<feGaussianBlur stdDeviation="1.30067"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/>
+<feBlend mode="normal" in2="shape" result="effect1_innerShadow_374_3659"/>
+</filter>
+</defs>
+</svg>

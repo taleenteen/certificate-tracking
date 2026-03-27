@@ -1,51 +1,37 @@
-version: "3.8"
-
 services:
-  # 1. Frontend Service (This Project)
   frontend:
     container_name: gov-nextjs-frontend
     build:
-      context: . # Point to your frontend folder
+      context: .
       dockerfile: Dockerfile
-    restart: always
-    ports:
-      - "3003:3003"
-    environment:
-      - NODE_ENV=production
-    networks:
-      - app-network
-
-  # 2. Backend Service (Your separate repo)
-  backend:
-    container_name: gov-nextjs-backend
-    build:
-      context: ./your-backend-folder # Point to your backend folder
-      dockerfile: Dockerfile
-    restart: always
-    ports:
-      - "4000:4000"
-    environment:
-      - PORT=4000
-    networks:
-      - app-network
-
-  # 3. Nginx Proxy Manager
-  npm:
-    image: "jc21/nginx-proxy-manager:latest"
-    container_name: nginx-proxy-manager
+      args:
+        GOV_API_URL: ${GOV_API_URL:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
     restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4003
+      HOSTNAME: 0.0.0.0
+      GOV_API_URL: ${GOV_API_URL:-}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+      NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
     ports:
-      - "80:80" # HTTP
-      - "81:81" # Admin UI (Access via http://localhost:81)
-      - "443:443" # HTTPS
-    volumes:
-      - ./npm-data:/data
-      - ./npm-letsencrypt:/etc/letsencrypt
+      - "${FRONTEND_PORT:-4003}:4003"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4003').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - app-network
-    depends_on:
-      - frontend
-      - backend
 
 networks:
   app-network:

@@ -32,6 +32,7 @@ const SEARCH_PAGE_CONFIG: Record<
 
 const DETAIL_PAGE_TITLES: Record<string, string> = {
   "/establishment": "รายละเอียดสถานประกอบการ",
+  "/my-licenses": "รายละเอียดใบอนุญาต",
 };
 
 const STANDALONE_PAGE_TITLES: Record<string, string> = {
@@ -82,7 +83,7 @@ export function BackOfficeNavbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-[#114e4b] text-white backdrop-blur">
+    <header className="sticky top-0 z-30 border-white/10 bg-[#114e4b] text-white backdrop-blur">
       <div className="relative mx-auto w-full max-w-6xl px-4 py-3 sm:px-6">
         {searchPlaceholder ? (
           <>
@@ -136,7 +137,7 @@ export function BackOfficeNavbar() {
                 )}
               </div>
             </div>
-            {searchPageConfig?.action === "filter" && (
+            {searchPageConfig?.action === "filter" && isFilterOpen && (
               <div
                 aria-hidden={!isFilterOpen}
                 className={[
@@ -201,21 +202,27 @@ export function BackOfficeNavbar() {
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <div>
+            {/* <div>
               <p className="text-xs uppercase tracking-[0.28em] text-white/60">
                 Back Office
               </p>
               <h1 className="text-sm font-semibold sm:text-base">
                 Certificate Tracking
               </h1>
+            </div> */}
+            <div>
+              <p className="text-xl font-semibold leading-tight">
+                ยินดีต้อนรับ, คุณสมชาย
+              </p>
+              <p className="mt-1 text-sm text-white/70">เจ้าหน้าที่</p>
             </div>
 
             <div className="flex items-center gap-2">
               <IconButton ariaLabel="Notifications">
-                <Bell className="h-4 w-4" />
+                <Bell className="size-5" />
               </IconButton>
               <IconButton ariaLabel="Profile">
-                <CircleUserRound className="h-4 w-4" />
+                <CircleUserRound className="size-5" />
               </IconButton>
             </div>
           </div>
@@ -283,7 +290,7 @@ function IconButton({
       size="icon"
       variant="ghost"
       aria-label={ariaLabel}
-      className="h-9 w-9 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+      className="h-9 w-9 text-white hover:bg-white/10 hover:text-white [&>svg]:size-5"
     >
       {children}
     </Button>

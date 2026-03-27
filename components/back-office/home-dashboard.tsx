@@ -1,16 +1,11 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ChartConfig } from "@/components/ui/chart";
-import {
-  Building2,
-  ChevronRight,
-  Map,
-  ScanSearch,
-  Search,
-} from "lucide-react";
+import { Building2, Map, ScanSearch, Search } from "lucide-react";
 import heroRightImage from "@/assets/hero/hero-right.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,10 +19,15 @@ import { AnimatedFolder } from "../shared/animated-folder";
 
 const summaryStats = [
   { label: "ปกติ", value: 20, color: "bg-emerald-500" },
-  { label: "กำลังมอบอำนาจ", value: 12, color: "bg-amber-400" },
+  { label: "ใกล้หมดอายุ", value: 12, color: "bg-amber-400" },
   { label: "หมดอายุ", value: 18, color: "bg-rose-400" },
   { label: "ถูกระงับ", value: 10, color: "bg-violet-500" },
 ];
+
+const totalSummaryStats = summaryStats.reduce(
+  (total, item) => total + item.value,
+  0,
+);
 
 const issueBars = [
   { label: "เอกสารไม่ครบ", value: 74, color: "bg-[#6f7cf6]" },
@@ -37,20 +37,47 @@ const issueBars = [
   { label: "ไม่มีวันหมดอายุ", value: 20, color: "bg-[#e47b9b]" },
 ];
 
-const inspectionTrendData = [
-  { month: "ม.ค.", inspections: 48 },
-  { month: "ก.พ.", inspections: 31 },
-  { month: "มี.ค.", inspections: 29 },
-  { month: "เม.ย.", inspections: 41 },
-  { month: "พ.ค.", inspections: 53 },
-  { month: "มิ.ย.", inspections: 49 },
-  { month: "ก.ค.", inspections: 36 },
-  { month: "ส.ค.", inspections: 41 },
-  { month: "ก.ย.", inspections: 34 },
-  { month: "ต.ค.", inspections: 28 },
-  { month: "พ.ย.", inspections: 22 },
-  { month: "ธ.ค.", inspections: 39 },
-];
+const inspectionTrendData = {
+  day: [
+    { label: "จ.", inspections: 8 },
+    { label: "อ.", inspections: 12 },
+    { label: "พ.", inspections: 10 },
+    { label: "พฤ.", inspections: 14 },
+    { label: "ศ.", inspections: 18 },
+    { label: "ส.", inspections: 9 },
+    { label: "อา.", inspections: 6 },
+  ],
+  month: [
+    { label: "ม.ค.", inspections: 48 },
+    { label: "ก.พ.", inspections: 31 },
+    { label: "มี.ค.", inspections: 29 },
+    { label: "เม.ย.", inspections: 41 },
+    { label: "พ.ค.", inspections: 53 },
+    { label: "มิ.ย.", inspections: 49 },
+    { label: "ก.ค.", inspections: 36 },
+    { label: "ส.ค.", inspections: 41 },
+    { label: "ก.ย.", inspections: 34 },
+    { label: "ต.ค.", inspections: 28 },
+    { label: "พ.ย.", inspections: 22 },
+    { label: "ธ.ค.", inspections: 39 },
+  ],
+  year: [
+    { label: "2563", inspections: 220 },
+    { label: "2564", inspections: 264 },
+    { label: "2565", inspections: 318 },
+    { label: "2566", inspections: 352 },
+    { label: "2567", inspections: 401 },
+  ],
+} as const;
+
+const trendRanges = [
+  { value: "day", label: "วัน" },
+  { value: "month", label: "เดือน" },
+  { value: "year", label: "ปี" },
+] as const;
+
+const issueScaleTicks = [20, 40, 60, 80] as const;
+const issueScalePositions = ["25%", "50%", "75%", "100%"] as const;
 
 const inspectionTrendConfig = {
   inspections: {
@@ -60,10 +87,26 @@ const inspectionTrendConfig = {
 } satisfies ChartConfig;
 
 export function HomeDashboard() {
+  const [selectedTrendRange, setSelectedTrendRange] =
+    useState<(typeof trendRanges)[number]["value"]>("month");
+
+  const activeInspectionTrendData = useMemo(
+    () => [...inspectionTrendData[selectedTrendRange]],
+    [selectedTrendRange],
+  );
+
+  const trendLabelPrefix = useMemo(() => {
+    if (selectedTrendRange === "day") return "วัน";
+    if (selectedTrendRange === "year") return "ปี";
+    return "เดือน";
+  }, [selectedTrendRange]);
+
+  // const [testValue, setTestValue] = useState(0);
+
   return (
     <main className="mx-auto w-full max-w-[430px] overflow-x-hidden bg-[#f4f5f7] text-slate-900 md:max-w-none">
       <section className="bg-[#114e4b] px-4 pb-6 pt-5 text-white sm:px-6">
-        <div className="flex items-start justify-between gap-4">
+        {/* <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xl font-semibold leading-tight">
               ยินดีต้อนรับ, คุณสมชาย
@@ -76,17 +119,15 @@ export function HomeDashboard() {
               <Search className="h-4 w-4" />
             </div>
           </div>
-        </div>
+        </div> */}
 
-        <div className="mt-5 space-y-3">
+        <div className="space-y-3">
           <Link
             href="/license-search"
             className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm"
           >
             <Search className="h-4 w-4 text-slate-400" />
-            <span className="flex-1 text-sm text-slate-400">
-              ค้นหาใบอนุญาต
-            </span>
+            <span className="flex-1 text-sm text-slate-400">ค้นหาใบอนุญาต</span>
             <div className="rounded-full border border-[#1b6964]/20 p-1 text-[#1b6964]">
               <ScanSearch className="h-4 w-4" />
             </div>
@@ -139,7 +180,7 @@ export function HomeDashboard() {
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <MiniTile
             title="ใบอนุญาตของฉัน"
-            description="2 รายการ"
+            description="3 รายการ"
             href="/my-licenses"
             isActive
             currentState={3}
@@ -151,6 +192,7 @@ export function HomeDashboard() {
             currentState={2}
           />
         </div>
+        {/* <Button onClick={() => setTestValue(testValue + 1)}>click</Button> */}
 
         <div className="mt-6 flex items-center justify-between">
           <div>
@@ -182,24 +224,33 @@ export function HomeDashboard() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="flex items-center gap-1.5">
                 {summaryStats.map((item) => (
                   <div
                     key={item.label}
                     className={`h-2 rounded-full ${item.color}`}
+                    style={{
+                      width: `${(item.value / totalSummaryStats) * 100}%`,
+                      minWidth: "1.5rem",
+                    }}
+                    aria-label={`${item.label} ${item.value}`}
                   />
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+              <div className="grid grid-cols-4 gap-2 text-sm">
                 {summaryStats.map((item) => (
-                  <div key={item.label} className="space-y-1">
-                    <p className="text-xl font-semibold text-slate-900">
+                  <div key={item.label} className="min-w-0 space-y-1">
+                    <p className="text-base font-semibold text-slate-900 sm:text-lg">
                       {item.value}
                     </p>
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <span className={`h-2 w-2 rounded-full ${item.color}`} />
-                      <span className="text-xs">{item.label}</span>
+                    <div className="flex items-start gap-1.5 text-slate-500">
+                      <span
+                        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.color}`}
+                      />
+                      <span className="text-[11px] leading-4 sm:text-xs">
+                        {item.label}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -211,18 +262,26 @@ export function HomeDashboard() {
             <CardContent className="p-4">
               <div className="min-w-0 rounded-[20px] bg-[#fbfbfb] p-4">
                 <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0 flex gap-1">
+                  <div className="min-w-0 flex justify-between items-center">
                     <h4 className="font-semibold text-[#145b57]">
                       สถิติการตรวจสอบ
                     </h4>
-                    <div className="overflow-x-auto">
-                      <div className="flex w-max min-w-full rounded-md bg-slate-100 p-1 text-xs text-slate-500">
-                        <span className="rounded-full px-3 py-1">สัปดาห์</span>
-                        <span className="rounded-full bg-[#d7f2ee] px-3 py-1 font-medium text-[#145b57]">
-                          เดือน
-                        </span>
-                        <span className="rounded-full px-3 py-1">ปี</span>
-                      </div>
+                    <div className="flex rounded-md bg-slate-100 border border-slate-300 text-xs text-slate-500">
+                      {trendRanges.map((range) => (
+                        <button
+                          key={range.value}
+                          type="button"
+                          onClick={() => setSelectedTrendRange(range.value)}
+                          className={`${
+                            range.value === selectedTrendRange
+                              ? "bg-white font-medium text-[#145b57]"
+                              : ""
+                          } rounded-lg px-3 py-1 text-xs`}
+                          aria-pressed={range.value === selectedTrendRange}
+                        >
+                          {range.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -234,7 +293,7 @@ export function HomeDashboard() {
                   >
                     <AreaChart
                       accessibilityLayer
-                      data={inspectionTrendData}
+                      data={activeInspectionTrendData}
                       margin={{ left: 0, right: 0, top: 8, bottom: 0 }}
                     >
                       <defs>
@@ -259,7 +318,7 @@ export function HomeDashboard() {
                       </defs>
                       <CartesianGrid vertical={false} strokeDasharray="3 3" />
                       <XAxis
-                        dataKey="month"
+                        dataKey="label"
                         tickLine={false}
                         axisLine={false}
                         tickMargin={8}
@@ -269,7 +328,9 @@ export function HomeDashboard() {
                         content={
                           <ChartTooltipContent
                             indicator="dot"
-                            labelFormatter={(label) => `เดือน ${label}`}
+                            labelFormatter={(label) =>
+                              `${trendLabelPrefix} ${label}`
+                            }
                           />
                         }
                       />
@@ -302,31 +363,63 @@ export function HomeDashboard() {
               <h3 className="text-lg font-semibold text-[#145b57]">
                 ปัญหาที่พบบ่อย
               </h3>
-              <div className="mt-4 space-y-3">
-                {issueBars.map((item) => (
-                  <div
-                    key={item.label}
-                    className="grid grid-cols-[1fr_3fr_auto] items-center gap-3"
-                  >
-                    <p className="text-xs text-slate-500">{item.label}</p>
-                    <div className="h-3 rounded-full bg-slate-100">
-                      <div
-                        className={`h-full rounded-full ${item.color}`}
-                        style={{ width: `${item.value}%` }}
-                      />
+              <div className="mt-6">
+                <div className="grid grid-cols-[80px_1fr] items-start gap-x-2 gap-y-3">
+                  {issueBars.map((item) => (
+                    <div key={item.label} className="contents">
+                      <p className="text-sm leading-6 text-slate-600">
+                        {item.label}
+                      </p>
+                      <div className="relative flex h-8 items-center">
+                        <div className="absolute inset-y-0 left-0 right-0">
+                          {issueScalePositions.map((position, index) => (
+                            <div
+                              key={`${item.label}-${issueScaleTicks[index]}`}
+                              className="absolute inset-y-0 border-l border-dashed border-slate-200"
+                              style={{ left: position }}
+                            />
+                          ))}
+                        </div>
+                        <div
+                          className={`relative h-4 rounded-full ${item.color}`}
+                          style={{ width: `${(item.value / 80) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                    <span className="text-xs text-slate-400">{item.value}</span>
+                  ))}
+                </div>
+
+                <div className="mt-2 grid grid-cols-[80px_1fr] gap-3">
+                  <div />
+                  <div className="relative h-4 text-[11px] text-slate-400">
+                    {issueScaleTicks.map((tick, index) => (
+                      <span
+                        key={tick}
+                        className="absolute top-0 text-left"
+                        style={{
+                          left: issueScalePositions[index],
+                          transform:
+                            index === 0
+                              ? "translateX(0)"
+                              : index === issueScaleTicks.length - 1
+                                ? "translateX(-100%)"
+                                : "translateX(0)",
+                        }}
+                      >
+                        {tick}
+                      </span>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
 
-              <Button
+              {/* <Button
                 variant="ghost"
                 className="mt-6 h-11 w-full justify-between rounded-2xl border border-dashed border-[#145b57]/20 bg-[#f7fbfb] px-4 text-[#145b57] hover:bg-[#edf8f7]"
               >
                 ดูรายการทั้งหมด
                 <ChevronRight className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
         </div>

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, Copy, FileText } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 
 import {
   StatusBadge,
   type StatusBadgeStatus,
 } from "@/components/shared/StatusBadge";
+import { LicensePreview, type LicensePreviewType } from "./license-preview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -20,7 +21,7 @@ export type LicenseCardItem = {
   issuedAt: string;
   expiresAt: string;
   previewLabel?: string;
-  previewType?: "document" | "seal";
+  previewType?: LicensePreviewType;
   detailsHref?: string;
 };
 
@@ -109,53 +110,5 @@ export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
         </Button>
       </CardContent>
     </Card>
-  );
-}
-
-function LicensePreview({
-  type,
-  label,
-}: {
-  type: "document" | "seal";
-  label?: string;
-}) {
-  if (type === "seal") {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-white">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-[#2d57bb] text-[#2d57bb]">
-          <FileText className="h-6 w-6" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative flex h-full w-full flex-col justify-between bg-white p-3">
-      <div className="space-y-1">
-        <div className="mx-auto h-5 w-5 rounded-full bg-rose-200" />
-        <div className="space-y-1">
-          <div className="h-1.5 rounded bg-slate-200" />
-          <div className="h-1.5 w-4/5 rounded bg-slate-200" />
-          <div className="h-1.5 w-3/5 rounded bg-slate-200" />
-        </div>
-      </div>
-
-      <div className="space-y-1">
-        <div className="h-1.5 rounded bg-slate-200" />
-        <div className="h-1.5 w-5/6 rounded bg-slate-200" />
-        <div className="h-1.5 w-2/3 rounded bg-slate-200" />
-      </div>
-
-      <div className="flex items-end justify-between">
-        <div className="h-5 w-10 rounded-full border border-rose-200" />
-        <div className="h-6 w-6 rounded-full border-2 border-sky-400" />
-      </div>
-
-      {label && (
-        <p className="absolute bottom-2 left-3 text-[9px] text-slate-400">
-          {label}
-        </p>
-      )}
-    </div>
   );
 }

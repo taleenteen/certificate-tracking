@@ -7,10 +7,10 @@ export function BackOfficeShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#d8dde0]">
+    <div className="flex min-h-screen flex-col bg-[#d8dde0]">
       <BackOfficeNavbar />
-      <div className="mx-auto w-full max-w-6xl px-0 md:px-6 md:py-6">
-        <div className="min-h-[calc(100vh-57px)] overflow-hidden bg-[#f4f5f7] md:rounded-[32px] md:shadow-[0_30px_80px_rgba(17,78,75,0.12)]">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 min-h-0 px-0 md:px-6 md:py-6">
+        <div className="flex-1 min-h-0 overflow-hidden bg-[#f4f5f7] md:rounded-[32px] md:shadow-[0_30px_80px_rgba(17,78,75,0.12)]">
           {children}
         </div>
       </div>

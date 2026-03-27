@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LicenseSearchPageView } from "@/components/back-office/license-search-page";
 import type { LicenseCardItem } from "@/components/back-office/license-certificate-card";
 
@@ -27,5 +28,13 @@ const mockLicenseSearchItems: LicenseCardItem[] = [
 ];
 
 export default function LicenseSearchPage() {
-  return <LicenseSearchPageView items={mockLicenseSearchItems} />;
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <LicenseSearchPageView items={mockLicenseSearchItems} />
+    </Suspense>
+  );
+}
+
+function PageFallback() {
+  return <main className="min-h-[calc(100vh-57px)] bg-[#F9FAFB] px-4 py-4" />;
 }

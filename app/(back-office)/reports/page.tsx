@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   ReportsPageView,
   type ReportItem,
@@ -73,5 +74,13 @@ const mockReports: ReportItem[] = [
 ];
 
 export default function ReportsPage() {
-  return <ReportsPageView reports={mockReports} />;
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <ReportsPageView reports={mockReports} />
+    </Suspense>
+  );
+}
+
+function PageFallback() {
+  return <main className="min-h-[calc(100vh-57px)] bg-[#F9FAFB] px-4 py-4" />;
 }

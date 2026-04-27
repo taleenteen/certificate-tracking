@@ -24,16 +24,17 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:4003').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:4003').then((res)=>process.exit(res.ok?0:1\
+            )).catch(()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     networks:
-      - app-network
+      - gov_smartcity
 
 networks:
-  app-network:
+  gov_smartcity:
     external: true
-    name: ${DOCKER_EXTERNAL_NETWORK:-app-network}
+    name: ${DOCKER_EXTERNAL_NETWORK:-gov_smartcity}

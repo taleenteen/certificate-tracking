@@ -1,5 +1,11 @@
-import { ApiClient } from "./api-client";
-import { ApiPin, CreatePinDto, UpdatePinDto } from "@/types/api";
+import {
+  ApiPin,
+  CreatePinDto,
+  GeometryType,
+  PinStatus,
+  UpdatePinDto,
+} from "@/types/api";
+import { cloneMock, mockPinCategories, mockPins } from "./mock-map-data";
 
 export interface PinFilterParams {
   minLat?: number;
@@ -12,46 +18,73 @@ export interface PinFilterParams {
 
 export const PinService = {
   getAll: async (params?: PinFilterParams) => {
-    const query = new URLSearchParams();
+    const take = params?.take ?? mockPins.length;
+    const filtered = mockPins.filter((pin) => {
+      if (params?.type && pin.type !== params.type) return false;
 
-    if (params?.minLat !== undefined)
-      query.set("minLat", String(params.minLat));
-    if (params?.maxLat !== undefined)
-      query.set("maxLat", String(params.maxLat));
-    if (params?.minLng !== undefined)
-      query.set("minLng", String(params.minLng));
-    if (params?.maxLng !== undefined)
-      query.set("maxLng", String(params.maxLng));
-    if (params?.type) query.set("type", params.type);
+      const coordinates =
+        pin.geometry?.type === GeometryType.POINT &&
+        Array.isArray(pin.geometry.coordinates)
+          ? (pin.geometry.coordinates as [number, number])
+          : null;
 
-    // Default high limit to avoid pagination issues
-    query.set("take", String(params?.take || 1000));
+      if (!coordinates) return true;
 
-    const queryString = query.toString();
-    const url = queryString ? `/pins?${queryString}` : "/pins";
+      const [lng, lat] = coordinates;
+      if (params?.minLat !== undefined && lat < params.minLat) return false;
+      if (params?.maxLat !== undefined && lat > params.maxLat) return false;
+      if (params?.minLng !== undefined && lng < params.minLng) return false;
+      if (params?.maxLng !== undefined && lng > params.maxLng) return false;
 
-    const response = await ApiClient.get<any>(url);
-    return response.data || response;
+      return true;
+    });
+
+    return cloneMock(filtered.slice(0, take));
   },
 
   getById: async (id: string) => {
-    return ApiClient.get<ApiPin>(`/pins/${id}`);
+    const pin = mockPins.find((item) => item.id === id);
+    if (!pin) throw new Error("Pin not found");
+    return cloneMock(pin);
   },
 
   create: async (data: CreatePinDto) => {
-    return ApiClient.post<ApiPin>("/pins", data);
+    const now = new Date().toISOString();
+    const pin: ApiPin = {
+      id: `pin-${Date.now()}`,
+      ...data,
+      tags: data.tags ?? [],
+      status: data.status ?? PinStatus.NORMAL,
+      isPublic: data.isPublic ?? true,
+      images: data.images ?? [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    mockPins.unshift(pin);
+    return cloneMock(pin);
   },
 
   update: async (id: string, data: UpdatePinDto) => {
-    return ApiClient.patch<ApiPin>(`/pins/${id}`, data);
+    const index = mockPins.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Pin not found");
+
+    const updated = {
+      ...mockPins[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    mockPins[index] = updated;
+    return cloneMock(updated);
   },
 
   delete: async (id: string) => {
-    return ApiClient.delete<void>(`/pins/${id}`);
+    const index = mockPins.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      mockPins.splice(index, 1);
+    }
   },
 
   getCategories: async () => {
-    const response = await ApiClient.get<any>("/pins/categories"); // Use 'any' to allow .data check
-    return response.data || response;
+    return cloneMock(mockPinCategories);
   },
 };

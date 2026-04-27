@@ -1,4 +1,4 @@
-import { ApiClient } from "./api-client";
+import { cloneMock, mockPins, mockZones } from "./mock-map-data";
 
 // Zone types matching backend
 export enum ZoneType {
@@ -42,27 +42,60 @@ export interface ApiZone {
 
 export const ZoneService = {
   getAll: async () => {
-    const response = await ApiClient.get<{ data: ApiZone[] }>("/zones");
-    return response.data || response;
+    return cloneMock(mockZones);
   },
 
   getById: async (id: string) => {
-    return ApiClient.get<ApiZone>(`/zones/${id}`);
+    const zone = mockZones.find((item) => item.id === id);
+    if (!zone) throw new Error("Zone not found");
+    return cloneMock(zone);
   },
 
   create: async (data: CreateZoneDto) => {
-    return ApiClient.post<ApiZone>("/zones", data);
+    const now = new Date().toISOString();
+    const zone: ApiZone = {
+      id: `zone-${Date.now()}`,
+      name: data.name,
+      description: data.description,
+      type: data.type,
+      color: data.color,
+      isActive: data.isActive ?? true,
+      siteId: data.siteId,
+      geometry: data.geometry
+        ? { ...data.geometry, id: `geom-zone-${Date.now()}` }
+        : undefined,
+      _count: { pins: 0 },
+      createdAt: now,
+      updatedAt: now,
+    };
+    mockZones.unshift(zone);
+    return cloneMock(zone);
   },
 
   update: async (id: string, data: Partial<CreateZoneDto>) => {
-    return ApiClient.patch<ApiZone>(`/zones/${id}`, data);
+    const index = mockZones.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Zone not found");
+
+    const updated = {
+      ...mockZones[index],
+      ...data,
+      geometry: data.geometry
+        ? { ...data.geometry, id: mockZones[index].geometry?.id || id }
+        : mockZones[index].geometry,
+      updatedAt: new Date().toISOString(),
+    };
+    mockZones[index] = updated;
+    return cloneMock(updated);
   },
 
   delete: async (id: string) => {
-    return ApiClient.delete<void>(`/zones/${id}`);
+    const index = mockZones.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      mockZones.splice(index, 1);
+    }
   },
 
   getPinsInZone: async (id: string) => {
-    return ApiClient.get<any[]>(`/zones/${id}/pins`);
+    return cloneMock(mockPins.filter((pin) => pin.zoneId === id));
   },
 };

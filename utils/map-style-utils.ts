@@ -1,6 +1,14 @@
-import { MapRef } from "react-map-gl/mapbox";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ReactElement } from "react";
+
+type ImageMap = {
+  hasImage: (id: string) => boolean;
+  addImage: (
+    id: string,
+    image: ImageData,
+    options?: { pixelRatio?: number },
+  ) => void;
+};
 
 // Helper to load an image from a URL (or data URL)
 const loadImage = (src: string): Promise<HTMLImageElement> => {
@@ -18,7 +26,7 @@ const loadImage = (src: string): Promise<HTMLImageElement> => {
  * with an icon inside, and add it to the Mapbox map.
  */
 export async function generatePinImage(
-  map: MapRef,
+  map: ImageMap,
   id: string,
   color: string,
   icon: string | ReactElement,

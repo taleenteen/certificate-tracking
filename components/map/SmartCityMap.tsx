@@ -8,6 +8,7 @@ import Map, {
   MapRef,
   MapMouseEvent,
 } from "react-map-gl/mapbox";
+import type { Map as MapboxMap } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MapPinned, UserRound } from "lucide-react";
 import { PinService } from "@/services/pin.service";
@@ -105,142 +106,33 @@ export default function SmartCityMap({
   // Get refresh counter from store
   const refreshCounter = useMapRefreshCounter();
 
-  // Debounce timer ref
-  const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // AbortController ref for cancelling in-flight requests
-  const abortControllerRef = useRef<AbortController | null>(null);
-
   // Hovered pin ID ref for feature state
   const hoveredPinIdRef = useRef<string | number | null>(null);
 
-  // Buffered viewport cache ref — stores the last-fetched expanded bounds
-  const lastFetchedBoundsRef = useRef<{
-    minLat: number;
-    maxLat: number;
-    minLng: number;
-    maxLng: number;
-  } | null>(null);
-
-  // ── Fetch pins logic (with AbortController + Buffered Viewport) ──
-  const fetchPins = React.useCallback(
-    async (options?: { force?: boolean }) => {
-      try {
-        const map = mapRef.current?.getMap();
-        if (!map) {
-          const data = await PinService.getAll({ take: 1000 });
-          setPins(data);
-          return;
-        }
-
-        const bounds = map.getBounds();
-        if (!bounds) {
-          const data = await PinService.getAll({ take: 1000 });
-          setPins(data);
-          return;
-        }
-
-        const south = bounds.getSouth();
-        const north = bounds.getNorth();
-        const west = bounds.getWest();
-        const east = bounds.getEast();
-
-        // ── Buffered Viewport Check ──
-        // Skip fetch if current viewport is still inside the last-fetched buffer
-        if (!options?.force && lastFetchedBoundsRef.current) {
-          const cached = lastFetchedBoundsRef.current;
-          if (
-            south >= cached.minLat &&
-            north <= cached.maxLat &&
-            west >= cached.minLng &&
-            east <= cached.maxLng
-          ) {
-            return; // Still within buffered area → no fetch needed
-          }
-        }
-
-        // ── Expand bounds by 30% buffer ──
-        const latBuffer = (north - south) * 0.3;
-        const lngBuffer = (east - west) * 0.3;
-        const bufferedBounds = {
-          minLat: south - latBuffer,
-          maxLat: north + latBuffer,
-          minLng: west - lngBuffer,
-          maxLng: east + lngBuffer,
-        };
-
-        // ── Abort previous in-flight request ──
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
-        const data = await PinService.getAll({
-          ...bufferedBounds,
-          take: 1000,
-        });
-
-        // Only update state if this request wasn't aborted
-        if (!controller.signal.aborted) {
-          setPins(data);
-          lastFetchedBoundsRef.current = bufferedBounds;
-        }
-      } catch (error: any) {
-        if (error?.name === "AbortError") return; // Silently ignore aborted requests
-        console.error("Failed to fetch pins:", error);
-      }
-    },
-    [mapRef],
-  );
-
-  // Debounced version for viewport changes
-  const fetchPinsDebounced = React.useCallback(() => {
-    if (fetchDebounceRef.current) {
-      clearTimeout(fetchDebounceRef.current);
-    }
-    fetchDebounceRef.current = setTimeout(() => {
-      fetchPins();
-    }, 500);
-  }, [fetchPins]);
-
-  // Initial fetch + refresh when refreshCounter changes
+  // Load mock map data from the in-memory services. This keeps the map route
+  // deterministic and avoids hidden backend fetches while the app is mocked.
   React.useEffect(() => {
-    fetchPins({ force: true });
-  }, [refreshCounter, fetchPins]);
+    let isMounted = true;
 
-  // Cleanup debounce timer and abort controller on unmount
-  React.useEffect(() => {
+    Promise.all([
+      PinService.getAll(),
+      ZoneService.getAll(),
+      ParcelService.getAll(),
+    ])
+      .then(([nextPins, nextZones, nextParcels]) => {
+        if (!isMounted) return;
+
+        setPins(nextPins || []);
+        setZones(nextZones || []);
+        setParcels(nextParcels || []);
+      })
+      .catch((error) => {
+        console.error("Failed to load mock map data:", error);
+      });
+
     return () => {
-      if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
-      if (abortControllerRef.current) abortControllerRef.current.abort();
+      isMounted = false;
     };
-  }, []);
-
-  // Fetch zones when component mounts or refresh is triggered
-  React.useEffect(() => {
-    const fetchZones = async () => {
-      try {
-        const data = await ZoneService.getAll();
-        setZones(data || []);
-      } catch (error) {
-        console.error("Failed to fetch zones:", error);
-      }
-    };
-    fetchZones();
-  }, [refreshCounter]);
-
-  // Fetch parcels when component mounts or refresh is triggered
-  React.useEffect(() => {
-    const fetchParcels = async () => {
-      try {
-        const data = await ParcelService.getAll();
-        setParcels(data || []);
-      } catch (error) {
-        console.error("Failed to fetch parcels:", error);
-      }
-    };
-    fetchParcels();
   }, [refreshCounter]);
 
   // Filter pins based on activeLayer
@@ -272,11 +164,7 @@ export default function SmartCityMap({
   const pointPins = filteredPins.filter(
     (pin) => !pin.geometry || pin.geometry.type === "POINT",
   );
-  const zonePins = filteredPins.filter(
-    (pin) => pin.geometry?.type === "LINESTRING",
-  );
-
-  const pointsGeoJson = React.useMemo(() => {
+  const pointsGeoJson = React.useMemo<GeoJSON.FeatureCollection>(() => {
     return {
       type: "FeatureCollection",
       features: pointPins.map((pin) => {
@@ -392,37 +280,11 @@ export default function SmartCityMap({
     };
   }, [pointPins]);
 
-  const zonesDataGeoJson = React.useMemo(() => {
-    return {
-      type: "FeatureCollection",
-      features: zonePins.map((pin) => ({
-        type: "Feature",
-        properties: {
-          id: pin.id,
-          title: pin.title,
-          description: pin.description,
-          type: pin.type,
-          status: pin.status,
-          ...pin.attributes,
-        },
-        geometry: {
-          type: "LineString",
-          coordinates: pin.geometry?.coordinates || [],
-        },
-      })),
-    };
-  }, [zonePins]);
-
   const [cursor, setCursor] = useState<string>("auto");
 
   const onMapLoad = useCallback(
-    (e: any) => {
+    (e: { target: MapboxMap }) => {
       const map = e.target;
-
-      // ── Register 'idle' event for fetching pins ──
-      // 'idle' fires after all map rendering (tiles + layers) is complete,
-      // providing natural debouncing without extra timers
-      map.on("idle", fetchPinsDebounced);
 
       // Register mouseleave on pin layers for reliable hover clearing
       const clearHover = () => {
@@ -585,11 +447,10 @@ export default function SmartCityMap({
         );
       });
     },
-    [fetchPinsDebounced],
+    [],
   );
 
   const onMouseEnter = useCallback(() => setCursor("pointer"), []);
-  const onMouseLeave = useCallback(() => setCursor("auto"), []);
 
   const onClick = (event: MapMouseEvent) => {
     const feature = event.features?.[0];
@@ -619,13 +480,29 @@ export default function SmartCityMap({
     if (clusterId) {
       // Clicked on a cluster
       const mapboxSource = mapRef.current?.getMap().getSource("pins");
-      (mapboxSource as any).getClusterExpansionZoom(
+      const clusterSource = mapboxSource as
+        | {
+            getClusterExpansionZoom: (
+              clusterId: number,
+              callback: (error: Error | null, zoom: number) => void,
+            ) => void;
+          }
+        | undefined;
+
+      clusterSource?.getClusterExpansionZoom(
         clusterId,
-        (err: any, zoom: number) => {
+        (err, zoom) => {
           if (err) return;
 
+          const coordinates =
+            "coordinates" in feature.geometry
+              ? (feature.geometry.coordinates as [number, number])
+              : undefined;
+
+          if (!coordinates) return;
+
           mapRef.current?.flyTo({
-            center: (feature.geometry as any).coordinates,
+            center: coordinates,
             zoom,
             duration: 500,
           });
@@ -899,7 +776,7 @@ export default function SmartCityMap({
         <Source
           id="pins"
           type="geojson"
-          data={pointsGeoJson as any}
+          data={pointsGeoJson}
           cluster={true}
           clusterMaxZoom={14}
           clusterRadius={50}

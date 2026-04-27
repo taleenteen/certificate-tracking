@@ -1,4 +1,4 @@
-import { ApiClient } from "./api-client";
+import { cloneMock, mockParcels } from "./mock-map-data";
 
 // Parcel types matching backend
 export enum ParcelType {
@@ -70,33 +70,59 @@ export interface ApiParcel {
 
 export const ParcelService = {
   getAll: async (params?: { zoneId?: string }) => {
-    const queryString = params?.zoneId ? `?zoneId=${params.zoneId}` : "";
-    const response = await ApiClient.get<{ data: ApiParcel[] }>(
-      `/parcels${queryString}`,
-    );
-    return response.data || response;
+    const parcels = params?.zoneId
+      ? mockParcels.filter((parcel) => parcel.zoneId === params.zoneId)
+      : mockParcels;
+    return cloneMock(parcels);
   },
 
   getById: async (id: string) => {
-    return ApiClient.get<ApiParcel>(`/parcels/${id}`);
+    const parcel = mockParcels.find((item) => item.id === id);
+    if (!parcel) throw new Error("Parcel not found");
+    return cloneMock(parcel);
   },
 
   getByZone: async (zoneId: string) => {
-    const response = await ApiClient.get<{ data: ApiParcel[] }>(
-      `/parcels/by-zone/${zoneId}`,
-    );
-    return response.data || response;
+    return cloneMock(mockParcels.filter((parcel) => parcel.zoneId === zoneId));
   },
 
   create: async (data: CreateParcelDto) => {
-    return ApiClient.post<ApiParcel>("/parcels", data);
+    const now = new Date().toISOString();
+    const parcel: ApiParcel = {
+      id: `parcel-${Date.now()}`,
+      type: data.type ?? ParcelType.MIXED_USE,
+      status: data.status ?? ParcelStatus.ACTIVE,
+      createdAt: now,
+      updatedAt: now,
+      ...data,
+      geometry: data.geometry
+        ? { ...data.geometry, id: `geom-parcel-${Date.now()}` }
+        : undefined,
+    };
+    mockParcels.unshift(parcel);
+    return cloneMock(parcel);
   },
 
   update: async (id: string, data: Partial<CreateParcelDto>) => {
-    return ApiClient.patch<ApiParcel>(`/parcels/${id}`, data);
+    const index = mockParcels.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Parcel not found");
+
+    const updated = {
+      ...mockParcels[index],
+      ...data,
+      geometry: data.geometry
+        ? { ...data.geometry, id: mockParcels[index].geometry?.id || id }
+        : mockParcels[index].geometry,
+      updatedAt: new Date().toISOString(),
+    };
+    mockParcels[index] = updated;
+    return cloneMock(updated);
   },
 
   delete: async (id: string) => {
-    return ApiClient.delete<void>(`/parcels/${id}`);
+    const index = mockParcels.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      mockParcels.splice(index, 1);
+    }
   },
 };

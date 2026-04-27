@@ -1,4 +1,4 @@
-import { ApiClient } from "./api-client";
+import { cloneMock, mockFloors } from "./mock-map-data";
 
 // Floor types matching backend
 export enum FloorType {
@@ -34,33 +34,52 @@ export interface ApiFloor {
 
 export const FloorService = {
   getAll: async (params?: { parcelId?: string }) => {
-    const queryString = params?.parcelId ? `?parcelId=${params.parcelId}` : "";
-    const response = await ApiClient.get<{ data: ApiFloor[] }>(
-      `/floors${queryString}`,
-    );
-    return response.data || response;
+    const floors = params?.parcelId
+      ? mockFloors.filter((floor) => floor.parcelId === params.parcelId)
+      : mockFloors;
+    return cloneMock(floors);
   },
 
   getById: async (id: string) => {
-    return ApiClient.get<ApiFloor>(`/floors/${id}`);
+    const floor = mockFloors.find((item) => item.id === id);
+    if (!floor) throw new Error("Floor not found");
+    return cloneMock(floor);
   },
 
   getByParcel: async (parcelId: string) => {
-    const response = await ApiClient.get<{ data: ApiFloor[] }>(
-      `/floors/by-parcel/${parcelId}`,
-    );
-    return response.data || response;
+    return cloneMock(mockFloors.filter((floor) => floor.parcelId === parcelId));
   },
 
   create: async (data: CreateFloorDto) => {
-    return ApiClient.post<ApiFloor>("/floors", data);
+    const now = new Date().toISOString();
+    const floor: ApiFloor = {
+      id: `floor-${Date.now()}`,
+      type: data.type ?? FloorType.GROUND,
+      createdAt: now,
+      updatedAt: now,
+      ...data,
+    };
+    mockFloors.unshift(floor);
+    return cloneMock(floor);
   },
 
   update: async (id: string, data: Partial<CreateFloorDto>) => {
-    return ApiClient.patch<ApiFloor>(`/floors/${id}`, data);
+    const index = mockFloors.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Floor not found");
+
+    const updated = {
+      ...mockFloors[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    mockFloors[index] = updated;
+    return cloneMock(updated);
   },
 
   delete: async (id: string) => {
-    return ApiClient.delete<void>(`/floors/${id}`);
+    const index = mockFloors.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      mockFloors.splice(index, 1);
+    }
   },
 };

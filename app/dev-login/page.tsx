@@ -34,11 +34,11 @@ export default function DevLoginPage() {
             <Button className="w-full justify-start" variant="secondary" onClick={() => handleDevLogin('tang-rat', { mToken: 'mock-public-owner' })}>
               Public Owner
             </Button>
-            <Button className="w-full justify-start" variant="secondary" onClick={() => handleDevLogin('tang-rat', { mToken: 'mock-inspector-1' })}>
-              Inspector (DIW)
+            <Button className="w-full justify-start" variant="secondary" onClick={() => handleDevLogin('tang-rat', { mToken: 'mock-officer-1' })}>
+              Officer (DIW)
             </Button>
-            <Button className="w-full justify-start" variant="secondary" onClick={() => handleDevLogin('tang-rat', { mToken: 'mock-supervisor-diw' })}>
-              Supervisor (DIW)
+            <Button className="w-full justify-start" variant="secondary" onClick={() => handleDevLogin('tang-rat', { mToken: 'mock-officer-diw' })}>
+              Officer Sr. (DIW)
             </Button>
           </div>
           

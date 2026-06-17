@@ -21,8 +21,7 @@ import { useAgencies } from "@/hooks/useAgencies";
 import {
   useDashboard,
   primaryRole,
-  type InspectorDashboardResponse,
-  type SupervisorDashboardResponse,
+  type OfficerDashboardResponse,
   type AdminDashboardResponse,
 } from "@/hooks/useDashboard";
 import { useLicenses } from "@/hooks/useLicenses";
@@ -102,27 +101,13 @@ export function HomeDashboard() {
   const summaryStats = useMemo<
     { label: string; value: number; color: string }[]
   >(() => {
-    if (role === "inspector" && dashboardData) {
-      const d = dashboardData as InspectorDashboardResponse;
+    if (role === "officer" && dashboardData) {
+      const d = dashboardData as OfficerDashboardResponse;
       return [
-        { label: "รอตรวจ", value: d.pendingTasks, color: "bg-amber-400" },
-        { label: "กำลังตรวจ", value: d.inProgress, color: "bg-blue-400" },
-        { label: "ส่งคืน", value: d.returnedToFix, color: "bg-rose-400" },
-        {
-          label: "เดือนนี้",
-          value: d.completedThisMonth,
-          color: "bg-emerald-500",
-        },
-      ];
-    }
-    if (role === "supervisor" && dashboardData) {
-      const d = dashboardData as SupervisorDashboardResponse;
-      const c = d.taskCountsByStatus;
-      return [
-        { label: "รอตรวจ", value: c.ASSIGNED ?? 0, color: "bg-amber-400" },
-        { label: "กำลังตรวจ", value: c.IN_PROGRESS ?? 0, color: "bg-blue-400" },
-        { label: "รอผล", value: c.PENDING_REVIEW ?? 0, color: "bg-violet-500" },
-        { label: "เสร็จสิ้น", value: c.APPROVED ?? 0, color: "bg-emerald-500" },
+        { label: "งานของฉัน (รอ)", value: d.myPendingTasks, color: "bg-amber-400" },
+        { label: "กำลังตรวจ", value: d.myInProgress, color: "bg-blue-400" },
+        { label: "ส่งคืน", value: d.myReturnedToFix, color: "bg-rose-400" },
+        { label: "เสร็จเดือนนี้", value: d.myCompletedThisMonth, color: "bg-emerald-500" },
       ];
     }
     if (role === "admin" && dashboardData) {
@@ -316,7 +301,7 @@ export function HomeDashboard() {
             <CardContent className="space-y-5 p-4">
               <div>
                 <h3 className="text-lg font-semibold text-[#145b57]">
-                  {role === "inspector" || role === "supervisor"
+                  {role === "officer"
                     ? "สถานะงานตรวจสอบ"
                     : "สถานะใบอนุญาตที่ตรวจ"}
                 </h3>
@@ -324,7 +309,7 @@ export function HomeDashboard() {
                   <span className="text-3xl font-semibold text-slate-900">
                     {totalSummaryStats}
                   </span>{" "}
-                  {role === "inspector" || role === "supervisor"
+                  {role === "officer"
                     ? "งาน"
                     : "ใบอนุญาต"}
                 </p>

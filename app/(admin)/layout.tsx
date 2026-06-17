@@ -6,7 +6,7 @@ import { ReactNode } from 'react';
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <RoleGate 
-      roles={['admin', 'supervisor']} 
+      roles={['admin', 'officer']}
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-fuji-light font-kanit text-slate-600">
           <div className="text-center p-8 bg-white border border-gray-200 rounded-square shadow-smooth-medium max-w-sm">

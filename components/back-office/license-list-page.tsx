@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 
 import {
   LicenseCertificateCard,
@@ -18,12 +18,14 @@ type LicenseListPageViewProps = {
   items: LicenseCardItem[];
   defaultTab: string;
   tabs: LicenseTab[];
+  tabActions?: Record<string, ReactNode>;
 };
 
 export function LicenseListPageView({
   items,
   defaultTab,
   tabs,
+  tabActions,
 }: LicenseListPageViewProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -49,9 +51,12 @@ export function LicenseListPageView({
           </TabsList>
 
           <TabsContent value={activeTab} className="space-y-4">
-            <p className="text-sm font-semibold text-slate-500">
-              พบ {filteredItems.length} รายการ
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-500">
+                พบ {filteredItems.length} รายการ
+              </p>
+              {tabActions?.[activeTab]}
+            </div>
 
             {filteredItems.length > 0 ? (
               <div className="space-y-4">

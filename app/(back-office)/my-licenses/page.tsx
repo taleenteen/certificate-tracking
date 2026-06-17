@@ -5,7 +5,8 @@ import {
   MY_LICENSE_TABS,
 } from "@/components/back-office/license-list-page";
 import type { LicenseCardItem } from "@/components/back-office/license-certificate-card";
-import { useLicenses, LicenseResponse } from "@/hooks/useLicenses";
+import { useLicenses, useDevSeedLicense, LicenseResponse } from "@/hooks/useLicenses";
+import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
@@ -16,6 +17,7 @@ dayjs.locale("th");
 
 export default function MyLicensesPage() {
   const { data: licenses, isLoading, isError } = useLicenses();
+  const { mutate: seedLicense, isPending: isSeeding } = useDevSeedLicense();
 
   const formattedLicenses = useMemo<LicenseCardItem[]>(() => {
     if (!licenses) return [];
@@ -72,6 +74,19 @@ export default function MyLicensesPage() {
       items={formattedLicenses}
       defaultTab="all"
       tabs={MY_LICENSE_TABS}
+      tabActions={{
+        expiringSoon: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => seedLicense()}
+            disabled={isSeeding}
+            className="text-xs border-dashed border-slate-300 text-slate-500 hover:text-slate-700"
+          >
+            {isSeeding ? "กำลังสร้าง..." : "[DEV] สร้างใบอนุญาตทดสอบ"}
+          </Button>
+        ),
+      }}
     />
   );
 }

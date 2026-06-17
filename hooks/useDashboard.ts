@@ -2,25 +2,20 @@ import { useQuery } from '@tanstack/react-query';
 import { http } from '@/lib/http';
 import { useAuthStore } from '@/stores/auth';
 
-// Inspector dashboard — task counts for the current inspector
-export interface InspectorDashboardResponse {
-  pendingTasks: number;
-  inProgress: number;
-  returnedToFix: number;
-  completedThisMonth: number;
+// Officer dashboard — personal task counts + zone-level aggregates
+export interface OfficerDashboardResponse {
+  myPendingTasks: number;
+  myInProgress: number;
+  myReturnedToFix: number;
+  myCompletedThisMonth: number;
   recentTasks: {
     id: string;
     status: string;
     business: { id: string; nameTh: string };
     updatedAt: string;
   }[];
-}
-
-// Supervisor dashboard — zone/task aggregates
-export interface SupervisorDashboardResponse {
-  zoneSummary: { zoneId: string; status: string; _count: number }[];
-  pendingReviewCount: number;
   taskCountsByStatus: Record<string, number>;
+  pendingReviewCount: number;
   complianceRate: number;
 }
 
@@ -32,14 +27,13 @@ export interface AdminDashboardResponse {
   lastSync: unknown[];
 }
 
-function primaryRole(roles: string[]): 'admin' | 'supervisor' | 'inspector' | 'public' {
+export function primaryRole(roles: string[]): 'admin' | 'officer' | 'public' {
   if (roles.includes('super_admin') || roles.includes('admin')) return 'admin';
-  if (roles.includes('supervisor')) return 'supervisor';
-  if (roles.includes('inspector')) return 'inspector';
+  if (roles.includes('officer')) return 'officer';
   return 'public';
 }
 
-type DashboardData = InspectorDashboardResponse | SupervisorDashboardResponse | AdminDashboardResponse | null;
+type DashboardData = OfficerDashboardResponse | AdminDashboardResponse | null;
 
 export function useDashboard() {
   const roles = useAuthStore((s) => s.user?.roles ?? []);
@@ -49,12 +43,11 @@ export function useDashboard() {
     queryKey: ['dashboard', role],
     queryFn: (): Promise<DashboardData> => {
       if (role === 'admin') return http.get<AdminDashboardResponse>('dashboard/admin');
-      if (role === 'supervisor') return http.get<SupervisorDashboardResponse>('dashboard/supervisor');
-      if (role === 'inspector') return http.get<InspectorDashboardResponse>('dashboard/inspector');
+      if (role === 'officer') return http.get<OfficerDashboardResponse>('dashboard/officer');
       return Promise.resolve(null);
     },
     enabled: roles.length > 0,
   });
 }
 
-export { primaryRole };
+export { primaryRole as default };

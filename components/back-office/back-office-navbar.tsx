@@ -170,11 +170,9 @@ export function BackOfficeNavbar() {
     ? "ผู้ดูแลระบบสูงสุด"
     : user?.roles?.includes("admin")
       ? "ผู้ดูแลระบบ"
-      : user?.roles?.includes("supervisor")
-        ? "ผู้ตรวจสอบอาวุโส"
-        : user?.roles?.includes("inspector")
-          ? "เจ้าหน้าที่ตรวจสอบ"
-          : "ผู้ประกอบการ / ประชาชน";
+      : user?.roles?.includes("officer")
+        ? "เจ้าหน้าที่"
+        : "ผู้ประกอบการ / ประชาชน";
 
   return (
     <header className="sticky top-0 z-30 border-white/10 bg-white text-black backdrop-blur">

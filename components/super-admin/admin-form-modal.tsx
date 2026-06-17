@@ -127,9 +127,9 @@ export function AdminFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[520px] rounded-square-hard border border-border-default shadow-smooth-medium bg-background p-6">
+      <DialogContent className="max-w-[520px] rounded-square-hard border border-gray-200 shadow-smooth-medium bg-background p-6">
         <DialogHeader className="mb-4">
-          <DialogTitle className="text-[18px] font-bold text-text-primary text-left">
+          <DialogTitle className="text-[18px] font-bold text-main text-left">
             {admin ? 'แก้ไขบัญชี Admin' : 'เพิ่มบัญชี Admin ใหม่'}
           </DialogTitle>
         </DialogHeader>
@@ -137,7 +137,7 @@ export function AdminFormModal({
         <form onSubmit={handleSubmit} className="space-y-[16px] text-left">
           {/* ชื่อ-นามสกุล */}
           <div className="space-y-1">
-            <Label htmlFor="fullName" className="text-[13px] font-semibold text-text-primary">
+            <Label htmlFor="fullName" className="text-[13px] font-semibold text-main">
               ชื่อ-นามสกุล <span className="text-semantic-critical">*</span>
             </Label>
             <Input
@@ -145,7 +145,7 @@ export function AdminFormModal({
               placeholder="เช่น สมชาย วงศ์ทอง"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className={errors.fullName ? 'border-border-critical' : 'border-border-neutral'}
+              className={errors.fullName ? 'border-critical' : 'border-gray-200'}
             />
             {errors.fullName && (
               <p className="text-[11px] text-semantic-critical font-medium">{errors.fullName}</p>
@@ -155,7 +155,7 @@ export function AdminFormModal({
           <div className="grid grid-cols-2 gap-3">
             {/* อีเมล */}
             <div className="space-y-1">
-              <Label htmlFor="email" className="text-[13px] font-semibold text-text-primary">
+              <Label htmlFor="email" className="text-[13px] font-semibold text-main">
                 อีเมล <span className="text-semantic-critical">*</span>
               </Label>
               <Input
@@ -164,7 +164,7 @@ export function AdminFormModal({
                 placeholder="เช่น somchai@diw.go.th"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={errors.email ? 'border-border-critical' : 'border-border-neutral'}
+                className={errors.email ? 'border-critical' : 'border-gray-200'}
               />
               {errors.email && (
                 <p className="text-[11px] text-semantic-critical font-medium">{errors.email}</p>
@@ -173,7 +173,7 @@ export function AdminFormModal({
 
             {/* เบอร์โทร */}
             <div className="space-y-1">
-              <Label htmlFor="phone" className="text-[13px] font-semibold text-text-primary">
+              <Label htmlFor="phone" className="text-[13px] font-semibold text-main">
                 เบอร์โทรศัพท์ <span className="text-semantic-critical">*</span>
               </Label>
               <Input
@@ -182,7 +182,7 @@ export function AdminFormModal({
                 placeholder="เช่น 0812345678"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className={errors.phone ? 'border-border-critical' : 'border-border-neutral'}
+                className={errors.phone ? 'border-critical' : 'border-gray-200'}
               />
               {errors.phone && (
                 <p className="text-[11px] text-semantic-critical font-medium">{errors.phone}</p>
@@ -192,7 +192,7 @@ export function AdminFormModal({
 
           {/* czp_user_id */}
           <div className="space-y-1">
-            <Label htmlFor="czpUserId" className="text-[13px] font-semibold text-text-primary">
+            <Label htmlFor="czpUserId" className="text-[13px] font-semibold text-main">
               czp_user_id <span className="text-semantic-critical">*</span>
             </Label>
             <Input
@@ -200,9 +200,9 @@ export function AdminFormModal({
               placeholder="เช่น CZP-00123"
               value={czpUserId}
               onChange={(e) => setCzpUserId(e.target.value)}
-              className={errors.czpUserId ? 'border-border-critical' : 'border-border-neutral'}
+              className={errors.czpUserId ? 'border-critical' : 'border-gray-200'}
             />
-            <p className="text-[11px] text-text-placeholder font-medium">
+            <p className="text-[11px] text-placeholder font-medium">
               * ยืนยัน czp_user_id จากระบบ mToken ของหน่วยงาน
             </p>
             {errors.czpUserId && (
@@ -212,21 +212,21 @@ export function AdminFormModal({
 
           {/* หน่วยงานในสังกัด (multi-select) */}
           <div className="space-y-2">
-            <Label className="text-[13px] font-semibold text-text-primary">
+            <Label className="text-[13px] font-semibold text-main">
               เลือกหน่วยงานในสังกัด (Multi-select) <span className="text-semantic-critical">*</span>
             </Label>
-            <div className="grid grid-cols-2 gap-2 p-3 border border-border-neutral rounded-md bg-fuji-light/20">
+            <div className="grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-md bg-fuji-light/20">
               {AGENCIES.map((agency) => (
                 <div key={agency.id} className="flex items-center gap-2">
                   <Checkbox
                     id={`agency-${agency.id}`}
                     checked={selectedAgencies.includes(agency.id)}
                     onCheckedChange={() => handleAgencyToggle(agency.id)}
-                    className="border-border-neutral data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary"
+                    className="border-gray-200 data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary"
                   />
                   <Label
                     htmlFor={`agency-${agency.id}`}
-                    className="text-[12px] font-medium text-text-primary cursor-pointer select-none"
+                    className="text-[12px] font-medium text-main cursor-pointer select-none"
                   >
                     {agency.label}
                   </Label>
@@ -240,14 +240,14 @@ export function AdminFormModal({
 
           {/* สถานะบัญชี */}
           <div className="space-y-1">
-            <Label htmlFor="status" className="text-[13px] font-semibold text-text-primary">
+            <Label htmlFor="status" className="text-[13px] font-semibold text-main">
               สถานะบัญชี
             </Label>
             <Select
               value={status}
               onValueChange={(val: 'Active' | 'Inactive') => setStatus(val)}
             >
-              <SelectTrigger id="status" className="w-full border-border-neutral">
+              <SelectTrigger id="status" className="w-full border-gray-200">
                 <SelectValue placeholder="เลือกสถานะ" />
               </SelectTrigger>
               <SelectContent>
@@ -258,12 +258,12 @@ export function AdminFormModal({
           </div>
 
           {/* Footer Actions */}
-          <DialogFooter className="pt-2 gap-2 flex items-center justify-end sm:justify-end border-t border-border-default">
+          <DialogFooter className="pt-2 gap-2 flex items-center justify-end sm:justify-end border-t border-gray-200">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="rounded-square border-border-neutral text-text-primary hover:bg-fuji-light h-9 text-[13px] px-4 font-semibold"
+              className="rounded-square border-gray-200 text-main hover:bg-fuji-light h-9 text-[13px] px-4 font-semibold"
             >
               ยกเลิก
             </Button>

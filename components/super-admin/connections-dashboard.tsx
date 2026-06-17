@@ -64,13 +64,13 @@ export function ConnectionsDashboard() {
   return (
     <div className="space-y-[16px]">
       {/* Tabs navigation row */}
-      <div className="flex border-b border-border-default gap-8 mb-4">
+      <div className="flex border-b border-gray-200 gap-8 mb-4">
         <button
           onClick={() => setActiveTab('connections')}
           className={`pb-3 text-[14px] font-medium transition-all relative cursor-pointer ${
             activeTab === 'connections'
               ? 'text-brand-primary font-bold'
-              : 'text-text-placeholder hover:text-text-primary'
+              : 'text-placeholder hover:text-main'
           }`}
         >
           การเชื่อมต่อระบบ
@@ -83,7 +83,7 @@ export function ConnectionsDashboard() {
           className={`pb-3 text-[14px] font-medium transition-all relative cursor-pointer ${
             activeTab === 'status'
               ? 'text-brand-primary font-bold'
-              : 'text-text-placeholder hover:text-text-primary'
+              : 'text-placeholder hover:text-main'
           }`}
         >
           สถานะระบบ
@@ -98,18 +98,18 @@ export function ConnectionsDashboard() {
           {/* Top Row: External API Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Card 1: Tang Rat */}
-            <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 flex gap-3 items-start">
+            <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex gap-3 items-start">
               <div className="text-semantic-warning mt-1 bg-yellow-50 p-2 rounded-lg border border-yellow-100">
                 <AlertCircle className="size-5" />
               </div>
               <div className="flex-1 text-left space-y-1">
-                <h3 className="text-[13px] font-bold text-text-primary">
+                <h3 className="text-[13px] font-bold text-main">
                   ทางรัฐ (mToken/Consumer-Key)
                 </h3>
                 <p className="text-[11px] font-bold text-[#ad8306] leading-none">
                   สถานะ: Consumer-Key ใกล้หมดอายุ
                 </p>
-                <p className="text-[11px] text-text-placeholder font-medium leading-none">
+                <p className="text-[11px] text-placeholder font-medium leading-none">
                   วันหมดอายุ Key: <span className="text-orange-600 font-bold">30/06/2568</span>
                 </p>
                 <div className="pt-1">
@@ -121,52 +121,52 @@ export function ConnectionsDashboard() {
             </Card>
 
             {/* Card 2: DIW */}
-            <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 flex gap-3 items-start">
+            <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex gap-3 items-start">
               <div className="text-semantic-success mt-1 bg-green-50 p-2 rounded-lg border border-green-100">
                 <CheckCircle2 className="size-5" />
               </div>
               <div className="flex-1 text-left space-y-1">
-                <h3 className="text-[13px] font-bold text-text-primary">
+                <h3 className="text-[13px] font-bold text-main">
                   DIW
                 </h3>
-                <p className="text-[11px] text-text-placeholder font-bold leading-none">
+                <p className="text-[11px] text-placeholder font-bold leading-none">
                   สถานะ: Manual Batch Import (i-Industry)
                 </p>
-                <p className="text-[11px] text-text-placeholder font-medium leading-none">
-                  วันนำเข้าล่าสุด: <span className="text-text-primary font-bold">14/08/2568 23:00</span>
+                <p className="text-[11px] text-placeholder font-medium leading-none">
+                  วันนำเข้าล่าสุด: <span className="text-main font-bold">14/08/2568 23:00</span>
                 </p>
               </div>
             </Card>
 
             {/* Card 3: GDX / ACFS */}
-            <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 flex gap-3 items-start">
+            <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex gap-3 items-start">
               <div className="text-red-500 mt-1 bg-red-50 p-2 rounded-lg border border-red-100">
                 <AlertTriangle className="size-5" />
               </div>
               <div className="flex-1 text-left space-y-1">
-                <h3 className="text-[13px] font-bold text-text-primary">
+                <h3 className="text-[13px] font-bold text-main">
                   GDX / มกอช. (ACFS)
                 </h3>
                 <p className="text-[11px] font-bold text-red-500 leading-none">
                   สถานะการเชื่อมต่อ: Timeout
                 </p>
-                <p className="text-[11px] text-text-placeholder font-medium leading-none">
-                  เวลาเรียกล่าสุด: <span className="text-text-primary font-bold">15/08/2568 09:01</span>
+                <p className="text-[11px] text-placeholder font-medium leading-none">
+                  เวลาเรียกล่าสุด: <span className="text-main font-bold">15/08/2568 09:01</span>
                 </p>
               </div>
             </Card>
           </div>
 
           {/* Middle Section: API Call Log */}
-          <Card className="rounded-[12px] border border-border-default shadow-smooth-low overflow-hidden bg-white">
-            <div className="px-4 py-3 flex items-center justify-between border-b border-border-default bg-fuji-light/10">
-              <h2 className="text-[13px] font-bold text-text-primary text-left">
+          <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low overflow-hidden bg-white">
+            <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200 bg-fuji-light/10">
+              <h2 className="text-[13px] font-bold text-main text-left">
                 API Call Log
               </h2>
               <button
                 onClick={handleRefreshLogs}
                 disabled={isRefreshing}
-                className="text-[12px] text-text-placeholder hover:text-text-primary font-medium flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="text-[12px] text-placeholder hover:text-main font-medium flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 รีเฟรช
@@ -175,29 +175,29 @@ export function ConnectionsDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                  <tr className="bg-fuji-light/30 border-b border-border-default">
-                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[120px]">เวลา</th>
-                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[140px]">หน่วยงาน</th>
-                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[240px]">Endpoint</th>
-                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[140px]">Response Code</th>
-                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[140px]">เวลาตอบสนอง</th>
-                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[120px]">สถานะ</th>
+                  <tr className="bg-fuji-light/30 border-b border-gray-200">
+                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">เวลา</th>
+                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[140px]">หน่วยงาน</th>
+                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[240px]">Endpoint</th>
+                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[140px]">Response Code</th>
+                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[140px]">เวลาตอบสนอง</th>
+                    <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">สถานะ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {logs.map((row, i) => (
                     <tr key={i} className="border-b border-fuji-light/50 hover:bg-fuji-light/5 transition-colors">
-                      <td className="px-[16px] py-[10px] text-[12px] text-text-placeholder font-medium font-mono">{row.time}</td>
+                      <td className="px-[16px] py-[10px] text-[12px] text-placeholder font-medium font-mono">{row.time}</td>
                       <td className="px-[16px] py-[10px]">
                         <span className="bg-sky-bright text-sky-dark border border-sky-light rounded-[4px] px-2 py-0.5 text-[11px] font-bold font-mono">
                           {row.agency}
                         </span>
                       </td>
-                      <td className="px-[16px] py-[10px] text-[12px] text-text-primary font-mono">{row.endpoint}</td>
+                      <td className="px-[16px] py-[10px] text-[12px] text-main font-mono">{row.endpoint}</td>
                       <td className={`px-[16px] py-[10px] text-[12px] font-bold font-mono ${row.code === 200 ? 'text-[#007a55]' : 'text-[#c71b1b]'}`}>
                         {row.code}
                       </td>
-                      <td className="px-[16px] py-[10px] text-[12px] text-text-primary font-mono font-medium">{row.latency}</td>
+                      <td className="px-[16px] py-[10px] text-[12px] text-main font-mono font-medium">{row.latency}</td>
                       <td className="px-[16px] py-[10px]">
                         <span
                           className={`inline-block px-[8px] py-[2px] rounded-[4px] text-[10px] font-bold leading-tight ${
@@ -219,8 +219,8 @@ export function ConnectionsDashboard() {
           {/* Bottom Grid: 3 Columns */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {/* Column 1: Server/DB Status */}
-            <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 flex flex-col justify-between text-left">
-              <h2 className="text-[12px] font-semibold text-text-placeholder mb-3">
+            <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex flex-col justify-between text-left">
+              <h2 className="text-[12px] font-semibold text-placeholder mb-3">
                 สถานะ Server/Database
               </h2>
               <div className="space-y-2.5 flex-1">
@@ -251,8 +251,8 @@ export function ConnectionsDashboard() {
             </Card>
 
             {/* Column 2: Graph Requests */}
-            <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 flex flex-col text-left">
-              <h2 className="text-[12px] font-semibold text-text-placeholder mb-3">
+            <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex flex-col text-left">
+              <h2 className="text-[12px] font-semibold text-placeholder mb-3">
                 กราฟ Request/Error ต่อวัน
               </h2>
               <div className="flex-1 w-full min-h-[120px]">
@@ -278,8 +278,8 @@ export function ConnectionsDashboard() {
             </Card>
 
             {/* Column 3: Storage usage */}
-            <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 flex flex-col justify-between text-left">
-              <h2 className="text-[12px] font-semibold text-text-placeholder mb-3">
+            <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex flex-col justify-between text-left">
+              <h2 className="text-[12px] font-semibold text-placeholder mb-3">
                 การใช้พื้นที่จัดเก็บข้อมูล
               </h2>
               <div className="space-y-3">
@@ -309,10 +309,10 @@ export function ConnectionsDashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Uptime Status List */}
-          <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 text-left">
+          <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 text-left">
             <div className="flex items-center gap-2 mb-3">
               <Activity className="size-4 text-brand-primary" />
-              <h2 className="text-[13px] font-bold text-text-primary">
+              <h2 className="text-[13px] font-bold text-main">
                 สถานะระบบโดยรวม
               </h2>
             </div>
@@ -326,7 +326,7 @@ export function ConnectionsDashboard() {
                 <div key={idx} className="py-3.5 flex items-center justify-between text-[12px]">
                   <span className="font-medium text-[#364153]">{s.name}</span>
                   <div className="flex items-center gap-4">
-                    <span className="text-text-placeholder font-semibold font-mono">{s.uptime}</span>
+                    <span className="text-placeholder font-semibold font-mono">{s.uptime}</span>
                     <span className={`${s.bg} ${s.text} px-2 py-0.5 rounded-[4px] text-[10px] font-bold`}>
                       {s.status}
                     </span>
@@ -337,10 +337,10 @@ export function ConnectionsDashboard() {
           </Card>
 
           {/* Maintenance Timetable */}
-          <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 text-left">
+          <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 text-left">
             <div className="flex items-center gap-2 mb-3">
               <Calendar className="size-4 text-brand-primary" />
-              <h2 className="text-[13px] font-bold text-text-primary">
+              <h2 className="text-[13px] font-bold text-main">
                 Maintenance Schedule
               </h2>
             </div>
@@ -351,13 +351,13 @@ export function ConnectionsDashboard() {
                 { date: '01/07/2568 22:00', title: 'System backup & archive', dur: '4 ชม.' },
               ].map((m, idx) => (
                 <div key={idx} className="flex gap-3 items-start text-[12px] pb-3 border-b border-fuji-light last:border-0 last:pb-0">
-                  <div className="text-text-placeholder flex items-center gap-1 font-mono font-medium mt-0.5 shrink-0 w-[120px]">
+                  <div className="text-placeholder flex items-center gap-1 font-mono font-medium mt-0.5 shrink-0 w-[120px]">
                     <Clock className="size-3.5 shrink-0" />
                     <span>{m.date}</span>
                   </div>
                   <div className="space-y-0.5 flex-1">
-                    <h4 className="font-bold text-text-primary leading-tight">{m.title}</h4>
-                    <p className="text-[11px] text-text-placeholder font-medium">ระยะเวลา: {m.dur}</p>
+                    <h4 className="font-bold text-main leading-tight">{m.title}</h4>
+                    <p className="text-[11px] text-placeholder font-medium">ระยะเวลา: {m.dur}</p>
                   </div>
                 </div>
               ))}

@@ -148,11 +148,11 @@ export function AuditLogsTable() {
   };
 
   const getTransitionStyle = (field: string, val: string, isNew: boolean) => {
-    if (val === '——') return 'text-text-disable';
+    if (val === '——') return 'text-disabled';
     if (field === 'status') {
       if (val === 'Active' || val === 'อนุมัติ') return 'text-semantic-success font-semibold';
       if (val === 'Inactive' || val === 'ปฏิเสธ') return 'text-text-critical font-semibold';
-      return isNew ? 'text-text-primary' : 'text-text-critical';
+      return isNew ? 'text-main' : 'text-text-critical';
     }
     return isNew ? 'text-semantic-success font-medium' : 'text-text-critical font-medium';
   };
@@ -160,11 +160,11 @@ export function AuditLogsTable() {
   return (
     <div className="space-y-[16px]">
       {/* Filters & Export Row */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-[12px] border border-border-default shadow-smooth-low">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-[12px] border border-gray-200 shadow-smooth-low">
         <div className="flex flex-wrap gap-2.5 items-center flex-1">
           {/* Agency Dropdown */}
           <Select value={agencyFilter} onValueChange={setAgencyFilter}>
-            <SelectTrigger className="w-full sm:w-[150px] border-border-neutral text-[13px] h-9">
+            <SelectTrigger className="w-full sm:w-[150px] border-gray-200 text-[13px] h-9">
               <SelectValue placeholder="หน่วยงานทั้งหมด" />
             </SelectTrigger>
             <SelectContent>
@@ -182,12 +182,12 @@ export function AuditLogsTable() {
             placeholder="ตัวกรอง: ผู้ใช้งาน"
             value={userFilter}
             onChange={(e) => setUserFilter(e.target.value)}
-            className="w-full sm:w-[160px] border-border-neutral text-[13px] h-9"
+            className="w-full sm:w-[160px] border-gray-200 text-[13px] h-9"
           />
 
           {/* Action Dropdown */}
           <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="w-full sm:w-[160px] border-border-neutral text-[13px] h-9">
+            <SelectTrigger className="w-full sm:w-[160px] border-gray-200 text-[13px] h-9">
               <SelectValue placeholder="การกระทำทั้งหมด" />
             </SelectTrigger>
             <SelectContent>
@@ -202,7 +202,7 @@ export function AuditLogsTable() {
 
           {/* Changed Field Dropdown */}
           <Select value={fieldFilter} onValueChange={setFieldFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] border-border-neutral text-[13px] h-9">
+            <SelectTrigger className="w-full sm:w-[180px] border-gray-200 text-[13px] h-9">
               <SelectValue placeholder="รายการที่เปลี่ยนทั้งหมด" />
             </SelectTrigger>
             <SelectContent>
@@ -220,7 +220,7 @@ export function AuditLogsTable() {
         <Button
           variant="outline"
           onClick={handleExportCSV}
-          className="border-border-neutral text-text-primary hover:bg-fuji-light rounded-square px-4 py-1.5 text-[13px] font-semibold flex items-center justify-center gap-1.5 shadow-smooth-low h-9 cursor-pointer"
+          className="border-gray-200 text-main hover:bg-fuji-light rounded-square px-4 py-1.5 text-[13px] font-semibold flex items-center justify-center gap-1.5 shadow-smooth-low h-9 cursor-pointer"
         >
           <Download className="size-4" />
           Export CSV
@@ -228,30 +228,30 @@ export function AuditLogsTable() {
       </div>
 
       {/* Main Table Card */}
-      <Card className="rounded-[12px] border border-border-default shadow-smooth-low overflow-hidden bg-white">
+      <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low overflow-hidden bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-fuji-light/30 border-b border-border-default">
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[150px]">
+              <tr className="bg-fuji-light/30 border-b border-gray-200">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[150px]">
                   วันที่-เวลา
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[110px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[110px]">
                   หน่วยงาน
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[220px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">
                   ผู้ใช้งาน
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[180px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[180px]">
                   บทบาท / เป้าหมาย
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[140px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[140px]">
                   การกระทำ
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[150px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[150px]">
                   รายการที่เปลี่ยน
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[250px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[250px]">
                   ค่าเดิม —&gt; ค่าใหม่
                 </th>
               </tr>
@@ -259,7 +259,7 @@ export function AuditLogsTable() {
             <tbody>
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-[16px] py-[32px] text-center text-text-placeholder text-[13px]">
+                  <td colSpan={7} className="px-[16px] py-[32px] text-center text-placeholder text-[13px]">
                     ไม่พบข้อมูล Audit Log
                   </td>
                 </tr>
@@ -267,7 +267,7 @@ export function AuditLogsTable() {
                 filteredLogs.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light hover:bg-fuji-light/10 transition-colors">
                     {/* วันที่-เวลา */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-medium font-mono">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium font-mono">
                       {row.dateTime}
                     </td>
 
@@ -279,22 +279,22 @@ export function AuditLogsTable() {
                     </td>
 
                     {/* ผู้ใช้งาน */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-primary font-semibold">
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-semibold">
                       {row.user}
                     </td>
 
                     {/* บทบาท / เป้าหมาย */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-mono font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-mono font-medium">
                       {row.target}
                     </td>
 
                     {/* การกระทำ */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-primary font-bold">
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-bold">
                       {row.action}
                     </td>
 
                     {/* รายการที่เปลี่ยน */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-mono">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-mono">
                       {row.field}
                     </td>
 
@@ -304,7 +304,7 @@ export function AuditLogsTable() {
                         <span className={getTransitionStyle(row.field, row.oldVal, false)}>
                           {row.oldVal}
                         </span>
-                        <ArrowRight className="size-3 text-text-placeholder" />
+                        <ArrowRight className="size-3 text-placeholder" />
                         <span className={getTransitionStyle(row.field, row.newVal, true)}>
                           {row.newVal}
                         </span>

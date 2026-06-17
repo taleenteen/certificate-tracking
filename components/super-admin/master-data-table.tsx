@@ -121,7 +121,7 @@ export function MasterDataTable() {
   return (
     <div className="space-y-[16px]">
       {/* Tabs navigation row */}
-      <div className="flex border-b border-border-default gap-8 mb-2">
+      <div className="flex border-b border-gray-200 gap-8 mb-2">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -129,7 +129,7 @@ export function MasterDataTable() {
             className={`pb-3 text-[14px] font-medium transition-all relative cursor-pointer ${
               activeTab === tab.id
                 ? 'text-brand-primary font-bold'
-                : 'text-text-placeholder hover:text-text-primary'
+                : 'text-placeholder hover:text-main'
             }`}
           >
             {tab.label}
@@ -152,25 +152,25 @@ export function MasterDataTable() {
       </div>
 
       {/* Main Table Card */}
-      <Card className="rounded-[12px] border border-border-default shadow-smooth-low overflow-hidden bg-white">
+      <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low overflow-hidden bg-white">
         <div className="overflow-x-auto">
           {activeTab === 'agencies' && (
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="bg-fuji-light/30 border-b border-border-default">
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[220px]">
+                <tr className="bg-fuji-light/30 border-b border-gray-200">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">
                     agency_code
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[320px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[320px]">
                     ชื่อหน่วยงาน
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[320px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[320px]">
                     ประเภทใบอนุญาตที่รับผิดชอบ
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder text-center w-[160px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[160px]">
                     จำนวน Admin ที่ดูแล
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder text-center w-[100px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[100px]">
                     จัดการ
                   </th>
                 </tr>
@@ -181,7 +181,7 @@ export function MasterDataTable() {
                     <td className="px-[16px] py-[12px] text-[13px] font-bold text-brand-primary font-mono">
                       {row.agencyCode}
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-primary font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-medium">
                       {row.name}
                     </td>
                     <td className="px-[16px] py-[12px]">
@@ -189,14 +189,14 @@ export function MasterDataTable() {
                         {row.licenseTypes.map((t) => (
                           <span
                             key={t}
-                            className="bg-fuji-light/50 text-[#4a5565] border border-border-neutral/20 rounded-[4px] px-2 py-0.5 text-[11px] font-semibold"
+                            className="bg-fuji-light/50 text-[#4a5565] border border-gray-200/20 rounded-[4px] px-2 py-0.5 text-[11px] font-semibold"
                           >
                             {t}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-[16px] py-[12px] text-center text-[13px] text-text-primary font-medium">
+                    <td className="px-[16px] py-[12px] text-center text-[13px] text-main font-medium">
                       {row.adminCount}
                     </td>
                     <td className="px-[16px] py-[12px] text-center">
@@ -216,23 +216,23 @@ export function MasterDataTable() {
           {activeTab === 'licenseTypes' && (
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="bg-fuji-light/30 border-b border-border-default">
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[260px]">
+                <tr className="bg-fuji-light/30 border-b border-gray-200">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[260px]">
                     ชื่อประเภทใบอนุญาต
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[160px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[160px]">
                     รหัส
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[160px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[160px]">
                     อายุใบอนุญาต
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[200px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[200px]">
                     หน่วยงานที่รับผิดชอบ
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[260px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[260px]">
                     กฎหมายอ้างอิง
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder text-center w-[100px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[100px]">
                     จัดการ
                   </th>
                 </tr>
@@ -240,13 +240,13 @@ export function MasterDataTable() {
               <tbody>
                 {licenseTypes.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light hover:bg-fuji-light/10 transition-colors">
-                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-text-primary">
+                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-main">
                       {row.name}
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-medium font-mono">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium font-mono">
                       {row.code}
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-primary font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-medium">
                       {row.duration}
                     </td>
                     <td className="px-[16px] py-[12px]">
@@ -254,7 +254,7 @@ export function MasterDataTable() {
                         {row.agency}
                       </span>
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium">
                       {row.law}
                     </td>
                     <td className="px-[16px] py-[12px] text-center">
@@ -274,20 +274,20 @@ export function MasterDataTable() {
           {activeTab === 'locations' && (
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="bg-fuji-light/30 border-b border-border-default">
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[160px]">
+                <tr className="bg-fuji-light/30 border-b border-gray-200">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[160px]">
                     รหัส
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[320px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[320px]">
                     จังหวัด
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[320px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[320px]">
                     เขตพื้นที่
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[160px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[160px]">
                     ภาค
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder text-center w-[100px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[100px]">
                     จัดการ
                   </th>
                 </tr>
@@ -295,17 +295,17 @@ export function MasterDataTable() {
               <tbody>
                 {locations.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light hover:bg-fuji-light/10 transition-colors">
-                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-text-primary font-mono">
+                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-main font-mono">
                       {row.code}
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-primary font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-medium">
                       {row.province}
                     </td>
                     <td className="px-[16px] py-[12px] text-[13px] text-sky-dark font-mono font-medium">
                       {row.zone}
                     </td>
                     <td className="px-[16px] py-[12px]">
-                      <span className="bg-fuji-light text-text-placeholder px-2 py-0.5 rounded-[4px] text-[11px] font-bold leading-tight">
+                      <span className="bg-fuji-light text-placeholder px-2 py-0.5 rounded-[4px] text-[11px] font-bold leading-tight">
                         {row.region}
                       </span>
                     </td>
@@ -326,20 +326,20 @@ export function MasterDataTable() {
           {activeTab === 'statuses' && (
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="bg-fuji-light/30 border-b border-border-default">
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[180px]">
+                <tr className="bg-fuji-light/30 border-b border-gray-200">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[180px]">
                     รหัสสถานะ
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[180px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[180px]">
                     ชื่อสถานะ
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[360px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[360px]">
                     คำอธิบาย
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[220px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">
                     Next Action
                   </th>
-                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder text-center w-[100px]">
+                  <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[100px]">
                     จัดการ
                   </th>
                 </tr>
@@ -347,7 +347,7 @@ export function MasterDataTable() {
               <tbody>
                 {statuses.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light hover:bg-fuji-light/10 transition-colors">
-                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-text-primary font-mono">
+                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-main font-mono">
                       {row.statusCode}
                     </td>
                     <td className="px-[16px] py-[12px]">
@@ -361,16 +361,16 @@ export function MasterDataTable() {
                             ? 'bg-[#fff1f0] text-[#cf1322] border border-[#ffa39e]'
                             : row.color === 'purple'
                             ? 'bg-[#f5e6ff] text-[#722ed1] border border-[#d3adf7]'
-                            : 'bg-fuji-light text-text-placeholder'
+                            : 'bg-fuji-light text-placeholder'
                         }`}
                       >
                         {row.statusName}
                       </span>
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium">
                       {row.description}
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-primary font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-medium">
                       {row.nextAction}
                     </td>
                     <td className="px-[16px] py-[12px] text-center">
@@ -391,39 +391,39 @@ export function MasterDataTable() {
 
       {/* Conditionally render bottom demo card for License Types when active tab is Agencies (Screenshot 1 parity) */}
       {activeTab === 'agencies' && (
-        <Card className="rounded-[12px] border border-border-default shadow-smooth-low overflow-hidden bg-white p-[16px] space-y-3">
-          <h3 className="text-[13px] font-bold text-text-primary text-left">
+        <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low overflow-hidden bg-white p-[16px] space-y-3">
+          <h3 className="text-[13px] font-bold text-main text-left">
             ตัวอย่างแท็บ "ประเภทใบอนุญาต"
           </h3>
-          <div className="overflow-x-auto border border-border-default rounded-md">
+          <div className="overflow-x-auto border border-gray-200 rounded-md">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
-                <tr className="bg-fuji-light/20 border-b border-border-default">
-                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-text-placeholder w-[240px]">ชื่อประเภทใบอนุญาต</th>
-                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-text-placeholder w-[120px]">รหัส</th>
-                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-text-placeholder w-[120px]">อายุใบอนุญาต</th>
-                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-text-placeholder w-[180px]">หน่วยงานที่รับผิดชอบ</th>
-                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-text-placeholder w-[240px]">กฎหมายอ้างอิง</th>
+                <tr className="bg-fuji-light/20 border-b border-gray-200">
+                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-placeholder w-[240px]">ชื่อประเภทใบอนุญาต</th>
+                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-placeholder w-[120px]">รหัส</th>
+                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-placeholder w-[120px]">อายุใบอนุญาต</th>
+                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-placeholder w-[180px]">หน่วยงานที่รับผิดชอบ</th>
+                  <th className="px-[12px] py-[8px] text-[12px] font-bold text-placeholder w-[240px]">กฎหมายอ้างอิง</th>
                 </tr>
               </thead>
               <tbody>
                 {licenseTypes.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light/50">
-                    <td className="px-[12px] py-[10px] text-[12px] font-bold text-text-primary">{row.name}</td>
-                    <td className="px-[12px] py-[10px] text-[12px] text-text-placeholder font-mono">{row.code}</td>
-                    <td className="px-[12px] py-[10px] text-[12px] text-text-primary">{row.duration}</td>
+                    <td className="px-[12px] py-[10px] text-[12px] font-bold text-main">{row.name}</td>
+                    <td className="px-[12px] py-[10px] text-[12px] text-placeholder font-mono">{row.code}</td>
+                    <td className="px-[12px] py-[10px] text-[12px] text-main">{row.duration}</td>
                     <td className="px-[12px] py-[10px]">
                       <span className="bg-sky-bright text-sky-dark border border-sky-light rounded-[4px] px-2 py-0.5 text-[11px] font-bold font-mono">
                         {row.agency}
                       </span>
                     </td>
-                    <td className="px-[12px] py-[10px] text-[12px] text-text-placeholder">{row.law}</td>
+                    <td className="px-[12px] py-[10px] text-[12px] text-placeholder">{row.law}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="text-[11px] text-text-placeholder text-left">
+          <p className="text-[11px] text-placeholder text-left">
             - ร.ง.4: ไม่มีวันหมดอายุ (Suspended จากค่าธรรมเนียมรายปี) | วัตถุอันตราย: 3 ปี | ACFS คือ 3 ประเภท: ตามเกณฑ์ มกอช.
           </p>
         </Card>

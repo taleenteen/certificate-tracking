@@ -14,8 +14,8 @@ const chartData = [
 
 export function TrendChart() {
   return (
-    <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-4 h-full flex flex-col min-h-[241px]">
-      <h2 className="text-[12px] font-semibold text-text-placeholder mb-4">
+    <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 h-full flex flex-col min-h-[241px]">
+      <h2 className="text-[12px] font-semibold text-placeholder mb-4">
         กราฟแนวโน้มการออกใบอนุญาตรวมทั้งระบบ
       </h2>
       <div className="flex-1 w-full min-h-[180px]">

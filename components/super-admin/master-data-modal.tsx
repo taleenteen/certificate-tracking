@@ -226,9 +226,9 @@ export function MasterDataModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[500px] rounded-square-hard border border-border-default shadow-smooth-medium bg-background p-6">
+      <DialogContent className="max-w-[500px] rounded-square-hard border border-gray-200 shadow-smooth-medium bg-background p-6">
         <DialogHeader className="mb-4">
-          <DialogTitle className="text-[18px] font-bold text-text-primary text-left">
+          <DialogTitle className="text-[18px] font-bold text-main text-left">
             {getTitle()}
           </DialogTitle>
         </DialogHeader>
@@ -238,7 +238,7 @@ export function MasterDataModal({
             <>
               {/* Agency Form */}
               <div className="space-y-1">
-                <Label htmlFor="agencyCode" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="agencyCode" className="text-[13px] font-semibold text-main">
                   รหัสหน่วยงาน (agency_code) <span className="text-semantic-critical">*</span>
                 </Label>
                 <Input
@@ -246,7 +246,7 @@ export function MasterDataModal({
                   placeholder="เช่น DIW"
                   value={agencyCode}
                   onChange={(e) => setAgencyCode(e.target.value)}
-                  className={errors.agencyCode ? 'border-border-critical' : 'border-border-neutral'}
+                  className={errors.agencyCode ? 'border-critical' : 'border-gray-200'}
                 />
                 {errors.agencyCode && (
                   <p className="text-[11px] text-semantic-critical font-medium">{errors.agencyCode}</p>
@@ -254,7 +254,7 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="agencyName" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="agencyName" className="text-[13px] font-semibold text-main">
                   ชื่อหน่วยงาน <span className="text-semantic-critical">*</span>
                 </Label>
                 <Input
@@ -262,7 +262,7 @@ export function MasterDataModal({
                   placeholder="เช่น กรมโรงงานอุตสาหกรรม"
                   value={agencyName}
                   onChange={(e) => setAgencyName(e.target.value)}
-                  className={errors.agencyName ? 'border-border-critical' : 'border-border-neutral'}
+                  className={errors.agencyName ? 'border-critical' : 'border-gray-200'}
                 />
                 {errors.agencyName && (
                   <p className="text-[11px] text-semantic-critical font-medium">{errors.agencyName}</p>
@@ -270,21 +270,21 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-[13px] font-semibold text-text-primary">
+                <Label className="text-[13px] font-semibold text-main">
                   ประเภทใบอนุญาตที่รับผิดชอบ (เลือกได้หลายรายการ)
                 </Label>
-                <div className="grid grid-cols-2 gap-2 p-3 border border-border-neutral rounded-md bg-fuji-light/20 max-h-[140px] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-md bg-fuji-light/20 max-h-[140px] overflow-y-auto">
                   {existingLicenseTypes.map((lic) => (
                     <div key={lic} className="flex items-center gap-2">
                       <Checkbox
                         id={`lic-${lic}`}
                         checked={agencyLicenses.includes(lic)}
                         onCheckedChange={() => handleLicenseToggle(lic)}
-                        className="border-border-neutral data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary"
+                        className="border-gray-200 data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary"
                       />
                       <Label
                         htmlFor={`lic-${lic}`}
-                        className="text-[12px] font-medium text-text-primary cursor-pointer select-none"
+                        className="text-[12px] font-medium text-main cursor-pointer select-none"
                       >
                         {lic}
                       </Label>
@@ -294,7 +294,7 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="agencyAdmins" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="agencyAdmins" className="text-[13px] font-semibold text-main">
                   จำนวน Admin ที่ดูแล
                 </Label>
                 <Input
@@ -303,7 +303,7 @@ export function MasterDataModal({
                   placeholder="0"
                   value={agencyAdmins}
                   onChange={(e) => setAgencyAdmins(Number(e.target.value))}
-                  className="border-border-neutral"
+                  className="border-gray-200"
                   min={0}
                 />
               </div>
@@ -314,7 +314,7 @@ export function MasterDataModal({
             <>
               {/* License Type Form */}
               <div className="space-y-1">
-                <Label htmlFor="licenseName" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="licenseName" className="text-[13px] font-semibold text-main">
                   ชื่อประเภทใบอนุญาต <span className="text-semantic-critical">*</span>
                 </Label>
                 <Input
@@ -322,7 +322,7 @@ export function MasterDataModal({
                   placeholder="เช่น ร.ง.4"
                   value={licenseName}
                   onChange={(e) => setLicenseName(e.target.value)}
-                  className={errors.licenseName ? 'border-border-critical' : 'border-border-neutral'}
+                  className={errors.licenseName ? 'border-critical' : 'border-gray-200'}
                 />
                 {errors.licenseName && (
                   <p className="text-[11px] text-semantic-critical font-medium">{errors.licenseName}</p>
@@ -331,7 +331,7 @@ export function MasterDataModal({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="licenseCode" className="text-[13px] font-semibold text-text-primary">
+                  <Label htmlFor="licenseCode" className="text-[13px] font-semibold text-main">
                     รหัส (code) <span className="text-semantic-critical">*</span>
                   </Label>
                   <Input
@@ -339,7 +339,7 @@ export function MasterDataModal({
                     placeholder="เช่น RNG4"
                     value={licenseCode}
                     onChange={(e) => setLicenseCode(e.target.value)}
-                    className={errors.licenseCode ? 'border-border-critical' : 'border-border-neutral'}
+                    className={errors.licenseCode ? 'border-critical' : 'border-gray-200'}
                   />
                   {errors.licenseCode && (
                     <p className="text-[11px] text-semantic-critical font-medium">{errors.licenseCode}</p>
@@ -347,7 +347,7 @@ export function MasterDataModal({
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="licenseDuration" className="text-[13px] font-semibold text-text-primary">
+                  <Label htmlFor="licenseDuration" className="text-[13px] font-semibold text-main">
                     อายุใบอนุญาต <span className="text-semantic-critical">*</span>
                   </Label>
                   <Input
@@ -355,7 +355,7 @@ export function MasterDataModal({
                     placeholder="เช่น 5 ปี"
                     value={licenseDuration}
                     onChange={(e) => setLicenseDuration(e.target.value)}
-                    className={errors.licenseDuration ? 'border-border-critical' : 'border-border-neutral'}
+                    className={errors.licenseDuration ? 'border-critical' : 'border-gray-200'}
                   />
                   {errors.licenseDuration && (
                     <p className="text-[11px] text-semantic-critical font-medium">{errors.licenseDuration}</p>
@@ -364,11 +364,11 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="licenseAgency" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="licenseAgency" className="text-[13px] font-semibold text-main">
                   หน่วยงานที่รับผิดชอบ
                 </Label>
                 <Select value={licenseAgency} onValueChange={setLicenseAgency}>
-                  <SelectTrigger id="licenseAgency" className="w-full border-border-neutral">
+                  <SelectTrigger id="licenseAgency" className="w-full border-gray-200">
                     <SelectValue placeholder="เลือกหน่วยงาน" />
                   </SelectTrigger>
                   <SelectContent>
@@ -382,7 +382,7 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="licenseLaw" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="licenseLaw" className="text-[13px] font-semibold text-main">
                   กฎหมายอ้างอิง
                 </Label>
                 <Input
@@ -390,7 +390,7 @@ export function MasterDataModal({
                   placeholder="เช่น พรบ.โรงงาน 2535"
                   value={licenseLaw}
                   onChange={(e) => setLicenseLaw(e.target.value)}
-                  className="border-border-neutral"
+                  className="border-gray-200"
                 />
               </div>
             </>
@@ -401,7 +401,7 @@ export function MasterDataModal({
               {/* Location Form */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="locCode" className="text-[13px] font-semibold text-text-primary">
+                  <Label htmlFor="locCode" className="text-[13px] font-semibold text-main">
                     รหัส (code) <span className="text-semantic-critical">*</span>
                   </Label>
                   <Input
@@ -409,7 +409,7 @@ export function MasterDataModal({
                     placeholder="เช่น 10"
                     value={locCode}
                     onChange={(e) => setLocCode(e.target.value)}
-                    className={errors.locCode ? 'border-border-critical' : 'border-border-neutral'}
+                    className={errors.locCode ? 'border-critical' : 'border-gray-200'}
                   />
                   {errors.locCode && (
                     <p className="text-[11px] text-semantic-critical font-medium">{errors.locCode}</p>
@@ -417,7 +417,7 @@ export function MasterDataModal({
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="locProvince" className="text-[13px] font-semibold text-text-primary">
+                  <Label htmlFor="locProvince" className="text-[13px] font-semibold text-main">
                     จังหวัด <span className="text-semantic-critical">*</span>
                   </Label>
                   <Input
@@ -425,7 +425,7 @@ export function MasterDataModal({
                     placeholder="เช่น กรุงเทพมหานคร"
                     value={locProvince}
                     onChange={(e) => setLocProvince(e.target.value)}
-                    className={errors.locProvince ? 'border-border-critical' : 'border-border-neutral'}
+                    className={errors.locProvince ? 'border-critical' : 'border-gray-200'}
                   />
                   {errors.locProvince && (
                     <p className="text-[11px] text-semantic-critical font-medium">{errors.locProvince}</p>
@@ -434,7 +434,7 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="locZone" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="locZone" className="text-[13px] font-semibold text-main">
                   เขตพื้นที่ <span className="text-semantic-critical">*</span>
                 </Label>
                 <Input
@@ -442,7 +442,7 @@ export function MasterDataModal({
                   placeholder="เช่น กทม. หรือ ปริมณฑล"
                   value={locZone}
                   onChange={(e) => setLocZone(e.target.value)}
-                  className={errors.locZone ? 'border-border-critical' : 'border-border-neutral'}
+                  className={errors.locZone ? 'border-critical' : 'border-gray-200'}
                 />
                 {errors.locZone && (
                   <p className="text-[11px] text-semantic-critical font-medium">{errors.locZone}</p>
@@ -450,11 +450,11 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="locRegion" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="locRegion" className="text-[13px] font-semibold text-main">
                   ภาค
                 </Label>
                 <Select value={locRegion} onValueChange={setLocRegion}>
-                  <SelectTrigger id="locRegion" className="w-full border-border-neutral">
+                  <SelectTrigger id="locRegion" className="w-full border-gray-200">
                     <SelectValue placeholder="เลือกภาค" />
                   </SelectTrigger>
                   <SelectContent>
@@ -475,7 +475,7 @@ export function MasterDataModal({
               {/* Status Form */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="statusCode" className="text-[13px] font-semibold text-text-primary">
+                  <Label htmlFor="statusCode" className="text-[13px] font-semibold text-main">
                     รหัสสถานะ <span className="text-semantic-critical">*</span>
                   </Label>
                   <Input
@@ -483,7 +483,7 @@ export function MasterDataModal({
                     placeholder="เช่น PENDING"
                     value={statusCode}
                     onChange={(e) => setStatusCode(e.target.value)}
-                    className={errors.statusCode ? 'border-border-critical' : 'border-border-neutral'}
+                    className={errors.statusCode ? 'border-critical' : 'border-gray-200'}
                   />
                   {errors.statusCode && (
                     <p className="text-[11px] text-semantic-critical font-medium">{errors.statusCode}</p>
@@ -491,7 +491,7 @@ export function MasterDataModal({
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="statusName" className="text-[13px] font-semibold text-text-primary">
+                  <Label htmlFor="statusName" className="text-[13px] font-semibold text-main">
                     ชื่อสถานะ <span className="text-semantic-critical">*</span>
                   </Label>
                   <Input
@@ -499,7 +499,7 @@ export function MasterDataModal({
                     placeholder="เช่น รออนุมัติ"
                     value={statusName}
                     onChange={(e) => setStatusName(e.target.value)}
-                    className={errors.statusName ? 'border-border-critical' : 'border-border-neutral'}
+                    className={errors.statusName ? 'border-critical' : 'border-gray-200'}
                   />
                   {errors.statusName && (
                     <p className="text-[11px] text-semantic-critical font-medium">{errors.statusName}</p>
@@ -508,14 +508,14 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="statusColor" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="statusColor" className="text-[13px] font-semibold text-main">
                   สีป้ายสถานะ (Badge Color)
                 </Label>
                 <Select
                   value={statusColor}
                   onValueChange={(val: any) => setStatusColor(val)}
                 >
-                  <SelectTrigger id="statusColor" className="w-full border-border-neutral">
+                  <SelectTrigger id="statusColor" className="w-full border-gray-200">
                     <SelectValue placeholder="เลือกสีสถานะ" />
                   </SelectTrigger>
                   <SelectContent>
@@ -529,7 +529,7 @@ export function MasterDataModal({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="statusDesc" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="statusDesc" className="text-[13px] font-semibold text-main">
                   คำอธิบายสถานะ
                 </Label>
                 <Input
@@ -537,12 +537,12 @@ export function MasterDataModal({
                   placeholder="เช่น ใบอนุญาตยื่นแล้ว รอเจ้าหน้าที่ตรวจสอบ"
                   value={statusDesc}
                   onChange={(e) => setStatusDesc(e.target.value)}
-                  className="border-border-neutral"
+                  className="border-gray-200"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="statusNext" className="text-[13px] font-semibold text-text-primary">
+                <Label htmlFor="statusNext" className="text-[13px] font-semibold text-main">
                   Next Action
                 </Label>
                 <Input
@@ -550,19 +550,19 @@ export function MasterDataModal({
                   placeholder="เช่น ตรวจสอบเอกสาร"
                   value={statusNext}
                   onChange={(e) => setStatusNext(e.target.value)}
-                  className="border-border-neutral"
+                  className="border-gray-200"
                 />
               </div>
             </>
           )}
 
           {/* Dialog Action Buttons */}
-          <DialogFooter className="pt-2 gap-2 flex items-center justify-end sm:justify-end border-t border-border-default">
+          <DialogFooter className="pt-2 gap-2 flex items-center justify-end sm:justify-end border-t border-gray-200">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="rounded-square border-border-neutral text-text-primary hover:bg-fuji-light h-9 text-[13px] px-4 font-semibold"
+              className="rounded-square border-gray-200 text-main hover:bg-fuji-light h-9 text-[13px] px-4 font-semibold"
             >
               ยกเลิก
             </Button>

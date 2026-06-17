@@ -28,7 +28,7 @@ const SidebarItem = ({
     className={`flex items-center gap-3 px-4 py-3 rounded-square transition-all ${
       active 
         ? 'bg-brand-primary text-white shadow-smooth-low' 
-        : 'text-text-secondary hover:bg-fuji-light hover:text-text-primary'
+        : 'text-sub hover:bg-fuji-light hover:text-main'
     }`}
   >
     <Icon className="size-5" />
@@ -40,8 +40,8 @@ export function SuperAdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[260px] bg-background border-r border-border-default flex flex-col shrink-0 h-screen sticky top-0">
-      <div className="h-[80px] flex items-center px-6 border-b border-border-default">
+    <aside className="w-[260px] bg-background border-r border-gray-200 flex flex-col shrink-0 h-screen sticky top-0">
+      <div className="h-[80px] flex items-center px-6 border-b border-gray-200">
          <Image 
            src="/assets/brand/e-license-logo.png" 
            alt="E-License Verification Platform" 
@@ -54,7 +54,7 @@ export function SuperAdminSidebar() {
 
       <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
         <div>
-          <p className="px-4 mb-3 text-[12px] font-bold text-text-placeholder uppercase tracking-[1.5px]">เมนูระบบ</p>
+          <p className="px-4 mb-3 text-[12px] font-bold text-placeholder uppercase tracking-[1.5px]">เมนูระบบ</p>
           <div className="space-y-1">
             <SidebarItem 
               icon={LayoutDashboard} 
@@ -90,8 +90,8 @@ export function SuperAdminSidebar() {
         </div>
       </nav>
 
-      <div className="p-4 border-t border-border-default">
-        <button className="flex items-center justify-center gap-2 text-text-placeholder py-3 w-full rounded-square hover:bg-fuji-light hover:text-text-primary transition-colors">
+      <div className="p-4 border-t border-gray-200">
+        <button className="flex items-center justify-center gap-2 text-placeholder py-3 w-full rounded-square hover:bg-fuji-light hover:text-main transition-colors">
           <ChevronLeft className="size-4" />
           <span className="text-[13px] font-medium">ซ่อนแถบเมนู</span>
         </button>

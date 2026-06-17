@@ -135,22 +135,22 @@ export function AdminAccountsTable() {
   return (
     <div className="space-y-[16px]">
       {/* Top Filter and Actions Row */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-[12px] border border-border-default shadow-smooth-low">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-[12px] border border-gray-200 shadow-smooth-low">
         <div className="flex flex-wrap gap-2.5 items-center flex-1">
           {/* Search Input */}
           <div className="relative w-full sm:w-[240px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-placeholder" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-placeholder" />
             <Input
               placeholder="ค้นหาบัญชี Admin"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full border-border-neutral text-[13px] h-9"
+              className="pl-9 w-full border-gray-200 text-[13px] h-9"
             />
           </div>
 
           {/* Agency Filter */}
           <Select value={agencyFilter} onValueChange={setAgencyFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] border-border-neutral text-[13px] h-9">
+            <SelectTrigger className="w-full sm:w-[180px] border-gray-200 text-[13px] h-9">
               <SelectValue placeholder="หน่วยงานทั้งหมด" />
             </SelectTrigger>
             <SelectContent>
@@ -165,7 +165,7 @@ export function AdminAccountsTable() {
 
           {/* Status Filter */}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] border-border-neutral text-[13px] h-9">
+            <SelectTrigger className="w-full sm:w-[180px] border-gray-200 text-[13px] h-9">
               <SelectValue placeholder="สถานะทั้งหมด" />
             </SelectTrigger>
             <SelectContent>
@@ -187,30 +187,30 @@ export function AdminAccountsTable() {
       </div>
 
       {/* Main Table Card */}
-      <Card className="rounded-[12px] border border-border-default shadow-smooth-low overflow-hidden bg-white">
+      <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low overflow-hidden bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-fuji-light/30 border-b border-border-default">
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[220px]">
+              <tr className="bg-fuji-light/30 border-b border-gray-200">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">
                   ชื่อ-นามสกุล
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[240px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[240px]">
                   อีเมล
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[150px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[150px]">
                   czp_user_id
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[200px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[200px]">
                   หน่วยงานในสังกัด
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[120px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">
                   สถานะ
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder w-[130px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[130px]">
                   วันที่สร้าง
                 </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-text-placeholder text-center w-[100px]">
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[100px]">
                   จัดการ
                 </th>
               </tr>
@@ -218,7 +218,7 @@ export function AdminAccountsTable() {
             <tbody>
               {filteredAdmins.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-[16px] py-[32px] text-center text-text-placeholder text-[13px]">
+                  <td colSpan={7} className="px-[16px] py-[32px] text-center text-placeholder text-[13px]">
                     ไม่พบข้อมูลบัญชี Admin
                   </td>
                 </tr>
@@ -226,17 +226,17 @@ export function AdminAccountsTable() {
                 filteredAdmins.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light hover:bg-fuji-light/10 transition-colors">
                     {/* ชื่อ-นามสกุล */}
-                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-text-primary">
+                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-main">
                       {row.fullName}
                     </td>
 
                     {/* อีเมล */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-medium font-mono">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium font-mono">
                       {row.email}
                     </td>
 
                     {/* czp_user_id */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-primary font-bold font-mono">
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-bold font-mono">
                       {row.czpUserId}
                     </td>
 
@@ -260,7 +260,7 @@ export function AdminAccountsTable() {
                         className={`inline-block px-[8px] py-[2px] rounded-[4px] text-[11px] font-bold leading-tight ${
                           row.status === 'Active'
                             ? 'bg-[#d0fae5] text-[#007a55]'
-                            : 'bg-fuji-light text-text-placeholder'
+                            : 'bg-fuji-light text-placeholder'
                         }`}
                       >
                         {row.status}
@@ -268,7 +268,7 @@ export function AdminAccountsTable() {
                     </td>
 
                     {/* วันที่สร้าง */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-text-placeholder font-medium">
+                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium">
                       {row.createdAt}
                     </td>
 

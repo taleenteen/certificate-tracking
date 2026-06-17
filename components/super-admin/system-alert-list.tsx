@@ -9,8 +9,8 @@ export function SystemAlertList() {
   ];
 
   return (
-    <Card className="rounded-[12px] border border-border-default shadow-smooth-low bg-white p-[16.8px] flex flex-col h-full min-h-[241px]">
-      <h2 className="text-[12px] font-semibold text-text-placeholder mb-3">
+    <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-[16.8px] flex flex-col h-full min-h-[241px]">
+      <h2 className="text-[12px] font-semibold text-placeholder mb-3">
         รายการแจ้งเตือนระดับระบบ
       </h2>
       

@@ -45,6 +45,7 @@
     "dayjs": "^1.11.19",
     "embla-carousel-react": "^8.6.0",
     "hls.js": "^1.6.15",
+    "html5-qrcode": "^2.3.8",
     "jose": "^6.2.1",
     "lucide-react": "^0.555.0",
     "mapbox-gl": "^3.16.0",

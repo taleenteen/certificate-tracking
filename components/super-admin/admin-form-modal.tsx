@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Eye, EyeOff } from 'lucide-react';
 import type { SystemUserSummary } from '@/hooks/useUsers';
 import { useAgencies } from '@/hooks/useAgencies';
 
@@ -27,6 +28,7 @@ export interface AdminFormData {
   phone: string;
   username?: string;
   agencyId: string;
+  password?: string;
 }
 
 interface AdminFormModalProps {
@@ -42,6 +44,8 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [username, setUsername] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
   const [agencyId, setAgencyId] = React.useState('');
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const { data: agencies = [] } = useAgencies();
@@ -61,6 +65,8 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
         setUsername('');
         setAgencyId(agencies[0]?.id ?? '');
       }
+      setPassword('');
+      setShowPassword(false);
       setErrors({});
     }
   }, [open, user]);
@@ -70,6 +76,7 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
     if (!fullName.trim()) next.fullName = 'กรุณากรอกชื่อ-นามสกุล';
     if (!email.trim()) next.email = 'กรุณากรอกอีเมล';
     else if (!/\S+@\S+\.\S+/.test(email)) next.email = 'รูปแบบอีเมลไม่ถูกต้อง';
+    if (username.trim() && password && password.length < 8) next.password = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -77,7 +84,14 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onSave({ fullName, email, phone, username: username || undefined, agencyId });
+    onSave({
+      fullName,
+      email,
+      phone,
+      username: username || undefined,
+      agencyId,
+      password: username.trim() && password.trim() ? password : undefined,
+    });
   };
 
   return (
@@ -160,6 +174,33 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
               </Select>
             </div>
           </div>
+
+          {username.trim() && (
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-[13px] font-semibold text-main">
+                รหัสผ่าน <span className="text-placeholder font-normal">(ถ้าไม่กรอก ระบบจะสร้างให้อัตโนมัติ)</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="อย่างน้อย 8 ตัวอักษร"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`pr-10 ${errors.password ? 'border-critical' : 'border-gray-200'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder hover:text-main transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-[11px] text-semantic-critical font-medium">{errors.password}</p>}
+            </div>
+          )}
 
           <DialogFooter className="pt-2 gap-2 flex items-center justify-end sm:justify-end border-t border-gray-200">
             <Button

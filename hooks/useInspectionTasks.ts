@@ -29,12 +29,12 @@ export interface InspectionTaskSummary {
   license: {
     id: string;
     licenseNumber: string;
-    licenseType: { id: string; code: string; nameTh: string; agency: string };
+    licenseType: { id: string; code: string; nameTh: string; agencyId: string };
   } | null;
   assignee: {
     id: string;
     fullName: string;
-    agency: string | null;
+    agencyId: string | null;
     roles: string[];
   } | null;
   zone: { id: string; nameTh: string } | null;

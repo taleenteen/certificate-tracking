@@ -2,19 +2,24 @@
 
 import { useLogin } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, ShieldCheck, User } from 'lucide-react';
 
 const isDev = process.env.NEXT_PUBLIC_ENV === 'development';
 
 export function LoginForm({ onToggle }: { onToggle: () => void }) {
   const login = useLogin();
   const [formData, setFormData] = useState({ username: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
-  const [adminData, setAdminData] = useState({ username: '', password: '', totpCode: isDev ? '000000' : '' });
+  const [adminData, setAdminData] = useState({
+    username: '',
+    password: '',
+    totpCode: isDev ? '000000' : '',
+  });
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
 
   const handlePasswordLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,199 +40,248 @@ export function LoginForm({ onToggle }: { onToggle: () => void }) {
     }
   };
 
-  const fillDev = (username: string, password: string) => {
-    setFormData({ username, password });
-  };
+  if (adminMode) {
+    return (
+      <div className="p-6 space-y-5">
+        {/* Admin mode header */}
+        <div className="flex items-center gap-3 pb-1">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100">
+            <ShieldCheck className="h-5 w-5 text-purple-600" />
+          </span>
+          <div>
+            <p className="text-sm font-bold text-slate-900">เข้าสู่ระบบเจ้าหน้าที่</p>
+            <p className="text-xs text-slate-500">Admin / Super Admin ต้องใช้รหัส OTP</p>
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100" />
+
+        <form onSubmit={handleAdminLogin} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-username" className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+              ชื่อผู้ใช้งาน
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="admin-username"
+                placeholder="เช่น superadmin"
+                required
+                autoComplete="username"
+                value={adminData.username}
+                onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
+                className="pl-9 h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-password" className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+              รหัสผ่าน
+            </Label>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="admin-password"
+                type={showAdminPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                value={adminData.password}
+                onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
+                className="pl-9 pr-10 h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowAdminPassword(!showAdminPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="totp" className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center gap-2">
+              รหัส OTP (6 หลัก)
+              {isDev && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 normal-case tracking-normal">dev: 000000</span>}
+            </Label>
+            <Input
+              id="totp"
+              inputMode="numeric"
+              maxLength={6}
+              pattern="\d{6}"
+              placeholder="000000"
+              required
+              value={adminData.totpCode}
+              onChange={(e) =>
+                setAdminData({ ...adminData, totpCode: e.target.value.replace(/\D/g, '').slice(0, 6) })
+              }
+              className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white font-mono tracking-[0.5em] text-center text-lg"
+            />
+          </div>
+
+          {login.isError && (
+            <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 text-center">
+              {login.error instanceof Error ? login.error.message : 'ข้อมูลไม่ถูกต้อง'}
+            </p>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm"
+            disabled={login.isPending}
+          >
+            {login.isPending ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบเจ้าหน้าที่'}
+          </Button>
+        </form>
+
+        {/* Dev fill */}
+        {isDev && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 space-y-1">
+            <p className="font-semibold text-slate-600">บัญชีทดสอบ</p>
+            <button
+              type="button"
+              onClick={() => setAdminData({ username: 'superadmin', password: 'ChangeMe-2026!', totpCode: '000000' })}
+              className="block w-full text-left rounded-lg px-2 py-1 hover:bg-slate-100 font-mono text-[11px]"
+            >
+              superadmin / ChangeMe-2026! / 000000
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setAdminMode(false)}
+          className="w-full text-center text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
+        >
+          ← กลับหน้าเข้าสู่ระบบปกติ
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card className="rounded-square-hard shadow-smooth-medium border-none overflow-hidden">
-        <div className={`h-2 w-full ${adminMode ? 'bg-purple-600' : 'bg-brand-primary'}`} />
-        <CardHeader>
-          <CardTitle className={`text-2xl font-bold ${adminMode ? 'text-purple-700' : 'text-brand-primary'}`}>
-            {adminMode ? 'เข้าสู่ระบบ (เจ้าหน้าที่)' : 'เข้าสู่ระบบ'}
-          </CardTitle>
-          <CardDescription>
-            {adminMode
-              ? 'บัญชี Admin / Super Admin ต้องใช้รหัส OTP'
-              : 'เข้าสู่ระบบด้วยบัญชี Digital ID หรือชื่อผู้ใช้และรหัสผ่าน'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          {!adminMode ? (
-            <>
-              {/* Tang Rat / Digital ID */}
-              <Button
-                className="w-full bg-[#2B3990] hover:bg-[#1E2770] text-white rounded-circle h-12 flex items-center justify-center gap-3"
-                onClick={handleTangRatLogin}
-                disabled={login.isPending}
-              >
-                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[#2B3990] font-bold text-[10px]">ทาง</div>
-                เข้าสู่ระบบด้วย ทางรัฐ (Digital ID)
-              </Button>
+    <div className="p-6 space-y-5">
+      {/* Tang Rat / Digital ID */}
+      <Button
+        type="button"
+        className="w-full h-12 rounded-xl bg-[#1a2a80] hover:bg-[#151f66] text-white font-semibold text-sm flex items-center justify-center gap-2.5 shadow-sm"
+        onClick={handleTangRatLogin}
+        disabled={login.isPending}
+      >
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[#1a2a80] font-extrabold text-[10px]">
+          ทาง
+        </span>
+        เข้าสู่ระบบด้วย ทางรัฐ (Digital ID)
+      </Button>
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">หรือ เข้าสู่ระบบด้วยบัญชี</span>
-                </div>
-              </div>
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <span className="flex-1 h-px bg-slate-200" />
+        <span className="text-xs text-slate-400 font-medium">หรือเข้าสู่ระบบด้วยบัญชี</span>
+        <span className="flex-1 h-px bg-slate-200" />
+      </div>
 
-              {/* Public password login */}
-              <form onSubmit={handlePasswordLogin} className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="username">ชื่อผู้ใช้งาน หรือ อีเมล</Label>
-                  <Input
-                    id="username"
-                    placeholder="username หรือ email@example.com"
-                    required
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="rounded-square h-11"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">รหัสผ่าน</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="rounded-square h-11"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white rounded-circle h-12 text-lg mt-2"
-                  disabled={login.isPending}
-                >
-                  {login.isPending ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-                </Button>
-              </form>
+      {/* Password login form */}
+      <form onSubmit={handlePasswordLogin} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="username" className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+            ชื่อผู้ใช้ หรือ อีเมล
+          </Label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="username"
+              placeholder="username หรือ email@example.com"
+              required
+              autoComplete="username"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              className="pl-9 h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
+            />
+          </div>
+        </div>
 
-              <div className="text-center text-sm">
-                ยังไม่มีบัญชี?{' '}
-                <button type="button" onClick={onToggle} className="text-brand-primary font-semibold hover:underline">
-                  สมัครสมาชิกใหม่
-                </button>
-              </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+            รหัสผ่าน
+          </Label>
+          <div className="relative">
+            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              autoComplete="current-password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="pl-9 pr-10 h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
 
-              {/* Switch to admin mode */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setAdminMode(true)}
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-purple-700 font-medium transition-colors"
-                >
-                  <ShieldCheck className="size-3.5" />
-                  เจ้าหน้าที่ / ผู้ดูแลระบบ
-                </button>
-              </div>
-            </>
-          ) : (
-            /* Admin / Super Admin login with TOTP */
-            <form onSubmit={handleAdminLogin} className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="admin-username">ชื่อผู้ใช้งาน</Label>
-                <Input
-                  id="admin-username"
-                  placeholder="เช่น superadmin"
-                  required
-                  autoComplete="username"
-                  value={adminData.username}
-                  onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
-                  className="rounded-square h-11"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="admin-password">รหัสผ่าน</Label>
-                <Input
-                  id="admin-password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  value={adminData.password}
-                  onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                  className="rounded-square h-11"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="totp">
-                  รหัส OTP (6 หลัก)
-                  {isDev && <span className="ml-2 text-[10px] text-slate-400 font-mono">[dev: 000000]</span>}
-                </Label>
-                <Input
-                  id="totp"
-                  inputMode="numeric"
-                  maxLength={6}
-                  pattern="\d{6}"
-                  placeholder="000000"
-                  required
-                  value={adminData.totpCode}
-                  onChange={(e) => setAdminData({ ...adminData, totpCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                  className="rounded-square h-11 font-mono tracking-widest text-center text-lg"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-circle h-12 text-lg mt-2"
-                disabled={login.isPending}
-              >
-                {login.isPending ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ (เจ้าหน้าที่)'}
-              </Button>
+        {login.isError && (
+          <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 text-center">
+            {login.error instanceof Error ? login.error.message : 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'}
+          </p>
+        )}
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setAdminMode(false)}
-                  className="text-xs text-slate-500 hover:text-slate-700 font-medium"
-                >
-                  ← กลับหน้าเข้าสู่ระบบปกติ
-                </button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+        <Button
+          type="submit"
+          className="w-full h-11 rounded-xl bg-[#1e7d55] hover:bg-[#186647] text-white font-semibold text-sm"
+          disabled={login.isPending}
+        >
+          {login.isPending ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+        </Button>
+      </form>
 
-      {/* Dev hint */}
+      {/* Dev fill */}
       {isDev && (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 space-y-2">
-          <p className="font-semibold text-slate-700">บัญชีทดสอบ (dev only)</p>
-          {!adminMode ? (
-            <div className="space-y-1">
-              <button
-                type="button"
-                onClick={() => fillDev('public-owner', 'password')}
-                className="block w-full text-left rounded-lg px-2 py-1 hover:bg-slate-100 font-mono"
-              >
-                public-owner / password
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <button
-                type="button"
-                onClick={() => setAdminData({ username: 'superadmin', password: 'ChangeMe-2026!', totpCode: '000000' })}
-                className="block w-full text-left rounded-lg px-2 py-1 hover:bg-slate-100 font-mono"
-              >
-                superadmin / ChangeMe-2026! / 000000
-              </button>
-            </div>
-          )}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 space-y-1">
+          <p className="font-semibold text-slate-600">บัญชีทดสอบ</p>
+          <button
+            type="button"
+            onClick={() => setFormData({ username: 'public-owner', password: 'password' })}
+            className="block w-full text-left rounded-lg px-2 py-1 hover:bg-slate-100 font-mono text-[11px]"
+          >
+            public-owner / password
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ username: 'officer-login', password: 'password' })}
+            className="block w-full text-left rounded-lg px-2 py-1 hover:bg-slate-100 font-mono text-[11px]"
+          >
+            officer-login / password
+          </button>
         </div>
       )}
 
-      {login.isError && (
-        <p className="text-sm text-destructive text-center font-medium bg-destructive/10 py-2 rounded-md px-3">
-          {login.error instanceof Error
-            ? login.error.message
-            : 'การเข้าสู่ระบบล้มเหลว กรุณาตรวจสอบข้อมูลอีกครั้ง'}
-        </p>
-      )}
+      <div className="h-px bg-slate-100" />
+
+      {/* Bottom links */}
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <span>
+          ยังไม่มีบัญชี?{' '}
+          <button type="button" onClick={onToggle} className="font-semibold text-[#1e7d55] hover:underline">
+            สมัครสมาชิก
+          </button>
+        </span>
+        <button
+          type="button"
+          onClick={() => setAdminMode(true)}
+          className="flex items-center gap-1 text-slate-400 hover:text-purple-600 font-medium transition-colors"
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          เจ้าหน้าที่
+        </button>
+      </div>
     </div>
   );
 }

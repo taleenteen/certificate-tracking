@@ -83,7 +83,7 @@ export function LicenseInspectionPageView({ task }: LicenseInspectionPageViewPro
   const handleSave = () => {
     if (!report?.id || !isEditable) return;
     updateReport.mutate(
-      { note },
+      { summaryNote: note },
       {
         onSuccess: () => toast.success("บันทึกสำเร็จ"),
         onError: () => toast.error("บันทึกไม่สำเร็จ กรุณาลองใหม่"),
@@ -95,7 +95,7 @@ export function LicenseInspectionPageView({ task }: LicenseInspectionPageViewPro
     if (!report?.id || !isEditable) return;
     // Save note first, then submit
     updateReport.mutate(
-      { note },
+      { summaryNote: note },
       {
         onSuccess: () =>
           submitReport.mutate(undefined, {

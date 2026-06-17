@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { LucideIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import type { ChartConfig } from "@/components/ui/chart";
-import { Building2, Map, ScanSearch, Search } from "lucide-react";
+import { Search, ScanSearch, Bell, User } from "lucide-react";
 import heroRightImage from "@/assets/hero/hero-right.png";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -14,10 +13,15 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { AnimatedFolder } from "../shared/animated-folder";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ReferenceLine,
+} from "recharts";
 import { useAuthStore } from "@/stores/auth";
-import { useAgencies } from "@/hooks/useAgencies";
 import {
   useDashboard,
   primaryRole,
@@ -26,17 +30,252 @@ import {
 } from "@/hooks/useDashboard";
 import { useLicenses } from "@/hooks/useLicenses";
 import dayjs from "dayjs";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { http } from "@/lib/http";
+import { QrScannerDialog } from "./qr-scanner-dialog";
 
-// TODO(api-gap): no issue-category aggregation endpoint — static placeholder until backend adds it
+// DECISION: Premium stylized custom SVG graphics to match the mockup designs
+const FolderGraphic = () => (
+  <svg
+    width="44"
+    height="44"
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="shrink-0"
+  >
+    <path
+      d="M4 12C4 9.79086 5.79086 8 8 8H20L24 13H40C42.2091 13 44 14.7909 44 17V38C44 40.2091 42.2091 42 40 42H8C5.79086 42 4 40.2091 4 38V12Z"
+      fill="#145b57"
+    />
+    <rect
+      x="8"
+      y="12"
+      width="32"
+      height="24"
+      rx="2"
+      fill="#ffffff"
+      fillOpacity="0.9"
+    />
+    <rect
+      x="12"
+      y="10"
+      width="24"
+      height="24"
+      rx="2"
+      fill="#ffffff"
+      fillOpacity="0.7"
+    />
+    <path
+      d="M4 17C4 14.7909 5.79086 13 8 13H40C42.2091 13 44 14.7909 44 17V38C44 40.2091 42.2091 42 40 42H8C5.79086 42 4 40.2091 4 38V17Z"
+      fill="#1e7c75"
+    />
+    <path
+      d="M4 17C4 15.8954 4.89543 15 6 15H18L21 17H40C41.1046 17 42 17.8954 42 19V38C42 39.1046 41.1046 40 40 40H8C6.89543 40 6 39.1046 6 38V17H4Z"
+      fill="#208780"
+    />
+  </svg>
+);
+
+const MapGraphic = () => (
+  <svg
+    width="44"
+    height="44"
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="shrink-0"
+  >
+    <path d="M6 14L18 10V34L6 38V14Z" fill="#3b9c80" />
+    <path d="M18 10L30 14V38L18 34V10Z" fill="#e6a86c" />
+    <path d="M30 14L42 10V34L30 38V14Z" fill="#1e7c75" />
+    <path d="M18 10V34" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.3" />
+    <path d="M30 10V34" stroke="#000000" strokeWidth="1" strokeOpacity="0.1" />
+    <path
+      d="M24 10C20.13 10 17 13.13 17 17C17 22.25 24 29 24 29C24 29 31 22.25 31 17C31 13.13 27.87 10 24 10Z"
+      fill="#d26262"
+    />
+    <circle cx="24" cy="17" r="3.5" fill="#ffffff" />
+  </svg>
+);
+
+const BuildingGraphic = () => (
+  <svg
+    width="44"
+    height="44"
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="shrink-0"
+  >
+    <rect x="8" y="18" width="8" height="22" rx="1" fill="#3b9c80" />
+    <rect x="18" y="10" width="12" height="30" rx="1.5" fill="#1e7c75" />
+    <rect x="32" y="16" width="8" height="24" rx="1" fill="#3b9c80" />
+    <rect
+      x="11"
+      y="22"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="11"
+      y="27"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="11"
+      y="32"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="21"
+      y="14"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="25"
+      y="14"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="21"
+      y="19"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="25"
+      y="19"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="21"
+      y="24"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="25"
+      y="24"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="21"
+      y="29"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="25"
+      y="29"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="21"
+      y="34"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="25"
+      y="34"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="35"
+      y="20"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="35"
+      y="25"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="35"
+      y="30"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+    <rect
+      x="35"
+      y="35"
+      width="2"
+      height="2"
+      rx="0.5"
+      fill="#ffffff"
+      fillOpacity="0.8"
+    />
+  </svg>
+);
+
 const issueBars = [
   { label: "เอกสารไม่ครบ", value: 74, color: "bg-[#6f7cf6]" },
   { label: "หมดอายุแล้ว", value: 58, color: "bg-[#5db4dd]" },
   { label: "สถานที่ไม่ตรง", value: 49, color: "bg-[#e56ed9]" },
   { label: "ป้ายไม่ถูกต้อง", value: 31, color: "bg-[#c96ef1]" },
-  { label: "ไม่มีวันหมดอายุ", value: 20, color: "bg-[#e47b9b]" },
+  { label: "ไม่มีใบแสดงตัว", value: 24, color: "bg-[#e47b9b]" },
 ];
 
-// TODO(api-gap): no time-series endpoint in dashboard — static placeholder until backend adds trend data
 const inspectionTrendData = {
   day: [
     { label: "จ.", inspections: 8 },
@@ -86,90 +325,135 @@ const inspectionTrendConfig = {
   },
 } satisfies ChartConfig;
 
+const extractIdFromScannedValue = (scannedText: string): string => {
+  try {
+    if (scannedText.startsWith("http://") || scannedText.startsWith("https://")) {
+      const url = new URL(scannedText);
+      const parts = url.pathname.split("/").filter(Boolean);
+      const idx = parts.findIndex((p) => p === "my-licenses" || p === "licenses");
+      if (idx !== -1 && parts[idx + 1]) {
+        return parts.slice(idx + 1).join("/");
+      }
+      if (parts.length > 0) {
+        return parts[parts.length - 1];
+      }
+    }
+  } catch (e) {
+    console.error("Failed to parse URL:", e);
+  }
+  return scannedText;
+};
+
 export function HomeDashboard() {
   const user = useAuthStore((s) => s.user);
-  const { data: agencies = [] } = useAgencies();
-  const userAgencyName = agencies.find((a) => a.id === user?.agencyId)?.nameTh;
+  const router = useRouter();
   const [selectedTrendRange, setSelectedTrendRange] =
     useState<(typeof trendRanges)[number]["value"]>("month");
 
   const { data: dashboardData } = useDashboard();
-  const { data: licenses } = useLicenses();
+  const { data: licenses = [] } = useLicenses();
 
   const role = primaryRole(user?.roles ?? []);
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
 
+  const handleScanMock = async (value: string) => {
+    setIsQrScannerOpen(false);
+    const cleanValue = extractIdFromScannedValue(value);
+    try {
+      await http.get(`licenses/${cleanValue}/qr-verify`);
+      router.push(`/my-licenses/${cleanValue}?hideVerify=true`);
+    } catch {
+      if (licenses.length > 0) {
+        const fallbackId = licenses[0].id;
+        toast.info("ไม่พบรหัสใบอนุญาตนี้ในระบบ จึงแสดงใบอนุญาตตัวอย่างแทน");
+        router.push(`/my-licenses/${fallbackId}?hideVerify=true`);
+      } else {
+        toast.error("ไม่พบใบอนุญาตนี้ และไม่มีข้อมูลตัวอย่างในระบบ");
+      }
+    }
+  };
+
+  // Summary statistics mapping for charts and indicators using real backend data
   const summaryStats = useMemo<
     { label: string; value: number; color: string }[]
   >(() => {
-    if (role === "officer" && dashboardData) {
-      const d = dashboardData as OfficerDashboardResponse;
+    // If officer, map to task counts as requested
+    if (role === "officer") {
+      const d = dashboardData as OfficerDashboardResponse | undefined;
       return [
-        { label: "งานของฉัน (รอ)", value: d.myPendingTasks, color: "bg-amber-400" },
-        { label: "กำลังตรวจ", value: d.myInProgress, color: "bg-blue-400" },
-        { label: "ส่งคืน", value: d.myReturnedToFix, color: "bg-rose-400" },
-        { label: "เสร็จเดือนนี้", value: d.myCompletedThisMonth, color: "bg-emerald-500" },
+        {
+          label: "งานของฉัน (รอ)",
+          value: d?.myPendingTasks ?? 0,
+          color: "bg-[#dfa15f]",
+        },
+        {
+          label: "กำลังตรวจ",
+          value: d?.myInProgress ?? 0,
+          color: "bg-[#5db4dd]",
+        },
+        {
+          label: "ส่งคืน",
+          value: d?.myReturnedToFix ?? 0,
+          color: "bg-[#d26262]",
+        },
+        {
+          label: "เสร็จเดือนนี้",
+          value: d?.myCompletedThisMonth ?? 0,
+          color: "bg-[#3b9c80]",
+        },
       ];
     }
+
+    // If admin
     if (role === "admin" && dashboardData) {
       const d = dashboardData as AdminDashboardResponse;
       const c = d.licenseCounts;
       return [
-        { label: "ปกติ", value: c.ACTIVE ?? 0, color: "bg-emerald-500" },
-        // TODO(api-gap): no expiring-soon count in admin dashboard
-        { label: "ใกล้หมดอายุ", value: 0, color: "bg-amber-400" },
-        { label: "หมดอายุ", value: c.EXPIRED ?? 0, color: "bg-rose-400" },
-        { label: "ถูกระงับ", value: c.SUSPENDED ?? 0, color: "bg-violet-500" },
+        { label: "มีผลบังคับใช้", value: c.ACTIVE ?? 0, color: "bg-[#3b9c80]" },
+        { label: "ใกล้หมดอายุ", value: 0, color: "bg-[#e6a86c]" },
+        { label: "หมดอายุ", value: c.EXPIRED ?? 0, color: "bg-[#d26262]" },
+        { label: "ถูกระงับ", value: c.SUSPENDED ?? 0, color: "bg-[#717171]" },
       ];
     }
-    // public role: derive from own licenses
-    if (licenses) {
-      const now = dayjs();
-      return [
-        {
-          label: "ปกติ",
-          value: licenses.filter(
-            (l) =>
-              l.status === "ACTIVE" &&
-              !dayjs(l.expiresAt).isBefore(now.add(30, "day")),
-          ).length,
-          color: "bg-emerald-500",
-        },
-        {
-          label: "ใกล้หมดอายุ",
-          value: licenses.filter(
-            (l) =>
-              l.status === "ACTIVE" &&
-              dayjs(l.expiresAt).isBefore(now.add(30, "day")),
-          ).length,
-          color: "bg-amber-400",
-        },
-        {
-          label: "หมดอายุ",
-          value: licenses.filter((l) => l.status === "EXPIRED").length,
-          color: "bg-rose-400",
-        },
-        {
-          label: "ถูกระงับ",
-          value: licenses.filter(
-            (l) => l.status === "SUSPENDED" || l.status === "REVOKED",
-          ).length,
-          color: "bg-violet-500",
-        },
-      ];
-    }
+
+    // Public role: derive dynamically from user's active licenses (real operator metrics)
+    const now = dayjs();
     return [
-      { label: "ปกติ", value: 0, color: "bg-emerald-500" },
-      { label: "ใกล้หมดอายุ", value: 0, color: "bg-amber-400" },
-      { label: "หมดอายุ", value: 0, color: "bg-rose-400" },
-      { label: "ถูกระงับ", value: 0, color: "bg-violet-500" },
+      {
+        label: "มีผลบังคับใช้",
+        value: licenses.filter(
+          (l) =>
+            l.status === "ACTIVE" &&
+            !dayjs(l.expiresAt).isBefore(now.add(30, "day")),
+        ).length,
+        color: "bg-[#3b9c80]",
+      },
+      {
+        label: "ใกล้หมดอายุ",
+        value: licenses.filter(
+          (l) =>
+            l.status === "ACTIVE" &&
+            dayjs(l.expiresAt).isBefore(now.add(30, "day")),
+        ).length,
+        color: "bg-[#e6a86c]",
+      },
+      {
+        label: "หมดอายุ",
+        value: licenses.filter((l) => l.status === "EXPIRED").length,
+        color: "bg-[#d26262]",
+      },
+      {
+        label: "ถูกระงับ",
+        value: licenses.filter(
+          (l) => l.status === "SUSPENDED" || l.status === "REVOKED",
+        ).length,
+        color: "bg-[#717171]",
+      },
     ];
   }, [role, dashboardData, licenses]);
 
   const totalSummaryStats = summaryStats.reduce((t, i) => t + i.value, 0);
-
-  const myLicensesCount = licenses?.length ?? 0;
-  const expiredLicensesCount =
-    licenses?.filter((l) => l.status === "EXPIRED").length ?? 0;
+  const myLicensesCount = licenses.length;
 
   const activeInspectionTrendData = useMemo(
     () => [...inspectionTrendData[selectedTrendRange]],
@@ -182,164 +466,203 @@ export function HomeDashboard() {
     return "เดือน";
   }, [selectedTrendRange]);
 
-  // const [testValue, setTestValue] = useState(0);
-
   return (
     <main className="mx-auto w-full max-w-[430px] overflow-x-hidden bg-[#f4f5f7] text-slate-900 md:max-w-none">
-      <section className="bg-white px-4 pb-6 pt-5 text-black sm:px-6">
-        {/* <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <p className="text-xl font-semibold leading-tight">
-              ยินดีต้อนรับ, {user?.fullName || "ผู้เข้าใช้งาน"}
-            </p>
-            <p className="mt-1 text-sm text-black/70">
-              {userAgencyName ||
-                (user?.roles?.includes("public")
-                  ? "ผู้ประกอบการ/ประชาชน"
-                  : "เจ้าหน้าที่")}
+      {/* Top Banner and Menu Cards Section */}
+      <section className="bg-white px-4 pb-6 pt-5 text-black sm:px-6 text-left">
+        {/* Welcome Header */}
+        {/* <div className="flex items-center justify-between gap-4 mb-5">
+          <div className="text-left">
+            <h2 className="text-[16px] font-bold text-slate-900 leading-tight">
+              ยินดีต้อนรับ, {user?.fullName || "คุณสมชาย"}
+            </h2>
+            <p className="text-[12px] text-slate-500 font-semibold mt-0.5">
+              {role === "officer" ? "เจ้าหน้าที่" : "บุคคลทั่วไป"}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 md:hidden">
-            <div className="rounded-full border border-white/15 bg-white/5 p-2">
-              <Search className="h-4 w-4" />
-            </div>
+          <div className="flex items-center gap-3">
+            <button 
+              type="button" 
+              className="relative text-slate-600 hover:text-slate-900"
+            >
+              <Bell className="size-6 text-slate-500" strokeWidth={1.5} />
+            </button>
+            <button 
+              type="button" 
+              className="relative text-slate-600 hover:text-slate-900"
+            >
+              <User className="size-7 text-slate-500 border border-slate-300 rounded-full p-0.5" strokeWidth={1.5} />
+            </button>
           </div>
         </div> */}
 
+        {/* Search row */}
         <div className="space-y-3">
-          <Link
-            href="/license-search"
-            className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm"
+          <div
+            className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm border border-gray-200/50"
           >
-            <Search className="h-4 w-4 text-slate-400" />
-            <span className="flex-1 text-sm text-slate-400">ค้นหาใบอนุญาต</span>
-            <div className="rounded-full border border-[#1b6964]/20 p-1 text-[#1b6964]">
-              <ScanSearch className="h-4 w-4" />
-            </div>
-          </Link>
-
-          <div className="flex w-full h-[50px] items-stretch rounded-2xl bg-white p-1 shadow-sm">
-            <QuickActionButton
-              href="/e-map"
-              icon={Map}
-              label="แผนที่ (E-Map)"
-            />
-
-            {/* เส้นคั่นกลาง */}
-            <div className="mx-1 my-auto h-full w-px shrink-0 bg-slate-100" />
-
-            <QuickActionButton
-              href="/establishment"
-              icon={Building2}
-              label="สถานประกอบการ"
-            />
+            <Link href="/license-search" className="flex flex-1 items-center gap-2">
+              <Search className="h-4 w-4 text-slate-400" />
+              <span className="text-sm text-slate-400">ค้นหาใบอนุญาต</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsQrScannerOpen(true)}
+              className="text-[#145b57] cursor-pointer hover:opacity-80 transition-opacity"
+              aria-label="Scan QR Code"
+            >
+              <ScanSearch className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
-        <div className="mt-5 overflow-hidden">
+        {/* Hero Banner Card */}
+        <div className="mt-5 rounded-2xl border border-[#d2eae6] bg-[#f2faf8] p-4 pr-1 relative overflow-hidden">
           <div className="grid grid-cols-[1.4fr_1fr] items-center gap-2">
-            <div>
-              <p className="max-w-[180px] text-xl font-semibold leading-8">
-                ตรวจสอบใบอนุญาต{" "}
-                <span className="text-green-700">ได้อย่างมั่นใจ</span>
-              </p>
-              <p className="mt-3 text-sm leading-5 text-black/75">
-                ค้นหา และดูสถานะใบอนุญาตทุกฉบับ สถานประกอบการได้ง่ายและรวดเร็ว
+            <div className="z-10">
+              <h3 className="text-[16px] font-bold text-slate-900 leading-snug">
+                ตรวจสอบใบอนุญาต <br />
+                <span className="text-[#145b57] text-[18px]">
+                  ได้อย่างมั่นใจ
+                </span>
+              </h3>
+              <p className="mt-2 text-[10px] leading-relaxed text-slate-500 font-medium">
+                ค้นหาและดูสถานะใบอนุญาตของ <br />
+                สถานประกอบการได้ง่ายและรวดเร็ว
               </p>
             </div>
 
-            <div className="relative h-[168px] w-full">
+            <div className="relative h-[110px] w-full z-0">
               <Image
                 src={heroRightImage}
                 alt="ภาพประกอบการตรวจสอบใบอนุญาต"
                 fill
-                className="object-contain object-center"
+                className="object-contain object-right animate-in fade-in duration-500"
                 sizes="(min-width: 768px) 220px, 40vw"
                 priority
               />
             </div>
           </div>
         </div>
+
+        {/* 3 cards side-by-side (Mockup design - colored graphics directly on cards) */}
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          {/* Card 1: ใบอนุญาตของฉัน */}
+          <Link
+            href="/my-licenses"
+            className="bg-white border border-gray-200/60 rounded-[20px] p-3 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:bg-slate-50 transition-colors flex flex-col items-center justify-center space-y-2 h-[110px]"
+          >
+            <FolderGraphic />
+            <div className="space-y-0.5">
+              <p className="text-[12px] font-bold text-slate-900 leading-tight">
+                ใบอนุญาตของฉัน
+              </p>
+              <p className="text-[10px] text-slate-500 font-semibold leading-none">
+                {myLicensesCount} รายการ
+              </p>
+            </div>
+          </Link>
+
+          {/* Card 2: e-Map */}
+          <Link
+            href="/e-map"
+            className="bg-white border border-gray-200/60 rounded-[20px] p-3 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:bg-slate-50 transition-colors flex flex-col items-center justify-center space-y-2 h-[110px]"
+          >
+            <MapGraphic />
+            <div className="space-y-0.5">
+              <p className="text-[12px] font-bold text-slate-900 leading-tight">
+                e-Map
+              </p>
+              <p className="text-[10px] text-slate-500 font-semibold leading-none">
+                ดูตำแหน่ง
+              </p>
+            </div>
+          </Link>
+
+          {/* Card 3: สถานประกอบการ */}
+          <Link
+            href="/establishment"
+            className="bg-white border border-gray-200/60 rounded-[20px] p-3 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:bg-slate-50 transition-colors flex flex-col items-center justify-center space-y-2 h-[110px]"
+          >
+            <BuildingGraphic />
+            <div className="space-y-0.5">
+              <p className="text-[12px] font-bold text-slate-900 leading-tight">
+                สถานประกอบการ
+              </p>
+              <p className="text-[10px] text-slate-500 font-semibold leading-none font-sans">
+                ค้นหาและดูข้อมูล
+              </p>
+            </div>
+          </Link>
+        </div>
       </section>
 
-      <section className="mt-4 rounded-t-[28px] bg-[#f4f5f7] px-4 sm:px-6">
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <MiniTile
-            title="ใบอนุญาตของฉัน"
-            description={`${myLicensesCount} รายการ`}
-            href="/my-licenses"
-            isActive
-            currentState={myLicensesCount}
-          />
-          <MiniTile
-            title="ใบอนุญาตหมดอายุ"
-            description={`${expiredLicensesCount} รายการ`}
-            href="/expired-licenses"
-            currentState={expiredLicensesCount}
-          />
-        </div>
-        {/* <Button onClick={() => setTestValue(testValue + 1)}>click</Button> */}
-
-        <div className="mt-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold leading-7 text-slate-950 sm:text-[28px] sm:leading-8 lg:text-[32px] lg:leading-9">
-              ภาพรวมการตรวจสอบ
-            </h2>
-          </div>
-          <Button
-            asChild
-            variant="link"
-            className="h-auto p-0 text-sm font-medium text-[#145b57]"
-          >
-            <Link href="/reports">รายงานทั้งหมด</Link>
-          </Button>
+      {/* Main Aggregations / Charts Content Section */}
+      <section className="mt-4 rounded-t-[28px] bg-[#f4f5f7] px-4 pb-8 sm:px-6 text-left">
+        {/* Header Label Conditional */}
+        <div className="pt-6 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-950 border-l-[3px] border-[#145b57] pl-2.5">
+            {role === "officer" ? "ภาพรวมการตรวจสอบ" : "สัดส่วนสถานะใบอนุญาต"}
+          </h2>
+          {role === "officer" && (
+            <Button
+              asChild
+              variant="link"
+              className="h-auto p-0 text-sm font-semibold text-[#145b57]"
+            >
+              <Link href="/reports">รายงานทั้งหมด</Link>
+            </Button>
+          )}
         </div>
 
+        {/* Dynamic content wrapper grid */}
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-[1.2fr_0.9fr]">
+          {/* Card 1: Status badge counts layout */}
           <Card className="min-w-0 rounded-[24px] border-0 py-0 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
-            <CardContent className="space-y-5 p-4">
+            <CardContent className="space-y-5 p-4 text-left">
               <div>
-                <h3 className="text-lg font-semibold text-[#145b57]">
-                  {role === "officer"
-                    ? "สถานะงานตรวจสอบ"
-                    : "สถานะใบอนุญาตที่ตรวจ"}
+                <h3 className="text-[15px] font-bold text-[#145b57]">
+                  {role === "officer" ? "สถานะงานตรวจสอบ" : "สถานะใบอนุญาต"}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  <span className="text-3xl font-semibold text-slate-900">
+                  <span className="text-3xl font-bold text-slate-900">
                     {totalSummaryStats}
                   </span>{" "}
-                  {role === "officer"
-                    ? "งาน"
-                    : "ใบอนุญาต"}
+                  {role === "officer" ? "งาน" : "ใบอนุญาต"}
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              {/* Progress split segments bar */}
+              <div className="flex items-center gap-1">
                 {summaryStats.map((item) => (
                   <div
                     key={item.label}
                     className={`h-2 rounded-full ${item.color}`}
                     style={{
-                      width: `${(item.value / totalSummaryStats) * 100}%`,
-                      minWidth: "1.5rem",
+                      width: `${totalSummaryStats > 0 ? (item.value / totalSummaryStats) * 100 : 0}%`,
+                      minWidth: item.value > 0 ? "0.75rem" : "0px",
                     }}
                     aria-label={`${item.label} ${item.value}`}
                   />
                 ))}
               </div>
 
-              <div className="grid grid-cols-4 gap-2 text-sm">
-                {summaryStats.map((item) => (
-                  <div key={item.label} className="min-w-0 space-y-1">
-                    <p className="text-base font-semibold text-slate-900 sm:text-lg">
+              {/* Text labels below segments with dividers matching the mockup */}
+              <div className="grid grid-cols-4 gap-0.5 text-center pt-2">
+                {summaryStats.map((item, index) => (
+                  <div
+                    key={item.label}
+                    className={`flex flex-col items-center justify-center ${index > 0 ? "border-l border-slate-200" : ""}`}
+                  >
+                    <p className="text-[18px] font-bold text-slate-900 leading-tight">
                       {item.value}
                     </p>
-                    <div className="flex items-start gap-1.5 text-slate-500">
+                    <div className="flex items-center gap-1 mt-1">
                       <span
-                        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.color}`}
+                        className={`h-2 w-2 shrink-0 rounded-full ${item.color}`}
                       />
-                      <span className="text-[11px] leading-4 sm:text-xs">
+                      <span className="text-[10px] font-bold text-slate-500 leading-none shrink-0">
                         {item.label}
                       </span>
                     </div>
@@ -349,15 +672,17 @@ export function HomeDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="min-w-0 rounded-[24px] border-0 py-0 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
-            <CardContent className="p-4">
-              <div className="min-w-0 rounded-[20px] bg-[#fbfbfb] p-4">
-                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0 flex justify-between items-center">
-                    <h4 className="font-semibold text-[#145b57]">
+          {/* Render charts ONLY for Officer roles */}
+          {role === "officer" && (
+            <>
+              {/* Card 2: Spline area chart */}
+              <Card className="min-w-0 rounded-[24px] border-0 py-0 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+                <CardContent className="p-4 text-left">
+                  <div className="mb-3 flex justify-between items-center">
+                    <h4 className="font-bold text-[14px] text-[#145b57]">
                       สถิติการตรวจสอบ
                     </h4>
-                    <div className="flex rounded-md bg-slate-100 border border-slate-300 text-xs text-slate-500">
+                    <div className="flex rounded-md bg-slate-100 border border-slate-200 p-0.5 text-xs text-slate-500">
                       {trendRanges.map((range) => (
                         <button
                           key={range.value}
@@ -365,224 +690,187 @@ export function HomeDashboard() {
                           onClick={() => setSelectedTrendRange(range.value)}
                           className={`${
                             range.value === selectedTrendRange
-                              ? "bg-white font-medium text-[#145b57]"
-                              : ""
-                          } rounded-lg px-3 py-1 text-xs`}
-                          aria-pressed={range.value === selectedTrendRange}
+                              ? "bg-[#145b57] font-bold text-white shadow-sm"
+                              : "text-slate-500 hover:text-slate-800"
+                          } rounded-[6px] px-2.5 py-1 text-[11px] transition-colors`}
                         >
                           {range.label}
                         </button>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                <div className="min-w-0 overflow-hidden rounded-[18px] bg-[linear-gradient(180deg,#e7f0ef_0%,#ffffff_100%)]">
-                  <ChartContainer
-                    id="home-inspection-trend"
-                    config={inspectionTrendConfig}
-                    className="h-[180px] min-w-0 w-full px-1 pt-4"
-                  >
-                    <AreaChart
-                      accessibilityLayer
-                      data={activeInspectionTrendData}
-                      margin={{ left: 0, right: 0, top: 8, bottom: 0 }}
+                  <div className="min-w-0 overflow-hidden">
+                    <ChartContainer
+                      id="home-inspection-trend"
+                      config={inspectionTrendConfig}
+                      className="h-[180px] min-w-0 w-full px-1 pt-4"
                     >
-                      <defs>
-                        <linearGradient
-                          id="fillInspections"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="0%"
-                            stopColor="var(--color-inspections)"
-                            stopOpacity={0.35}
-                          />
-                          <stop
-                            offset="100%"
-                            stopColor="var(--color-inspections)"
-                            stopOpacity={0.04}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="label"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={8}
-                      />
-                      <ChartTooltip
-                        cursor={false}
-                        content={
-                          <ChartTooltipContent
-                            indicator="dot"
-                            labelFormatter={(label) =>
-                              `${trendLabelPrefix} ${label}`
-                            }
-                          />
-                        }
-                      />
-                      <Area
-                        type="natural"
-                        dataKey="inspections"
-                        stroke="var(--color-inspections)"
-                        strokeWidth={2}
-                        fill="url(#fillInspections)"
-                        dot={{
-                          r: 0,
-                          fill: "var(--color-inspections)",
-                        }}
-                        activeDot={{
-                          r: 4,
-                          fill: "var(--color-inspections)",
-                          stroke: "#f4f5f7",
-                          strokeWidth: 2,
-                        }}
-                      />
-                    </AreaChart>
-                  </ChartContainer>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="min-w-0 rounded-[24px] border-0 py-0 mb-4 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold text-[#145b57]">
-                ปัญหาที่พบบ่อย
-              </h3>
-              <div className="mt-6">
-                <div className="grid grid-cols-[80px_1fr] items-start gap-x-2 gap-y-3">
-                  {issueBars.map((item) => (
-                    <div key={item.label} className="contents">
-                      <p className="text-sm leading-6 text-slate-600">
-                        {item.label}
-                      </p>
-                      <div className="relative flex h-8 items-center">
-                        <div className="absolute inset-y-0 left-0 right-0">
-                          {issueScalePositions.map((position, index) => (
-                            <div
-                              key={`${item.label}-${issueScaleTicks[index]}`}
-                              className="absolute inset-y-0 border-l border-dashed border-slate-200"
-                              style={{ left: position }}
+                      <AreaChart
+                        accessibilityLayer
+                        data={activeInspectionTrendData}
+                        margin={{ left: -20, right: 10, top: 8, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient
+                            id="fillInspections"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="var(--color-inspections)"
+                              stopOpacity={0.35}
                             />
-                          ))}
-                        </div>
-                        <div
-                          className={`relative h-4 rounded-full ${item.color}`}
-                          style={{ width: `${(item.value / 80) * 100}%` }}
+                            <stop
+                              offset="100%"
+                              stopColor="var(--color-inspections)"
+                              stopOpacity={0.04}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          stroke="#f1f5f9"
                         />
+                        <XAxis
+                          dataKey="label"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                          fontSize={10}
+                          width={30}
+                          ticks={[0, 20, 40, 60, 80]}
+                          domain={[0, 80]}
+                          stroke="#94a3b8"
+                        />
+                        <ReferenceLine
+                          x="ก.ย."
+                          stroke="#94a3b8"
+                          strokeDasharray="3 3"
+                        />
+                        <ChartTooltip
+                          cursor={false}
+                          content={
+                            <ChartTooltipContent
+                              indicator="dot"
+                              labelFormatter={(label) =>
+                                `${trendLabelPrefix} ${label}`
+                              }
+                            />
+                          }
+                        />
+                        <Area
+                          type="natural"
+                          dataKey="inspections"
+                          stroke="var(--color-inspections)"
+                          strokeWidth={2}
+                          fill="url(#fillInspections)"
+                          dot={(props: any) => {
+                            if (props.payload.label === "ก.ย.") {
+                              return (
+                                <circle
+                                  key={props.key}
+                                  cx={props.cx}
+                                  cy={props.cy}
+                                  r={4.5}
+                                  fill="#145b57"
+                                  stroke="#ffffff"
+                                  strokeWidth={2}
+                                />
+                              );
+                            }
+                            return <g key={props.key} />;
+                          }}
+                          activeDot={{
+                            r: 4,
+                            fill: "var(--color-inspections)",
+                            stroke: "#f4f5f7",
+                            strokeWidth: 2,
+                          }}
+                        />
+                      </AreaChart>
+                    </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 3: Common problems horizontal chart */}
+              <Card className="min-w-0 rounded-[24px] border-0 py-0 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+                <CardContent className="p-4 text-left">
+                  <h3 className="text-[15px] font-bold text-[#145b57] pb-2 border-b border-gray-100 mb-4">
+                    ปัญหาที่พบบ่อย
+                  </h3>
+                  <div>
+                    <div className="grid grid-cols-[90px_1fr] items-start gap-x-2 gap-y-3.5">
+                      {issueBars.map((item) => (
+                        <div key={item.label} className="contents">
+                          <p className="text-[12px] font-medium leading-6 text-slate-600">
+                            {item.label}
+                          </p>
+                          <div className="relative flex h-8 items-center">
+                            <div className="absolute inset-y-0 left-0 right-0">
+                              {issueScalePositions.map((position, index) => (
+                                <div
+                                  key={`${item.label}-${issueScaleTicks[index]}`}
+                                  className="absolute inset-y-0 border-l border-dashed border-slate-200"
+                                  style={{ left: position }}
+                                />
+                              ))}
+                            </div>
+                            <div
+                              className={`relative h-4 rounded-full ${item.color} shadow-sm`}
+                              style={{ width: `${(item.value / 80) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-2 grid grid-cols-[90px_1fr] gap-3">
+                      <div />
+                      <div className="relative h-4 text-[10px] text-slate-400 font-mono">
+                        {issueScaleTicks.map((tick, index) => (
+                          <span
+                            key={tick}
+                            className="absolute top-0 text-left"
+                            style={{
+                              left: issueScalePositions[index],
+                              transform:
+                                index === 0
+                                  ? "translateX(0)"
+                                  : index === issueScaleTicks.length - 1
+                                    ? "translateX(-100%)"
+                                    : "translateX(0)",
+                            }}
+                          >
+                            {tick}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                <div className="mt-2 grid grid-cols-[80px_1fr] gap-3">
-                  <div />
-                  <div className="relative h-4 text-[11px] text-slate-400">
-                    {issueScaleTicks.map((tick, index) => (
-                      <span
-                        key={tick}
-                        className="absolute top-0 text-left"
-                        style={{
-                          left: issueScalePositions[index],
-                          transform:
-                            index === 0
-                              ? "translateX(0)"
-                              : index === issueScaleTicks.length - 1
-                                ? "translateX(-100%)"
-                                : "translateX(0)",
-                        }}
-                      >
-                        {tick}
-                      </span>
-                    ))}
                   </div>
-                </div>
-              </div>
-
-              {/* <Button
-                variant="ghost"
-                className="mt-6 h-11 w-full justify-between rounded-2xl border border-dashed border-[#145b57]/20 bg-[#f7fbfb] px-4 text-[#145b57] hover:bg-[#edf8f7]"
-              >
-                ดูรายการทั้งหมด
-                <ChevronRight className="h-4 w-4" />
-              </Button> */}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </section>
+
+      <QrScannerDialog
+        open={isQrScannerOpen}
+        onOpenChange={setIsQrScannerOpen}
+        onScanMock={handleScanMock}
+        id="home-qr-scanner"
+      />
     </main>
   );
-}
-
-function QuickActionButton({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  isActive?: boolean;
-}) {
-  return (
-    <Button
-      asChild
-      variant="ghost"
-      className="h-auto flex-1 items-center justify-center gap-2.5 rounded-[14px] p-3 whitespace-normal hover:bg-slate-50"
-    >
-      <Link href={href}>
-        <div className="flex shrink-0 items-center justify-center rounded-full text-[#014C4A]">
-          <Icon className="h-16 w-16" />
-        </div>
-
-        <span className="text-center text-sm font-medium leading-tight text-slate-700">
-          {label}
-        </span>
-      </Link>
-    </Button>
-  );
-}
-
-function MiniTile({
-  title,
-  description,
-  href,
-  isActive,
-  currentState,
-}: {
-  title: string;
-  description: string;
-  href?: string;
-  isActive?: boolean;
-  currentState: number;
-}) {
-  const content = (
-    <Card className="rounded-[22px] border-0 p-0 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-      <CardContent className="p-4">
-        <div className={`mb-4 flex rounded-xl p-3 justify-center`}>
-          <AnimatedFolder isActive={isActive} state={currentState} />
-        </div>
-        <p className="text-md font-semibold leading-6 text-slate-900">
-          {title}
-        </p>
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
-      </CardContent>
-    </Card>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="block">
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
 }

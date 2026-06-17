@@ -4,34 +4,119 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { useState } from "react";
 import Image from "next/image";
+import heroRight from "@/assets/hero/hero-right.png";
+
+const FEATURES = [
+  { icon: "📋", label: "ติดตามสถานะใบอนุญาตแบบเรียลไทม์" },
+  { icon: "🔔", label: "แจ้งเตือนอัตโนมัติเมื่อใกล้หมดอายุ" },
+  { icon: "🏢", label: "รองรับหลายหน่วยงานในระบบเดียว" },
+];
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-brand-surface p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-8">
-        <div className="flex flex-col items-center gap-2">
-          <div className="relative w-20 h-20 mb-2">
-             {/* Logo placeholder - using image if available, else stylized icon */}
-             <div className="w-full h-full bg-brand-primary rounded-square-hard flex items-center justify-center shadow-smooth-low">
-                <span className="text-white font-bold text-3xl">CT</span>
-             </div>
+    <div className="min-h-svh grid lg:grid-cols-[480px_1fr]">
+      {/* ── Left: Brand Panel ── */}
+      <aside className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-[#094d34] via-[#116645] to-[#1e7d55] px-12 py-10 text-white overflow-hidden relative">
+        {/* Background decoration rings */}
+        <div className="pointer-events-none absolute -top-32 -left-32 h-[400px] w-[400px] rounded-full bg-white/5" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-[340px] w-[340px] rounded-full bg-white/5" />
+        <div className="pointer-events-none absolute top-1/2 -right-10 h-[200px] w-[200px] rounded-full bg-white/5" />
+
+        {/* Center content */}
+        <div className="relative z-10 space-y-8">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold leading-snug">
+              ระบบบริหารจัดการ<br />ใบอนุญาตธุรกิจ
+            </h2>
+            <p className="text-white/70 text-sm leading-relaxed max-w-xs">
+              ติดตาม ตรวจสอบ และจัดการใบอนุญาตธุรกิจทุกประเภท<br />จากทุกหน่วยงานในระบบเดียว
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-brand-text-dark">Certificate Tracking</h1>
-          <p className="text-sm text-slate-500 text-center">ระบบบริหารจัดการและตรวจสอบใบอนุญาต</p>
+
+          <Image
+            src={heroRight}
+            alt="License management illustration"
+            height={220}
+            className="object-contain drop-shadow-xl"
+          />
+
+          <ul className="space-y-3">
+            {FEATURES.map(({ icon, label }) => (
+              <li key={label} className="flex items-center gap-3 text-sm">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15 text-base">
+                  {icon}
+                </span>
+                <span className="text-white/90">{label}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {mode === 'login' ? (
-          <LoginForm onToggle={() => setMode('register')} />
-        ) : (
-          <RegisterForm onToggle={() => setMode('login')} />
-        )}
-
-        <p className="text-[10px] text-slate-400 text-center mt-4">
-          © 2026 Certificate Tracking System. All rights reserved.
+        {/* Footer */}
+        <p className="relative z-10 text-[11px] text-white/40">
+          © 2026 Certificate Tracking System
         </p>
-      </div>
+      </aside>
+
+      {/* ── Right: Form Panel ── */}
+      <main className="flex flex-col items-center justify-center bg-[#f7f8fb] px-5 py-10 sm:px-8">
+        <div className="w-full max-w-[400px] space-y-7">
+          {/* Mode tabs (only for non-admin flows) */}
+          <div className="space-y-6">
+            <div className="text-center space-y-1">
+              <h1 className="text-2xl font-bold text-slate-900">
+                {mode === 'login' ? 'เข้าสู่ระบบ' : 'สร้างบัญชีใหม่'}
+              </h1>
+              <p className="text-sm text-slate-500">
+                {mode === 'login'
+                  ? 'ยินดีต้อนรับกลับสู่ระบบ'
+                  : 'กรอกข้อมูลเพื่อเริ่มใช้งานระบบ'}
+              </p>
+            </div>
+
+            {/* Tab switcher */}
+            <div className="flex rounded-xl bg-slate-200/70 p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
+                  mode === 'login'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                เข้าสู่ระบบ
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('register')}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
+                  mode === 'register'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                สมัครสมาชิก
+              </button>
+            </div>
+          </div>
+
+          {/* Form card */}
+          <div className="rounded-2xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-slate-200/80 overflow-hidden">
+            {mode === 'login' ? (
+              <LoginForm onToggle={() => setMode('register')} />
+            ) : (
+              <RegisterForm onToggle={() => setMode('login')} />
+            )}
+          </div>
+
+          <p className="text-center text-[11px] text-slate-400">
+            © 2026 Certificate Tracking System · All rights reserved.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

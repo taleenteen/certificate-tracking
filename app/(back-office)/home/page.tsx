@@ -11,8 +11,7 @@ export default function BackOfficeHomePage() {
 
   useEffect(() => {
     if (user) {
-      const isAgencyAdmin = user.roles?.includes('admin') || user.roles?.includes('officer');
-      if (isAgencyAdmin && !user.roles?.includes('super_admin')) {
+      if (user.roles?.includes('admin') && !user.roles?.includes('super_admin')) {
         router.replace('/admin/inspections');
       }
     }

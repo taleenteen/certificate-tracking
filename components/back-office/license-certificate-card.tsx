@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
@@ -8,9 +9,9 @@ import {
   StatusBadge,
   type StatusBadgeStatus,
 } from "@/components/shared/StatusBadge";
-import { LicensePreview, type LicensePreviewType } from "./license-preview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import licenseImg from "@/assets/license.png";
 
 export type LicenseCardItem = {
   id: string;
@@ -21,7 +22,6 @@ export type LicenseCardItem = {
   issuedAt: string;
   expiresAt: string;
   previewLabel?: string;
-  previewType?: LicensePreviewType;
   detailsHref?: string;
 };
 
@@ -47,12 +47,12 @@ export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
       <CardContent className="space-y-4 p-2">
         <div className="grid grid-cols-[118px_1fr] gap-3">
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-            <div className="flex h-full min-h-[170px] items-center justify-center bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
-              <LicensePreview
-                type={item.previewType ?? "document"}
-                label={item.previewLabel}
-              />
-            </div>
+            <Image
+              src={licenseImg}
+              alt="ใบอนุญาต"
+              className="h-full w-full object-cover"
+              style={{ minHeight: 170 }}
+            />
           </div>
 
           <div className="min-w-0">

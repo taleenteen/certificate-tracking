@@ -51,20 +51,35 @@ export function useInspectionTask(id: string) {
   });
 }
 
+export function useInspectionTaskByLicense(licenseId: string) {
+  return useQuery({
+    queryKey: ['inspection-task-by-license', licenseId],
+    queryFn: () => http.get<InspectionTaskDetail>(`inspection-tasks/by-license/${licenseId}`),
+    enabled: !!licenseId,
+    retry: false,
+  });
+}
+
 export function useStartTask(taskId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => http.patch(`inspection-tasks/${taskId}/start`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inspection-task', taskId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inspection-task', taskId] });
+      qc.invalidateQueries({ queryKey: ['inspection-task-by-license'] });
+    },
   });
 }
 
 export function useUpdateReport(reportId: string, taskId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { note?: string; result?: 'PASSED' | 'FAILED' }) =>
+    mutationFn: (body: { summaryNote?: string; result?: 'PASSED' | 'FAILED' }) =>
       http.put(`inspection-reports/${reportId}`, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inspection-task', taskId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inspection-task', taskId] });
+      qc.invalidateQueries({ queryKey: ['inspection-task-by-license'] });
+    },
   });
 }
 
@@ -72,7 +87,10 @@ export function useSubmitReport(reportId: string, taskId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => http.patch(`inspection-reports/${reportId}/submit`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inspection-task', taskId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inspection-task', taskId] });
+      qc.invalidateQueries({ queryKey: ['inspection-task-by-license'] });
+    },
   });
 }
 
@@ -84,7 +102,10 @@ export function useUploadEvidence(reportId: string, taskId: string) {
       form.append('file', file);
       return http.post(`inspection-reports/${reportId}/evidence`, form);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inspection-task', taskId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inspection-task', taskId] });
+      qc.invalidateQueries({ queryKey: ['inspection-task-by-license'] });
+    },
   });
 }
 
@@ -93,6 +114,9 @@ export function useDeleteEvidence(reportId: string, taskId: string) {
   return useMutation({
     mutationFn: (docId: string) =>
       http.delete(`inspection-reports/${reportId}/evidence/${docId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inspection-task', taskId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inspection-task', taskId] });
+      qc.invalidateQueries({ queryKey: ['inspection-task-by-license'] });
+    },
   });
 }

@@ -7,7 +7,7 @@ export interface BusinessLicense {
   status: string;
   issuedAt: string;
   expiresAt: string | null;
-  licenseType: { id: string; code: string; nameTh: string; nameEn: string; agency: string };
+  licenseType: { id: string; code: string; nameTh: string; nameEn: string; agencyId: string };
 }
 
 export interface BusinessSummary {
@@ -44,6 +44,16 @@ export function useBusinesses(query: string) {
         query ? `businesses?q=${encodeURIComponent(query)}&limit=20` : 'businesses?limit=20',
       ),
     enabled: query.length > 0,
+  });
+}
+
+export function useAdminBusinesses(query?: string) {
+  return useQuery({
+    queryKey: ['admin-businesses', query ?? ''],
+    queryFn: () =>
+      http.get<BusinessListResponse>(
+        query ? `businesses?q=${encodeURIComponent(query)}&limit=50` : 'businesses?limit=50',
+      ),
   });
 }
 

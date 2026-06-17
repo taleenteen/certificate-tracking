@@ -52,11 +52,13 @@ export function AdminAccountsTable() {
     createUser.mutate(
       {
         fullName: data.fullName,
+        username: data.username,
         email: data.email,
         phone: data.phone,
         roles: ['admin'],
         agencyId: data.agencyId,
         zoneIds: [],
+        initialPassword: data.password,
       },
       {
         onSuccess: () => {

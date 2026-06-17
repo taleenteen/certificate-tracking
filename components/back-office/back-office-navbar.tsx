@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/stores/auth";
 import { useLogout } from "@/hooks/useAuth";
 import { useAgencies } from "@/hooks/useAgencies";
+import { useIsStaff } from "@/hooks/useIsStaff";
 import { http } from "@/lib/http";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +87,25 @@ const STANDALONE_PAGE_TITLES: Record<string, string> = {
   "/expired-licenses": "ใบอนุญาตหมดอายุ",
 };
 
+const extractIdFromScannedValue = (scannedText: string): string => {
+  try {
+    if (scannedText.startsWith("http://") || scannedText.startsWith("https://")) {
+      const url = new URL(scannedText);
+      const parts = url.pathname.split("/").filter(Boolean);
+      const idx = parts.findIndex((p) => p === "my-licenses" || p === "licenses");
+      if (idx !== -1 && parts[idx + 1]) {
+        return parts.slice(idx + 1).join("/");
+      }
+      if (parts.length > 0) {
+        return parts[parts.length - 1];
+      }
+    }
+  } catch (e) {
+    console.error("Failed to parse URL:", e);
+  }
+  return scannedText;
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function BackOfficeNavbar() {
@@ -93,9 +113,11 @@ export function BackOfficeNavbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
+  const activeJuristicId = useAuthStore((s) => s.activeJuristicId);
   const logout = useLogout();
   const { data: agencies = [] } = useAgencies();
   const userAgencyName = agencies.find((a) => a.id === user?.agencyId)?.nameTh;
+  const isStaff = useIsStaff();
 
   const searchPageConfig = SEARCH_PAGE_CONFIG[pathname];
   const searchPlaceholder = searchPageConfig?.placeholder;
@@ -154,11 +176,25 @@ export function BackOfficeNavbar() {
 
   const handleMockScan = async (value: string) => {
     setIsQrScannerOpen(false);
+    const cleanValue = extractIdFromScannedValue(value);
     try {
-      await http.get(`licenses/${value}/qr-verify`);
-      router.push(`/my-licenses/${value}`);
+      await http.get(`licenses/${cleanValue}/qr-verify`);
+      router.push(`/my-licenses/${cleanValue}?hideVerify=true`);
     } catch {
-      toast.error("ไม่พบใบอนุญาตนี้ กรุณาตรวจสอบ QR Code อีกครั้ง");
+      try {
+        // Fallback: fetch licenses and use the first one
+        const mode = activeJuristicId ? "juristic" : "personal";
+        const list = await http.get<any[]>(`my/licenses?mode=${mode}`);
+        if (list && list.length > 0) {
+          const fallbackId = list[0].id;
+          toast.info("ไม่พบรหัสใบอนุญาตนี้ในระบบ จึงแสดงใบอนุญาตตัวอย่างแทน");
+          router.push(`/my-licenses/${fallbackId}?hideVerify=true`);
+        } else {
+          toast.error("ไม่พบใบอนุญาตนี้ และไม่มีข้อมูลตัวอย่างในระบบ");
+        }
+      } catch (err) {
+        toast.error("ไม่พบใบอนุญาตนี้ กรุณาตรวจสอบ QR Code อีกครั้ง");
+      }
     }
   };
 
@@ -277,9 +313,16 @@ export function BackOfficeNavbar() {
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xl font-semibold leading-tight">
-                ยินดีต้อนรับ, {user?.fullName || "ผู้เข้าใช้งาน"}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-semibold leading-tight">
+                  ยินดีต้อนรับ, {user?.fullName || "ผู้เข้าใช้งาน"}
+                </p>
+                {isStaff && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-100 text-teal-700 border border-teal-200 shrink-0">
+                    เจ้าหน้าที่
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-sm text-black/70">
                 {userAgencyName || roleLabel}
               </p>
@@ -357,6 +400,7 @@ export function BackOfficeNavbar() {
         open={isQrScannerOpen}
         onOpenChange={setIsQrScannerOpen}
         onScanMock={handleMockScan}
+        id="navbar-qr-scanner"
       />
     </header>
   );

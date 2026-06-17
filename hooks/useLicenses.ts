@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+export type LicenseStatusUpdate = 'ACTIVE' | 'SUSPENDED' | 'REVOKED' | 'EXPIRED' | 'PENDING';
 import { http } from '@/lib/http';
 import { useAuthStore } from '@/stores/auth';
 
@@ -32,6 +33,18 @@ export function useLicenses() {
     queryFn: async () => {
       const mode = activeJuristicId ? 'juristic' : 'personal';
       return http.get<LicenseResponse[]>(`my/licenses?mode=${mode}`);
+    },
+  });
+}
+
+export function useUpdateLicenseStatus(licenseId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: { status: LicenseStatusUpdate; note?: string }) =>
+      http.patch(`licenses/${licenseId}/status`, dto),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-licenses'] });
+      qc.invalidateQueries({ queryKey: ['license', licenseId] });
     },
   });
 }

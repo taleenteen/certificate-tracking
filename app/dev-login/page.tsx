@@ -47,6 +47,9 @@ export default function DevLoginPage() {
             <Button className="w-full justify-start" variant="outline" onClick={() => handleDevLogin('password', { username: 'public-owner', password: 'password' })}>
               Public (Password)
             </Button>
+            <Button className="w-full justify-start" variant="outline" onClick={() => handleDevLogin('password', { username: 'officer-login', password: 'password' })}>
+              Officer (Password)
+            </Button>
             <Button className="w-full justify-start" variant="outline" onClick={() => handleDevLogin('self', { username: 'admin', password: 'ChangeMe-2026!', totpCode: '000000' })}>
               Admin Self (TOTP)
             </Button>

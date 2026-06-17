@@ -89,7 +89,7 @@ export function EstablishmentPageView() {
                     label: "นำทาง",
                     href: item.latitude && item.longitude
                       ? `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`
-                      : "/map",
+                      : "/e-map",
                     variant: "secondary",
                   }}
                   primaryAction={{

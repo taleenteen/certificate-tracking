@@ -24,6 +24,7 @@ export interface CreateUserPayload {
   roles: string[];
   agencyId: string;
   zoneIds: string[];
+  initialPassword?: string;
 }
 
 const QUERY_KEY = 'users';

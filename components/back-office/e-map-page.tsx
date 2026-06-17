@@ -124,7 +124,7 @@ export function EMapPageView() {
           initialViewState={{
             longitude: THAILAND_CENTER[0],
             latitude: THAILAND_CENTER[1],
-            zoom: 5.2,
+            zoom: 11,
           }}
           mapboxAccessToken={MAPBOX_TOKEN}
           mapStyle="mapbox://styles/mapbox/navigation-day-v1"

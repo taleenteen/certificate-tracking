@@ -30,7 +30,7 @@ export function useLogin() {
         juristicRole: data.juristicRole,
       });
       const roles: string[] = data.user?.roles ?? [];
-      if (roles.includes('super_admin')) router.push('/super-admin/dashboard');
+      if (roles.includes('super_admin')) router.push('/dashboard');
       else if (roles.includes('admin')) router.push('/admin/inspections');
       else router.push('/home');
     },

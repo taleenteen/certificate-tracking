@@ -17,7 +17,14 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { AnimatedFolder } from "../shared/animated-folder";
 import { useAuthStore } from "@/stores/auth";
-import { useDashboard, primaryRole, type InspectorDashboardResponse, type SupervisorDashboardResponse, type AdminDashboardResponse } from "@/hooks/useDashboard";
+import { useAgencies } from "@/hooks/useAgencies";
+import {
+  useDashboard,
+  primaryRole,
+  type InspectorDashboardResponse,
+  type SupervisorDashboardResponse,
+  type AdminDashboardResponse,
+} from "@/hooks/useDashboard";
 import { useLicenses } from "@/hooks/useLicenses";
 import dayjs from "dayjs";
 
@@ -82,6 +89,8 @@ const inspectionTrendConfig = {
 
 export function HomeDashboard() {
   const user = useAuthStore((s) => s.user);
+  const { data: agencies = [] } = useAgencies();
+  const userAgencyName = agencies.find((a) => a.id === user?.agencyId)?.nameTh;
   const [selectedTrendRange, setSelectedTrendRange] =
     useState<(typeof trendRanges)[number]["value"]>("month");
 
@@ -90,17 +99,23 @@ export function HomeDashboard() {
 
   const role = primaryRole(user?.roles ?? []);
 
-  const summaryStats = useMemo<{ label: string; value: number; color: string }[]>(() => {
-    if (role === 'inspector' && dashboardData) {
+  const summaryStats = useMemo<
+    { label: string; value: number; color: string }[]
+  >(() => {
+    if (role === "inspector" && dashboardData) {
       const d = dashboardData as InspectorDashboardResponse;
       return [
         { label: "รอตรวจ", value: d.pendingTasks, color: "bg-amber-400" },
         { label: "กำลังตรวจ", value: d.inProgress, color: "bg-blue-400" },
         { label: "ส่งคืน", value: d.returnedToFix, color: "bg-rose-400" },
-        { label: "เดือนนี้", value: d.completedThisMonth, color: "bg-emerald-500" },
+        {
+          label: "เดือนนี้",
+          value: d.completedThisMonth,
+          color: "bg-emerald-500",
+        },
       ];
     }
-    if (role === 'supervisor' && dashboardData) {
+    if (role === "supervisor" && dashboardData) {
       const d = dashboardData as SupervisorDashboardResponse;
       const c = d.taskCountsByStatus;
       return [
@@ -110,7 +125,7 @@ export function HomeDashboard() {
         { label: "เสร็จสิ้น", value: c.APPROVED ?? 0, color: "bg-emerald-500" },
       ];
     }
-    if (role === 'admin' && dashboardData) {
+    if (role === "admin" && dashboardData) {
       const d = dashboardData as AdminDashboardResponse;
       const c = d.licenseCounts;
       return [
@@ -125,10 +140,36 @@ export function HomeDashboard() {
     if (licenses) {
       const now = dayjs();
       return [
-        { label: "ปกติ", value: licenses.filter(l => l.status === 'ACTIVE' && !dayjs(l.expiresAt).isBefore(now.add(30, 'day'))).length, color: "bg-emerald-500" },
-        { label: "ใกล้หมดอายุ", value: licenses.filter(l => l.status === 'ACTIVE' && dayjs(l.expiresAt).isBefore(now.add(30, 'day'))).length, color: "bg-amber-400" },
-        { label: "หมดอายุ", value: licenses.filter(l => l.status === 'EXPIRED').length, color: "bg-rose-400" },
-        { label: "ถูกระงับ", value: licenses.filter(l => l.status === 'SUSPENDED' || l.status === 'REVOKED').length, color: "bg-violet-500" },
+        {
+          label: "ปกติ",
+          value: licenses.filter(
+            (l) =>
+              l.status === "ACTIVE" &&
+              !dayjs(l.expiresAt).isBefore(now.add(30, "day")),
+          ).length,
+          color: "bg-emerald-500",
+        },
+        {
+          label: "ใกล้หมดอายุ",
+          value: licenses.filter(
+            (l) =>
+              l.status === "ACTIVE" &&
+              dayjs(l.expiresAt).isBefore(now.add(30, "day")),
+          ).length,
+          color: "bg-amber-400",
+        },
+        {
+          label: "หมดอายุ",
+          value: licenses.filter((l) => l.status === "EXPIRED").length,
+          color: "bg-rose-400",
+        },
+        {
+          label: "ถูกระงับ",
+          value: licenses.filter(
+            (l) => l.status === "SUSPENDED" || l.status === "REVOKED",
+          ).length,
+          color: "bg-violet-500",
+        },
       ];
     }
     return [
@@ -142,7 +183,8 @@ export function HomeDashboard() {
   const totalSummaryStats = summaryStats.reduce((t, i) => t + i.value, 0);
 
   const myLicensesCount = licenses?.length ?? 0;
-  const expiredLicensesCount = licenses?.filter(l => l.status === 'EXPIRED').length ?? 0;
+  const expiredLicensesCount =
+    licenses?.filter((l) => l.status === "EXPIRED").length ?? 0;
 
   const activeInspectionTrendData = useMemo(
     () => [...inspectionTrendData[selectedTrendRange]],
@@ -159,14 +201,17 @@ export function HomeDashboard() {
 
   return (
     <main className="mx-auto w-full max-w-[430px] overflow-x-hidden bg-[#f4f5f7] text-slate-900 md:max-w-none">
-      <section className="bg-[#114e4b] px-4 pb-6 pt-5 text-white sm:px-6">
-        <div className="flex items-start justify-between gap-4 mb-4">
+      <section className="bg-white px-4 pb-6 pt-5 text-black sm:px-6">
+        {/* <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <p className="text-xl font-semibold leading-tight">
               ยินดีต้อนรับ, {user?.fullName || "ผู้เข้าใช้งาน"}
             </p>
-            <p className="mt-1 text-sm text-white/70">
-              {user?.agency || (user?.roles?.includes('public') ? "ผู้ประกอบการ/ประชาชน" : "เจ้าหน้าที่")}
+            <p className="mt-1 text-sm text-black/70">
+              {userAgencyName ||
+                (user?.roles?.includes("public")
+                  ? "ผู้ประกอบการ/ประชาชน"
+                  : "เจ้าหน้าที่")}
             </p>
           </div>
 
@@ -175,7 +220,7 @@ export function HomeDashboard() {
               <Search className="h-4 w-4" />
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="space-y-3">
           <Link
@@ -211,9 +256,10 @@ export function HomeDashboard() {
           <div className="grid grid-cols-[1.4fr_1fr] items-center gap-2">
             <div>
               <p className="max-w-[180px] text-xl font-semibold leading-8">
-                ตรวจสอบใบอนุญาต ได้อย่างมั่นใจ
+                ตรวจสอบใบอนุญาต{" "}
+                <span className="text-green-700">ได้อย่างมั่นใจ</span>
               </p>
-              <p className="mt-3 text-sm leading-5 text-white/75">
+              <p className="mt-3 text-sm leading-5 text-black/75">
                 ค้นหา และดูสถานะใบอนุญาตทุกฉบับ สถานประกอบการได้ง่ายและรวดเร็ว
               </p>
             </div>
@@ -270,13 +316,17 @@ export function HomeDashboard() {
             <CardContent className="space-y-5 p-4">
               <div>
                 <h3 className="text-lg font-semibold text-[#145b57]">
-                  {role === 'inspector' || role === 'supervisor' ? "สถานะงานตรวจสอบ" : "สถานะใบอนุญาตที่ตรวจ"}
+                  {role === "inspector" || role === "supervisor"
+                    ? "สถานะงานตรวจสอบ"
+                    : "สถานะใบอนุญาตที่ตรวจ"}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   <span className="text-3xl font-semibold text-slate-900">
                     {totalSummaryStats}
                   </span>{" "}
-                  {role === 'inspector' || role === 'supervisor' ? "งาน" : "ใบอนุญาต"}
+                  {role === "inspector" || role === "supervisor"
+                    ? "งาน"
+                    : "ใบอนุญาต"}
                 </p>
               </div>
 

@@ -7,7 +7,7 @@ interface ProfileResponse {
   id: string;
   displayName: string;
   roles: string[];
-  agency: string | null;
+  agencyId: string | null;
   citizenIdVerified: boolean;
   citizenIdLast4: string | null;
   primaryChannel: string;
@@ -25,7 +25,7 @@ export function useSessionHydration() {
           id: data.id,
           fullName: data.displayName,
           roles: data.roles,
-          agency: data.agency,
+          agencyId: data.agencyId,
         },
       });
     },

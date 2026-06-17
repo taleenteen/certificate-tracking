@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import type { AgencyRecord } from '@/hooks/useAgencies';
 import {
   Select,
   SelectContent,
@@ -24,10 +24,12 @@ export type MasterDataCategory = 'agencies' | 'licenseTypes' | 'locations' | 'st
 
 export interface AgencyItem {
   id?: string;
-  agencyCode: string;
-  name: string;
-  licenseTypes: string[];
-  adminCount: number;
+  code: string;
+  nameTh: string;
+  nameEn?: string;
+  dataSource: 'API' | 'MANUAL_IMPORT';
+  apiStatus: 'CONNECTED' | 'MANUAL' | 'DISCONNECTED';
+  isActive?: boolean;
 }
 
 export interface LicenseTypeItem {
@@ -35,7 +37,7 @@ export interface LicenseTypeItem {
   name: string;
   code: string;
   duration: string;
-  agency: string;
+  agencyId: string;
   law: string;
 }
 
@@ -62,7 +64,7 @@ interface MasterDataModalProps {
   category: MasterDataCategory;
   item?: any | null;
   onSave: (item: any) => void;
-  existingAgencies?: string[];
+  agencies?: AgencyRecord[];
   existingLicenseTypes?: string[];
 }
 
@@ -72,22 +74,24 @@ export function MasterDataModal({
   category,
   item,
   onSave,
-  existingAgencies = ['DIW', 'ACFS', 'FDA', 'DBD', 'MOL'],
-  existingLicenseTypes = ['ร.ง.4', 'วัตถุอันตราย', 'ใบอนุญาตผลิต', 'ใบอนุญาตนำเข้า', 'GAP/HACCP', 'ใบสำคัญอาหาร', 'ใบทะเบียนพาณิชย์'],
+  agencies = [],
+  existingLicenseTypes = [],
 }: MasterDataModalProps) {
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   // 1. Agency form states
   const [agencyCode, setAgencyCode] = React.useState('');
-  const [agencyName, setAgencyName] = React.useState('');
-  const [agencyLicenses, setAgencyLicenses] = React.useState<string[]>([]);
-  const [agencyAdmins, setAgencyAdmins] = React.useState<number>(0);
+  const [agencyNameTh, setAgencyNameTh] = React.useState('');
+  const [agencyNameEn, setAgencyNameEn] = React.useState('');
+  const [agencyDataSource, setAgencyDataSource] = React.useState<'API' | 'MANUAL_IMPORT'>('MANUAL_IMPORT');
+  const [agencyApiStatus, setAgencyApiStatus] = React.useState<'CONNECTED' | 'MANUAL' | 'DISCONNECTED'>('MANUAL');
+  const [agencyIsActive, setAgencyIsActive] = React.useState(true);
 
   // 2. License type states
   const [licenseName, setLicenseName] = React.useState('');
   const [licenseCode, setLicenseCode] = React.useState('');
   const [licenseDuration, setLicenseDuration] = React.useState('');
-  const [licenseAgency, setLicenseAgency] = React.useState('');
+  const [licenseAgencyId, setLicenseAgencyId] = React.useState('');
   const [licenseLaw, setLicenseLaw] = React.useState('');
 
   // 3. Location states
@@ -108,15 +112,17 @@ export function MasterDataModal({
     if (open) {
       setErrors({});
       if (category === 'agencies') {
-        setAgencyCode(item?.agencyCode || '');
-        setAgencyName(item?.name || '');
-        setAgencyLicenses(item?.licenseTypes || []);
-        setAgencyAdmins(item?.adminCount || 0);
+        setAgencyCode(item?.code || '');
+        setAgencyNameTh(item?.nameTh || '');
+        setAgencyNameEn(item?.nameEn || '');
+        setAgencyDataSource(item?.dataSource || 'MANUAL_IMPORT');
+        setAgencyApiStatus(item?.apiStatus || 'MANUAL');
+        setAgencyIsActive(item?.isActive !== undefined ? item.isActive : true);
       } else if (category === 'licenseTypes') {
         setLicenseName(item?.name || '');
         setLicenseCode(item?.code || '');
         setLicenseDuration(item?.duration || '');
-        setLicenseAgency(item?.agency || existingAgencies[0] || '');
+        setLicenseAgencyId(item?.agencyId || agencies[0]?.id || '');
         setLicenseLaw(item?.law || '');
       } else if (category === 'locations') {
         setLocCode(item?.code || '');
@@ -133,18 +139,12 @@ export function MasterDataModal({
     }
   }, [open, category, item]);
 
-  const handleLicenseToggle = (lic: string) => {
-    setAgencyLicenses((prev) =>
-      prev.includes(lic) ? prev.filter((x) => x !== lic) : [...prev, lic]
-    );
-  };
-
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
     if (category === 'agencies') {
       if (!agencyCode.trim()) newErrors.agencyCode = 'กรุณากรอกรหัสหน่วยงาน';
-      if (!agencyName.trim()) newErrors.agencyName = 'กรุณากรอกชื่อหน่วยงาน';
+      if (!agencyNameTh.trim()) newErrors.agencyNameTh = 'กรุณากรอกชื่อหน่วยงาน';
     } else if (category === 'licenseTypes') {
       if (!licenseName.trim()) newErrors.licenseName = 'กรุณากรอกชื่อประเภทใบอนุญาต';
       if (!licenseCode.trim()) newErrors.licenseCode = 'กรุณากรอกรหัส';
@@ -171,10 +171,12 @@ export function MasterDataModal({
     if (category === 'agencies') {
       payload = {
         ...payload,
-        agencyCode,
-        name: agencyName,
-        licenseTypes: agencyLicenses,
-        adminCount: Number(agencyAdmins),
+        code: agencyCode,
+        nameTh: agencyNameTh,
+        nameEn: agencyNameEn || undefined,
+        dataSource: agencyDataSource,
+        apiStatus: agencyApiStatus,
+        isActive: agencyIsActive,
       };
     } else if (category === 'licenseTypes') {
       payload = {
@@ -182,7 +184,7 @@ export function MasterDataModal({
         name: licenseName,
         code: licenseCode,
         duration: licenseDuration,
-        agency: licenseAgency,
+        agencyId: licenseAgencyId,
         law: licenseLaw,
       };
     } else if (category === 'locations') {
@@ -236,77 +238,77 @@ export function MasterDataModal({
         <form onSubmit={handleSubmit} className="space-y-[16px] text-left">
           {category === 'agencies' && (
             <>
-              {/* Agency Form */}
               <div className="space-y-1">
                 <Label htmlFor="agencyCode" className="text-[13px] font-semibold text-main">
-                  รหัสหน่วยงาน (agency_code) <span className="text-semantic-critical">*</span>
+                  รหัสหน่วยงาน (code) <span className="text-semantic-critical">*</span>
+                  {item?.id && <span className="ml-1 text-[11px] text-placeholder font-normal">(แก้ไขไม่ได้)</span>}
                 </Label>
                 <Input
                   id="agencyCode"
                   placeholder="เช่น DIW"
                   value={agencyCode}
-                  onChange={(e) => setAgencyCode(e.target.value)}
+                  onChange={(e) => setAgencyCode(e.target.value.toUpperCase())}
+                  disabled={!!item?.id}
                   className={errors.agencyCode ? 'border-critical' : 'border-gray-200'}
                 />
-                {errors.agencyCode && (
-                  <p className="text-[11px] text-semantic-critical font-medium">{errors.agencyCode}</p>
-                )}
+                {errors.agencyCode && <p className="text-[11px] text-semantic-critical font-medium">{errors.agencyCode}</p>}
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="agencyName" className="text-[13px] font-semibold text-main">
-                  ชื่อหน่วยงาน <span className="text-semantic-critical">*</span>
+                <Label htmlFor="agencyNameTh" className="text-[13px] font-semibold text-main">
+                  ชื่อหน่วยงาน (ภาษาไทย) <span className="text-semantic-critical">*</span>
                 </Label>
                 <Input
-                  id="agencyName"
+                  id="agencyNameTh"
                   placeholder="เช่น กรมโรงงานอุตสาหกรรม"
-                  value={agencyName}
-                  onChange={(e) => setAgencyName(e.target.value)}
-                  className={errors.agencyName ? 'border-critical' : 'border-gray-200'}
+                  value={agencyNameTh}
+                  onChange={(e) => setAgencyNameTh(e.target.value)}
+                  className={errors.agencyNameTh ? 'border-critical' : 'border-gray-200'}
                 />
-                {errors.agencyName && (
-                  <p className="text-[11px] text-semantic-critical font-medium">{errors.agencyName}</p>
-                )}
+                {errors.agencyNameTh && <p className="text-[11px] text-semantic-critical font-medium">{errors.agencyNameTh}</p>}
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-[13px] font-semibold text-main">
-                  ประเภทใบอนุญาตที่รับผิดชอบ (เลือกได้หลายรายการ)
-                </Label>
-                <div className="grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-md bg-fuji-light/20 max-h-[140px] overflow-y-auto">
-                  {existingLicenseTypes.map((lic) => (
-                    <div key={lic} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`lic-${lic}`}
-                        checked={agencyLicenses.includes(lic)}
-                        onCheckedChange={() => handleLicenseToggle(lic)}
-                        className="border-gray-200 data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary"
-                      />
-                      <Label
-                        htmlFor={`lic-${lic}`}
-                        className="text-[12px] font-medium text-main cursor-pointer select-none"
-                      >
-                        {lic}
-                      </Label>
-                    </div>
-                  ))}
+              <div className="space-y-1">
+                <Label htmlFor="agencyNameEn" className="text-[13px] font-semibold text-main">ชื่อหน่วยงาน (ภาษาอังกฤษ)</Label>
+                <Input id="agencyNameEn" placeholder="e.g. Department of Industrial Works" value={agencyNameEn} onChange={(e) => setAgencyNameEn(e.target.value)} className="border-gray-200" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[13px] font-semibold text-main">แหล่งข้อมูล</Label>
+                  <Select value={agencyDataSource} onValueChange={(v: any) => setAgencyDataSource(v)}>
+                    <SelectTrigger className="w-full border-gray-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="API">API (Real-time)</SelectItem>
+                      <SelectItem value="MANUAL_IMPORT">CSV Import</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[13px] font-semibold text-main">สถานะ API</Label>
+                  <Select value={agencyApiStatus} onValueChange={(v: any) => setAgencyApiStatus(v)}>
+                    <SelectTrigger className="w-full border-gray-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CONNECTED">เชื่อมต่อแล้ว</SelectItem>
+                      <SelectItem value="MANUAL">Manual</SelectItem>
+                      <SelectItem value="DISCONNECTED">ขาดการเชื่อมต่อ</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="agencyAdmins" className="text-[13px] font-semibold text-main">
-                  จำนวน Admin ที่ดูแล
-                </Label>
-                <Input
-                  id="agencyAdmins"
-                  type="number"
-                  placeholder="0"
-                  value={agencyAdmins}
-                  onChange={(e) => setAgencyAdmins(Number(e.target.value))}
-                  className="border-gray-200"
-                  min={0}
-                />
-              </div>
+              {item?.id && (
+                <div className="space-y-1">
+                  <Label className="text-[13px] font-semibold text-main">สถานะการใช้งาน</Label>
+                  <Select value={agencyIsActive ? 'true' : 'false'} onValueChange={(v) => setAgencyIsActive(v === 'true')}>
+                    <SelectTrigger className="w-full border-gray-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </>
           )}
 
@@ -367,14 +369,14 @@ export function MasterDataModal({
                 <Label htmlFor="licenseAgency" className="text-[13px] font-semibold text-main">
                   หน่วยงานที่รับผิดชอบ
                 </Label>
-                <Select value={licenseAgency} onValueChange={setLicenseAgency}>
+                <Select value={licenseAgencyId} onValueChange={setLicenseAgencyId}>
                   <SelectTrigger id="licenseAgency" className="w-full border-gray-200">
                     <SelectValue placeholder="เลือกหน่วยงาน" />
                   </SelectTrigger>
                   <SelectContent>
-                    {existingAgencies.map((age) => (
-                      <SelectItem key={age} value={age}>
-                        {age}
+                    {agencies.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.code} — {a.nameTh}
                       </SelectItem>
                     ))}
                   </SelectContent>

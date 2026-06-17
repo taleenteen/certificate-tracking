@@ -11,133 +11,98 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Plus } from 'lucide-react';
-import { AdminFormModal, AdminAccount } from './admin-form-modal';
-
-const INITIAL_ADMINS: AdminAccount[] = [
-  {
-    id: '1',
-    fullName: 'สมชาย วงศ์ทอง',
-    email: 'somchai@diw.go.th',
-    phone: '0812345678',
-    czpUserId: 'CZP-00123',
-    agencies: ['DIW'],
-    status: 'Active',
-    createdAt: '01/03/2568',
-  },
-  {
-    id: '2',
-    fullName: 'วิภา รัตนสุข',
-    email: 'wipa@acfs.go.th',
-    phone: '0898765432',
-    czpUserId: 'CZP-00456',
-    agencies: ['ACFS', 'DIW'],
-    status: 'Active',
-    createdAt: '15/03/2568',
-  },
-  {
-    id: '3',
-    fullName: 'ประสิทธิ์ ดีงาม',
-    email: 'prasit@fda.moph.go.th',
-    phone: '0855554444',
-    czpUserId: 'CZP-00789',
-    agencies: ['FDA'],
-    status: 'Inactive',
-    createdAt: '20/03/2568',
-  },
-  {
-    id: '4',
-    fullName: 'นภา สุขใจ',
-    email: 'napa@dbd.go.th',
-    phone: '0833332222',
-    czpUserId: 'CZP-00321',
-    agencies: ['DBD'],
-    status: 'Active',
-    createdAt: '01/04/2568',
-  },
-  {
-    id: '5',
-    fullName: 'อรุณ มาลัย',
-    email: 'aroon@mol.go.th',
-    phone: '0822221111',
-    czpUserId: 'CZP-00654',
-    agencies: ['MOL'],
-    status: 'Active',
-    createdAt: '10/04/2568',
-  },
-];
+import { Search, Plus, RefreshCw } from 'lucide-react';
+import { useUsers, useCreateUser, useSuspendUser, type SystemUserSummary } from '@/hooks/useUsers';
+import { useAgencies } from '@/hooks/useAgencies';
+import { toast } from 'sonner';
+import { AdminFormModal, type AdminFormData } from './admin-form-modal';
 
 export function AdminAccountsTable() {
-  const [admins, setAdmins] = React.useState<AdminAccount[]>(INITIAL_ADMINS);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [agencyFilter, setAgencyFilter] = React.useState('ALL');
   const [statusFilter, setStatusFilter] = React.useState('ALL');
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [editingAdmin, setEditingAdmin] = React.useState<AdminAccount | null>(null);
+  const { data: users = [], isLoading, isError, refetch } = useUsers({
+    q: searchQuery || undefined,
+    role: 'admin',
+  });
+  const { data: agencies = [] } = useAgencies();
 
-  // Generate Thai Buddhist Year Date String (e.g. 17/06/2569)
-  const getThaiDateString = () => {
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear() + 543;
+  const createUser = useCreateUser();
+
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<SystemUserSummary | null>(null);
+
+  const handleCreateNew = () => {
+    setEditingUser(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (user: SystemUserSummary) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (data: AdminFormData) => {
+    if (editingUser) {
+      // Edit is not implemented in v1 (would need PATCH /users/:id)
+      toast.info('การแก้ไขบัญชีทำผ่าน PATCH /users/:id/roles และ /agency แยกกัน');
+      return;
+    }
+    createUser.mutate(
+      {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        roles: ['admin'],
+        agencyId: data.agencyId,
+        zoneIds: [],
+      },
+      {
+        onSuccess: () => {
+          toast.success('สร้างบัญชี Admin สำเร็จ');
+          setIsModalOpen(false);
+        },
+        onError: (err: any) => {
+          toast.error(err?.message ?? 'ไม่สามารถสร้างบัญชีได้');
+        },
+      },
+    );
+  };
+
+  const filteredUsers = users.filter((u) => {
+    const matchesAgency = agencyFilter === 'ALL' || u.agencyId === agencyFilter;
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      (statusFilter === 'Active' ? u.isActive : !u.isActive);
+    return matchesAgency && matchesStatus;
+  });
+
+  const formatDate = (iso: string | null) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear() + 543;
     return `${day}/${month}/${year}`;
   };
 
-  const handleCreateNew = () => {
-    setEditingAdmin(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEdit = (admin: AdminAccount) => {
-    setEditingAdmin(admin);
-    setIsModalOpen(true);
-  };
-
-  const handleSave = (savedAdmin: AdminAccount) => {
-    if (savedAdmin.id) {
-      // Editing
-      setAdmins((prev) =>
-        prev.map((item) => (item.id === savedAdmin.id ? savedAdmin : item))
-      );
-    } else {
-      // Creating
-      const newAdmin: AdminAccount = {
-        ...savedAdmin,
-        id: String(Date.now()),
-        createdAt: getThaiDateString(),
-      };
-      setAdmins((prev) => [...prev, newAdmin]);
-    }
-  };
-
-  // Filter logic
-  const filteredAdmins = admins.filter((admin) => {
-    // Search filter
-    const matchesSearch =
-      admin.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      admin.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      admin.czpUserId.toLowerCase().includes(searchQuery.toLowerCase());
-
-    // Agency filter
-    const matchesAgency =
-      agencyFilter === 'ALL' || admin.agencies.includes(agencyFilter);
-
-    // Status filter
-    const matchesStatus =
-      statusFilter === 'ALL' || admin.status === statusFilter;
-
-    return matchesSearch && matchesAgency && matchesStatus;
-  });
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[200px] gap-3">
+        <p className="text-[13px] text-placeholder">โหลดข้อมูลไม่สำเร็จ</p>
+        <button onClick={() => refetch()} className="text-[13px] font-semibold text-brand-primary hover:underline">
+          ลองใหม่
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-[16px]">
       {/* Top Filter and Actions Row */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-[12px] border border-gray-200 shadow-smooth-low">
         <div className="flex flex-wrap gap-2.5 items-center flex-1">
-          {/* Search Input */}
           <div className="relative w-full sm:w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-placeholder" />
             <Input
@@ -148,22 +113,18 @@ export function AdminAccountsTable() {
             />
           </div>
 
-          {/* Agency Filter */}
           <Select value={agencyFilter} onValueChange={setAgencyFilter}>
             <SelectTrigger className="w-full sm:w-[180px] border-gray-200 text-[13px] h-9">
               <SelectValue placeholder="หน่วยงานทั้งหมด" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">หน่วยงานทั้งหมด</SelectItem>
-              <SelectItem value="DIW">DIW (กรมโรงงานฯ)</SelectItem>
-              <SelectItem value="ACFS">ACFS (มกอช.)</SelectItem>
-              <SelectItem value="FDA">FDA (อย.)</SelectItem>
-              <SelectItem value="DBD">DBD (กรมพัฒนาธุรกิจฯ)</SelectItem>
-              <SelectItem value="MOL">MOL (กรมแรงงาน)</SelectItem>
+              {agencies.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.code} — {a.nameTh}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
-          {/* Status Filter */}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[180px] border-gray-200 text-[13px] h-9">
               <SelectValue placeholder="สถานะทั้งหมด" />
@@ -176,7 +137,6 @@ export function AdminAccountsTable() {
           </Select>
         </div>
 
-        {/* Create Button */}
         <Button
           onClick={handleCreateNew}
           className="bg-brand-primary hover:bg-brand-primary/95 text-white rounded-circle px-[18px] py-2 text-[13px] font-semibold flex items-center justify-center gap-1.5 shadow-smooth-low h-9"
@@ -189,90 +149,62 @@ export function AdminAccountsTable() {
       {/* Main Table Card */}
       <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low overflow-hidden bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
+          <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="bg-fuji-light/30 border-b border-gray-200">
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">
-                  ชื่อ-นามสกุล
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[240px]">
-                  อีเมล
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[150px]">
-                  czp_user_id
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[200px]">
-                  หน่วยงานในสังกัด
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">
-                  สถานะ
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[130px]">
-                  วันที่สร้าง
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[100px]">
-                  จัดการ
-                </th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">ชื่อ-นามสกุล</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[240px]">อีเมล / ชื่อผู้ใช้</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[130px]">เลขบัตร (ท้าย 4 หลัก)</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">หน่วยงาน</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">สถานะ</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[130px]">เข้าสู่ระบบล่าสุด</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder text-center w-[100px]">จัดการ</th>
               </tr>
             </thead>
             <tbody>
-              {filteredAdmins.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-[16px] py-[32px] text-center text-placeholder text-[13px]">
+                    <RefreshCw className="animate-spin size-4 inline-block mr-2" />
+                    กำลังโหลด...
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-[16px] py-[32px] text-center text-placeholder text-[13px]">
                     ไม่พบข้อมูลบัญชี Admin
                   </td>
                 </tr>
               ) : (
-                filteredAdmins.map((row) => (
+                filteredUsers.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light hover:bg-fuji-light/10 transition-colors">
-                    {/* ชื่อ-นามสกุล */}
-                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-main">
-                      {row.fullName}
-                    </td>
-
-                    {/* อีเมล */}
+                    <td className="px-[16px] py-[12px] text-[13px] font-bold text-main">{row.fullName}</td>
                     <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium font-mono">
-                      {row.email}
+                      {row.email ?? row.username ?? '—'}
                     </td>
-
-                    {/* czp_user_id */}
                     <td className="px-[16px] py-[12px] text-[13px] text-main font-bold font-mono">
-                      {row.czpUserId}
+                      {row.citizenIdLast4 ? `…${row.citizenIdLast4}` : '—'}
                     </td>
-
-                    {/* หน่วยงานในสังกัด */}
                     <td className="px-[16px] py-[12px]">
-                      <div className="flex flex-wrap gap-[4px] items-center">
-                        {row.agencies.map((agency) => (
-                          <span
-                            key={agency}
-                            className="bg-sky-bright text-sky-dark border border-sky-light rounded-[4px] text-[11px] px-2 py-0.5 font-bold font-mono leading-tight"
-                          >
-                            {agency}
+                      {row.agencyId ? (() => {
+                        const ag = agencies.find((a) => a.id === row.agencyId);
+                        return (
+                          <span className="bg-sky-bright text-sky-dark border border-sky-light rounded-[4px] text-[11px] px-2 py-0.5 font-bold font-mono leading-tight">
+                            {ag?.code ?? row.agencyId.slice(0, 8)}
                           </span>
-                        ))}
-                      </div>
+                        );
+                      })() : '—'}
                     </td>
-
-                    {/* สถานะ */}
                     <td className="px-[16px] py-[12px]">
-                      <span
-                        className={`inline-block px-[8px] py-[2px] rounded-[4px] text-[11px] font-bold leading-tight ${
-                          row.status === 'Active'
-                            ? 'bg-[#d0fae5] text-[#007a55]'
-                            : 'bg-fuji-light text-placeholder'
-                        }`}
-                      >
-                        {row.status}
+                      <span className={`inline-block px-[8px] py-[2px] rounded-[4px] text-[11px] font-bold leading-tight ${
+                        row.isActive ? 'bg-[#d0fae5] text-[#007a55]' : 'bg-fuji-light text-placeholder'
+                      }`}>
+                        {row.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-
-                    {/* วันที่สร้าง */}
                     <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium">
-                      {row.createdAt}
+                      {formatDate(row.lastLoginAt)}
                     </td>
-
-                    {/* จัดการ */}
                     <td className="px-[16px] py-[12px] text-center">
                       <button
                         onClick={() => handleEdit(row)}
@@ -289,24 +221,23 @@ export function AdminAccountsTable() {
         </div>
       </Card>
 
-      {/* Info Tip Box matching the bottom box in screenshot */}
       <div className="bg-[#e6f4ff]/40 border border-[#91caff]/40 rounded-[12px] p-[16px] text-left">
         <h4 className="text-[13px] font-bold text-[#0958d9] mb-1.5">
-          ข้อมูลคำแนะนำสำหรับการใช้งาน (Modal เพิ่ม/แก้ไขบัญชี Admin)
+          ข้อมูลบัญชี Admin (ข้อมูลจริงจากระบบ)
         </h4>
         <ul className="list-disc pl-5 text-[12px] text-[#4a5565] space-y-1">
-          <li><strong>ยืนยันตัวตน:</strong> ข้อมูล ชื่อ-นามสกุล, อีเมล, และเบอร์โทร จะได้รับการยืนยันและดึง czp_user_id จากระบบ mToken</li>
-          <li><strong>หน่วยงานในสังกัด:</strong> สนับสนุนการเลือกแบบ multi-select (สามารถมอบหมายให้ดูแลได้มากกว่า 1 หน่วยงาน เช่น DIW และ มกอช. พร้อมกัน)</li>
-          <li><strong>สถานะการใช้งาน:</strong> บัญชีจะสามารถสลับสถานะการเข้าใช้งานได้ระหว่าง Active และ Inactive</li>
+          <li><strong>สิทธิ์ Super Admin:</strong> สามารถสร้าง/แก้ไขบัญชี Admin ของทุกหน่วยงานได้</li>
+          <li><strong>หน่วยงาน:</strong> หน่วยงานที่รองรับบริหารจัดการได้ที่ Master Data → Agencies (1 บัญชีต่อ 1 หน่วยงาน)</li>
+          <li><strong>สถานะ:</strong> สามารถระงับบัญชีผ่าน PATCH /users/:id/suspend</li>
         </ul>
       </div>
 
-      {/* Admin Form Modal */}
       <AdminFormModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        admin={editingAdmin}
+        user={editingUser}
         onSave={handleSave}
+        isSaving={createUser.isPending}
       />
     </div>
   );

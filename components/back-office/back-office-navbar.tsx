@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/stores/auth";
 import { useLogout } from "@/hooks/useAuth";
+import { useAgencies } from "@/hooks/useAgencies";
 import { http } from "@/lib/http";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +94,8 @@ export function BackOfficeNavbar() {
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
+  const { data: agencies = [] } = useAgencies();
+  const userAgencyName = agencies.find((a) => a.id === user?.agencyId)?.nameTh;
 
   const searchPageConfig = SEARCH_PAGE_CONFIG[pathname];
   const searchPlaceholder = searchPageConfig?.placeholder;
@@ -104,7 +107,9 @@ export function BackOfficeNavbar() {
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
-  const [openPanel, setOpenPanel] = useState<"profile" | "notifications" | null>(null);
+  const [openPanel, setOpenPanel] = useState<
+    "profile" | "notifications" | null
+  >(null);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -172,7 +177,7 @@ export function BackOfficeNavbar() {
           : "ผู้ประกอบการ / ประชาชน";
 
   return (
-    <header className="sticky top-0 z-30 border-white/10 bg-[#114e4b] text-white backdrop-blur">
+    <header className="sticky top-0 z-30 border-white/10 bg-white text-black backdrop-blur">
       <div className="relative mx-auto w-full max-w-6xl px-4 py-3 sm:px-6">
         {searchPlaceholder ? (
           <>
@@ -183,7 +188,7 @@ export function BackOfficeNavbar() {
                 variant="ghost"
                 aria-label="Go back"
                 onClick={() => router.back()}
-                className="h-10 w-10 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                className="h-10 w-10 rounded-full border border-white/15 bg-white/5 text-black hover:bg-white/10 hover:text-black"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -207,7 +212,7 @@ export function BackOfficeNavbar() {
                   >
                     <SlidersHorizontal className="h-4 w-4" />
                     {activeFilterCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#114e4b] px-1 text-[10px] font-semibold text-white">
+                      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#114e4b] px-1 text-[10px] font-semibold text-black">
                         {activeFilterCount}
                       </span>
                     )}
@@ -262,11 +267,11 @@ export function BackOfficeNavbar() {
               variant="ghost"
               aria-label="Go back"
               onClick={() => router.back()}
-              className="h-10 w-10 rounded-full text-white hover:bg-white/10 hover:text-white"
+              className="h-10 w-10 rounded-full text-black hover:bg-white/10 hover:text-black"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-center text-base font-semibold text-white sm:text-[1.125rem]">
+            <h1 className="text-center text-base font-semibold text-black sm:text-[1.125rem]">
               {detailPageTitle}
             </h1>
             <div aria-hidden="true" className="h-10 w-10" />
@@ -277,8 +282,8 @@ export function BackOfficeNavbar() {
               <p className="text-xl font-semibold leading-tight">
                 ยินดีต้อนรับ, {user?.fullName || "ผู้เข้าใช้งาน"}
               </p>
-              <p className="mt-1 text-sm text-white/70">
-                {user?.agency || roleLabel}
+              <p className="mt-1 text-sm text-black/70">
+                {userAgencyName || roleLabel}
               </p>
             </div>
 
@@ -292,13 +297,13 @@ export function BackOfficeNavbar() {
                   aria-label="Notifications"
                   onClick={() => togglePanel("notifications")}
                   className={cn(
-                    "relative h-9 w-9 text-white hover:bg-white/10 hover:text-white",
+                    "relative h-9 w-9 text-black hover:bg-white/10 hover:text-black",
                     openPanel === "notifications" && "bg-white/10",
                   )}
                 >
                   <Bell className="size-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-black">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
@@ -322,7 +327,7 @@ export function BackOfficeNavbar() {
                   aria-label="Profile"
                   onClick={() => togglePanel("profile")}
                   className={cn(
-                    "h-9 w-9 text-white hover:bg-white/10 hover:text-white",
+                    "h-9 w-9 text-black hover:bg-white/10 hover:text-black",
                     openPanel === "profile" && "bg-white/10",
                   )}
                 >
@@ -332,6 +337,7 @@ export function BackOfficeNavbar() {
                 {openPanel === "profile" && (
                   <ProfilePanel
                     user={user}
+                    agencyName={userAgencyName}
                     roleLabel={roleLabel}
                     onNavigate={(href) => {
                       setOpenPanel(null);
@@ -388,7 +394,9 @@ function NotificationsPanel({
         <div>
           <p className="text-sm font-semibold text-slate-900">การแจ้งเตือน</p>
           {unreadCount > 0 && (
-            <p className="text-xs text-slate-500">ยังไม่ได้อ่าน {unreadCount} รายการ</p>
+            <p className="text-xs text-slate-500">
+              ยังไม่ได้อ่าน {unreadCount} รายการ
+            </p>
           )}
         </div>
         {unreadCount > 0 && (
@@ -412,8 +420,12 @@ function NotificationsPanel({
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
               <BellOff className="h-5 w-5" />
             </div>
-            <p className="text-sm font-medium text-slate-700">ไม่มีการแจ้งเตือน</p>
-            <p className="text-xs text-slate-400">การแจ้งเตือนใหม่จะปรากฏที่นี่</p>
+            <p className="text-sm font-medium text-slate-700">
+              ไม่มีการแจ้งเตือน
+            </p>
+            <p className="text-xs text-slate-400">
+              การแจ้งเตือนใหม่จะปรากฏที่นี่
+            </p>
           </div>
         ) : (
           <ul className="divide-y divide-slate-100 px-2 py-1.5">
@@ -431,10 +443,17 @@ function NotificationsPanel({
                   <Bell className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1 pr-4">
-                  <p className={cn("text-sm leading-snug text-slate-900", !n.isRead && "font-medium")}>
+                  <p
+                    className={cn(
+                      "text-sm leading-snug text-slate-900",
+                      !n.isRead && "font-medium",
+                    )}
+                  >
                     {n.title}
                   </p>
-                  <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{n.body}</p>
+                  <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
+                    {n.body}
+                  </p>
                   <p className="mt-1 text-[10px] text-slate-400">
                     {new Date(n.createdAt).toLocaleDateString("th-TH", {
                       day: "numeric",
@@ -456,11 +475,13 @@ function NotificationsPanel({
 
 function ProfilePanel({
   user,
+  agencyName,
   roleLabel,
   onNavigate,
   onLogout,
 }: {
-  user: { fullName: string; roles: string[]; agency?: string | null } | null;
+  user: { fullName: string; roles: string[] } | null;
+  agencyName?: string | null;
   roleLabel: string;
   onNavigate: (href: string) => void;
   onLogout: () => void;
@@ -478,7 +499,7 @@ function ProfilePanel({
     <DropdownCard className="right-0 w-64">
       {/* Avatar + name */}
       <div className="flex flex-col items-center gap-2 px-4 pt-5 pb-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#114e4b] text-lg font-bold text-white shadow-sm">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#114e4b] text-lg font-bold text-black shadow-sm">
           {initials}
         </div>
         <div className="text-center">
@@ -486,8 +507,10 @@ function ProfilePanel({
             {user?.fullName || "ผู้เข้าใช้งาน"}
           </p>
           <p className="text-xs text-slate-500 mt-0.5">{roleLabel}</p>
-          {user?.agency && (
-            <p className="mt-0.5 text-xs text-[#0c6d66] font-medium">{user.agency}</p>
+          {agencyName && (
+            <p className="mt-0.5 text-xs text-[#0c6d66] font-medium">
+              {agencyName}
+            </p>
           )}
         </div>
       </div>
@@ -524,7 +547,13 @@ function ProfilePanel({
 
 // ─── Shared dropdown shell ────────────────────────────────────────────────────
 
-function DropdownCard({ children, className }: { children: ReactNode; className?: string }) {
+function DropdownCard({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div
       className={cn(

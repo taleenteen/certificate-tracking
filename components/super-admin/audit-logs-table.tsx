@@ -11,215 +11,122 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Download, ArrowRight } from 'lucide-react';
+import { Download, ArrowRight, RefreshCw } from 'lucide-react';
+import { useAuditLogs, exportAuditLogsCsv, type AuditLogFilters } from '@/hooks/useAuditLogs';
+import { useAgencies } from '@/hooks/useAgencies';
 
-interface AuditLogEntry {
-  id: string;
-  dateTime: string;
-  agency: string;
-  user: string;
-  target: string;
-  action: string;
-  field: string;
-  oldVal: string;
-  newVal: string;
-}
-
-const INITIAL_LOGS: AuditLogEntry[] = [
-  {
-    id: '1',
-    dateTime: '15/06/2568 09:14',
-    agency: 'DIW',
-    user: 'สมชาย วงศ์ทอง',
-    target: 'บัญชี Admin #12',
-    action: 'สร้างบัญชี',
-    field: 'status',
-    oldVal: '——',
-    newVal: 'Active',
-  },
-  {
-    id: '2',
-    dateTime: '15/06/2568 08:52',
-    agency: 'ACFS',
-    user: 'วิภา รัตนสุข',
-    target: 'ใบอนุญาต #990234',
-    action: 'อนุมัติใบอนุญาต',
-    field: 'status',
-    oldVal: 'รออนุมัติ',
-    newVal: 'อนุมัติ',
-  },
-  {
-    id: '3',
-    dateTime: '15/06/2568 08:30',
-    agency: 'FDA',
-    user: 'อรณิชา เพชรวรสกุล (Super Admin)',
-    target: 'หน่วยงาน FDA',
-    action: 'แก้ไข scope',
-    field: 'license_types',
-    oldVal: 'ใบอนุญาตผลิต',
-    newVal: 'ใบอนุญาตผลิต, ใบสำคัญอาหาร',
-  },
-  {
-    id: '4',
-    dateTime: '14/06/2568 17:45',
-    agency: 'DIW',
-    user: 'สมชาย วงศ์ทอง',
-    target: 'ใบอนุญาต #880011',
-    action: 'ปฏิเสธใบอนุญาต',
-    field: 'status',
-    oldVal: 'รออนุมัติ',
-    newVal: 'ปฏิเสธ',
-  },
-  {
-    id: '5',
-    dateTime: '14/06/2568 16:20',
-    agency: 'DBD',
-    user: 'นภา สุขใจ',
-    target: 'บัญชีเจ้าหน้าที่ #5',
-    action: 'แก้ไขบัญชี',
-    field: 'email',
-    oldVal: 'old@dbd.go.th',
-    newVal: 'new@dbd.go.th',
-  },
-  {
-    id: '6',
-    dateTime: '14/06/2568 15:00',
-    agency: 'ACFS',
-    user: 'อรณิชา เพชรวรสกุล (Super Admin)',
-    target: 'Admin CZP-00456',
-    action: 'เพิ่มหน่วยงาน',
-    field: 'agencies',
-    oldVal: 'ACFS',
-    newVal: 'ACFS, DIW',
-  },
+const ENTITY_TYPES = [
+  'User',
+  'License',
+  'InspectionTask',
+  'Zone',
+  'LicenseType',
+  'SyncLog',
 ];
 
+const roleLabel = (roles: string[]) => {
+  if (roles.includes('super_admin')) return 'Super Admin';
+  if (roles.includes('admin')) return 'Admin';
+  if (roles.includes('supervisor')) return 'Supervisor';
+  if (roles.includes('inspector')) return 'Inspector';
+  return roles.join(', ');
+};
+
+const formatValue = (val: Record<string, unknown> | null): string => {
+  if (!val) return '——';
+  const entries = Object.entries(val)
+    .filter(([k]) => !['id', 'updatedAt', 'createdAt'].includes(k))
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(', ');
+  return entries.length > 80 ? entries.slice(0, 80) + '…' : entries || '——';
+};
+
 export function AuditLogsTable() {
-  const [logs] = React.useState<AuditLogEntry[]>(INITIAL_LOGS);
-  
-  // Filter States
-  const [agencyFilter, setAgencyFilter] = React.useState('ALL');
-  const [userFilter, setUserFilter] = React.useState('');
-  const [actionFilter, setActionFilter] = React.useState('ALL');
-  const [fieldFilter, setFieldFilter] = React.useState('ALL');
+  const [q, setQ] = React.useState('');
+  const [entityType, setEntityType] = React.useState('');
+  const [from, setFrom] = React.useState('');
+  const [to, setTo] = React.useState('');
 
-  // Filter logs logic
-  const filteredLogs = logs.filter((log) => {
-    const matchesAgency = agencyFilter === 'ALL' || log.agency === agencyFilter;
-    const matchesUser = log.user.toLowerCase().includes(userFilter.toLowerCase());
-    const matchesAction = actionFilter === 'ALL' || log.action === actionFilter;
-    const matchesField = fieldFilter === 'ALL' || log.field === fieldFilter;
+  const filters: AuditLogFilters = {
+    q: q || undefined,
+    entityType: entityType || undefined,
+    from: from || undefined,
+    to: to || undefined,
+  };
 
-    return matchesAgency && matchesUser && matchesAction && matchesField;
-  });
+  const { data: logsPage, isLoading, isError, refetch } = useAuditLogs(filters);
+  const logs = logsPage?.data ?? [];
+  const { data: agencies = [] } = useAgencies();
 
-  // Unique lists for dropdowns
-  const uniqueAgencies = Array.from(new Set(logs.map((l) => l.agency)));
-  const uniqueActions = Array.from(new Set(logs.map((l) => l.action)));
-  const uniqueFields = Array.from(new Set(logs.map((l) => l.field)));
-
-  // Premium CSV Exporter (UTF-8 with BOM for correct Thai display in Excel)
-  const handleExportCSV = () => {
-    const headers = ['วันที่-เวลา', 'หน่วยงาน', 'ผู้ใช้งาน', 'บทบาท/เป้าหมาย', 'การกระทำ', 'รายการที่เปลี่ยน', 'ค่าเดิม', 'ค่าใหม่'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredLogs.map((log) => [
-        log.dateTime,
-        log.agency,
-        `"${log.user}"`,
-        `"${log.target}"`,
-        `"${log.action}"`,
-        log.field,
-        `"${log.oldVal}"`,
-        `"${log.newVal}"`,
-      ].join(',')),
-    ].join('\n');
-
-    const blob = new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), csvContent], {
-      type: 'text/csv;charset=utf-8;',
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleString('th-TH', {
+      timeZone: 'Asia/Bangkok',
+      dateStyle: 'short',
+      timeStyle: 'short',
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `audit_logs_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
-  const getTransitionStyle = (field: string, val: string, isNew: boolean) => {
-    if (val === '——') return 'text-disabled';
-    if (field === 'status') {
-      if (val === 'Active' || val === 'อนุมัติ') return 'text-semantic-success font-semibold';
-      if (val === 'Inactive' || val === 'ปฏิเสธ') return 'text-text-critical font-semibold';
-      return isNew ? 'text-main' : 'text-text-critical';
-    }
-    return isNew ? 'text-semantic-success font-medium' : 'text-text-critical font-medium';
-  };
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[200px] gap-3">
+        <p className="text-[13px] text-placeholder">โหลดข้อมูลไม่สำเร็จ</p>
+        <button
+          onClick={() => refetch()}
+          className="text-[13px] font-semibold text-brand-primary hover:underline"
+        >
+          ลองใหม่
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-[16px]">
       {/* Filters & Export Row */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-[12px] border border-gray-200 shadow-smooth-low">
         <div className="flex flex-wrap gap-2.5 items-center flex-1">
-          {/* Agency Dropdown */}
-          <Select value={agencyFilter} onValueChange={setAgencyFilter}>
-            <SelectTrigger className="w-full sm:w-[150px] border-gray-200 text-[13px] h-9">
-              <SelectValue placeholder="หน่วยงานทั้งหมด" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">หน่วยงานทั้งหมด</SelectItem>
-              {uniqueAgencies.map((agency) => (
-                <SelectItem key={agency} value={agency}>
-                  {agency}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* User Input Filter */}
+          {/* User / keyword search */}
           <Input
-            placeholder="ตัวกรอง: ผู้ใช้งาน"
-            value={userFilter}
-            onChange={(e) => setUserFilter(e.target.value)}
-            className="w-full sm:w-[160px] border-gray-200 text-[13px] h-9"
+            placeholder="ค้นหาผู้ใช้งาน / คำสำคัญ"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full sm:w-[200px] border-gray-200 text-[13px] h-9"
           />
 
-          {/* Action Dropdown */}
-          <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="w-full sm:w-[160px] border-gray-200 text-[13px] h-9">
-              <SelectValue placeholder="การกระทำทั้งหมด" />
+          {/* EntityType filter */}
+          <Select value={entityType || 'ALL'} onValueChange={(v) => setEntityType(v === 'ALL' ? '' : v)}>
+            <SelectTrigger className="w-full sm:w-[180px] border-gray-200 text-[13px] h-9">
+              <SelectValue placeholder="ประเภทรายการทั้งหมด" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">การกระทำทั้งหมด</SelectItem>
-              {uniqueActions.map((action) => (
-                <SelectItem key={action} value={action}>
-                  {action}
-                </SelectItem>
+              <SelectItem value="ALL">ประเภทรายการทั้งหมด</SelectItem>
+              {ENTITY_TYPES.map((et) => (
+                <SelectItem key={et} value={et}>{et}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {/* Changed Field Dropdown */}
-          <Select value={fieldFilter} onValueChange={setFieldFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] border-gray-200 text-[13px] h-9">
-              <SelectValue placeholder="รายการที่เปลี่ยนทั้งหมด" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">รายการที่เปลี่ยนทั้งหมด</SelectItem>
-              {uniqueFields.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {f}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Date range: from */}
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="w-full sm:w-[160px] border-gray-200 text-[13px] h-9"
+            title="วันที่เริ่มต้น"
+          />
+
+          {/* Date range: to */}
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="w-full sm:w-[160px] border-gray-200 text-[13px] h-9"
+            title="วันที่สิ้นสุด"
+          />
         </div>
 
-        {/* Export Button */}
         <Button
           variant="outline"
-          onClick={handleExportCSV}
+          onClick={() => exportAuditLogsCsv(filters)}
           className="border-gray-200 text-main hover:bg-fuji-light rounded-square px-4 py-1.5 text-[13px] font-semibold flex items-center justify-center gap-1.5 shadow-smooth-low h-9 cursor-pointer"
         >
           <Download className="size-4" />
@@ -227,86 +134,74 @@ export function AuditLogsTable() {
         </Button>
       </div>
 
-      {/* Main Table Card */}
+      {/* Main Table */}
       <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low overflow-hidden bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
+          <table className="w-full text-left border-collapse min-w-[1060px]">
             <thead>
               <tr className="bg-fuji-light/30 border-b border-gray-200">
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[150px]">
-                  วันที่-เวลา
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[110px]">
-                  หน่วยงาน
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">
-                  ผู้ใช้งาน
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[180px]">
-                  บทบาท / เป้าหมาย
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[140px]">
-                  การกระทำ
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[150px]">
-                  รายการที่เปลี่ยน
-                </th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[250px]">
-                  ค่าเดิม —&gt; ค่าใหม่
-                </th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[155px]">วันที่-เวลา</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[100px]">หน่วยงาน</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[180px]">ผู้ใช้งาน</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[160px]">ประเภทรายการ / ID</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[160px]">การกระทำ</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder">ค่าเดิม → ค่าใหม่</th>
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.length === 0 ? (
+              {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-[16px] py-[32px] text-center text-placeholder text-[13px]">
+                  <td colSpan={6} className="px-[16px] py-[32px] text-center text-placeholder text-[13px]">
+                    <RefreshCw className="animate-spin size-4 inline-block mr-2" />
+                    กำลังโหลด...
+                  </td>
+                </tr>
+              ) : logs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-[16px] py-[32px] text-center text-placeholder text-[13px]">
                     ไม่พบข้อมูล Audit Log
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map((row) => (
+                logs.map((row) => (
                   <tr key={row.id} className="border-b border-fuji-light hover:bg-fuji-light/10 transition-colors">
-                    {/* วันที่-เวลา */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium font-mono">
-                      {row.dateTime}
+                    <td className="px-[16px] py-[12px] text-[12px] text-placeholder font-medium font-mono whitespace-nowrap">
+                      {formatDate(row.createdAt)}
                     </td>
-
-                    {/* หน่วยงาน */}
                     <td className="px-[16px] py-[12px]">
-                      <span className="bg-sky-bright text-sky-dark border border-sky-light rounded-[4px] px-2 py-0.5 text-[11px] font-bold font-mono">
-                        {row.agency}
-                      </span>
-                    </td>
-
-                    {/* ผู้ใช้งาน */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-main font-semibold">
-                      {row.user}
-                    </td>
-
-                    {/* บทบาท / เป้าหมาย */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-mono font-medium">
-                      {row.target}
-                    </td>
-
-                    {/* การกระทำ */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-main font-bold">
-                      {row.action}
-                    </td>
-
-                    {/* รายการที่เปลี่ยน */}
-                    <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-mono">
-                      {row.field}
-                    </td>
-
-                    {/* ค่าเดิม —-> ค่าใหม่ */}
-                    <td className="px-[16px] py-[12px] text-[12px]">
-                      <div className="flex items-center gap-2 font-mono">
-                        <span className={getTransitionStyle(row.field, row.oldVal, false)}>
-                          {row.oldVal}
+                      {row.user?.agencyId ? (
+                        <span className="bg-sky-bright text-sky-dark border border-sky-light rounded-[4px] px-2 py-0.5 text-[11px] font-bold font-mono">
+                          {agencies.find((a) => a.id === row.user!.agencyId)?.code ?? row.user.agencyId.slice(0, 8)}
                         </span>
-                        <ArrowRight className="size-3 text-placeholder" />
-                        <span className={getTransitionStyle(row.field, row.newVal, true)}>
-                          {row.newVal}
+                      ) : <span className="text-placeholder text-[12px]">—</span>}
+                    </td>
+                    <td className="px-[16px] py-[12px]">
+                      <p className="text-[13px] text-main font-semibold leading-tight">
+                        {row.user?.fullName ?? '—'}
+                      </p>
+                      {row.user?.roles && (
+                        <p className="text-[11px] text-placeholder font-medium mt-0.5">
+                          {roleLabel(row.user.roles)}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-[16px] py-[12px]">
+                      <p className="text-[12px] font-bold text-main">{row.entityType}</p>
+                      {row.entityId && (
+                        <p className="text-[10px] text-placeholder font-mono mt-0.5 truncate max-w-[140px]">
+                          {row.entityId}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-[16px] py-[12px] text-[13px] text-main font-bold">{row.action}</td>
+                    <td className="px-[16px] py-[12px] text-[12px]">
+                      <div className="flex items-start gap-2 font-mono">
+                        <span className="text-[#cf1322] break-all leading-relaxed">
+                          {formatValue(row.beforeValue)}
+                        </span>
+                        <ArrowRight className="size-3 text-placeholder shrink-0 mt-1" />
+                        <span className="text-[#007a55] break-all leading-relaxed">
+                          {formatValue(row.afterValue)}
                         </span>
                       </div>
                     </td>
@@ -318,14 +213,12 @@ export function AuditLogsTable() {
         </div>
       </Card>
 
-      {/* Info Tip Box matching bottom box in screenshot */}
       <div className="bg-[#f0f9eb]/40 border border-[#b2e2a2]/40 rounded-[12px] p-[16px] text-left">
-        <h4 className="text-[13px] font-bold text-[#4a9b72] mb-1.5">
-          Audit Log รวมทุกหน่วยงาน
-        </h4>
+        <h4 className="text-[13px] font-bold text-[#4a9b72] mb-1.5">Audit Log รวมทุกหน่วยงาน</h4>
         <ul className="list-disc pl-5 text-[12px] text-[#4a5565] space-y-1">
-          <li><strong>สิทธิ์ Super Admin:</strong> สามารถเรียกดูประวัติบันทึกการทำงานของทุกหน่วยงาน รวมถึงการสร้าง/แก้ไขบัญชีผู้ดูแลระบบ (Admin) และการปรับแต่งสิทธิ์ขอบเขตของหน่วยงาน</li>
-          <li><strong>สิทธิ์ Admin:</strong> สามารถเห็นประวัติ Log เฉพาะสำหรับในขอบเขตการทำงานของหน่วยงานตนเองเท่านั้น (คนละมุมมองกับ Super Admin)</li>
+          <li><strong>สิทธิ์ Super Admin:</strong> เรียกดูประวัติทุกหน่วยงาน รวมถึงการสร้าง/แก้ไขบัญชี Admin และการปรับสิทธิ์</li>
+          <li><strong>citizenId:</strong> ไม่แสดงในบันทึก (ระบบปกป้องข้อมูลส่วนบุคคล)</li>
+          <li><strong>Export CSV:</strong> ดาวน์โหลดตามตัวกรองที่เลือก สามารถเปิดด้วย Excel (รองรับภาษาไทย)</li>
         </ul>
       </div>
     </div>

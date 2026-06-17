@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const setPendingTempToken = useAuthStore((s) => s.setPendingTempToken);
   const router = useRouter();
 
   return useMutation({
@@ -15,12 +16,44 @@ export function useLogin() {
       return http.post<any>('auth/login', { username: body.username, password: body.password });
     },
     onSuccess: (data) => {
+      // Backend returns this shape when the account requires a password change
+      // (seeded accounts with mustChangePassword: true, or first-time admin login).
+      if (data?.requiresPasswordChange && data?.tempToken) {
+        setPendingTempToken(data.tempToken);
+        router.push('/auth/change-password');
+        return;
+      }
+
       setAuth({
         user: data.user,
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
       });
-      router.push('/home');
+      const roles: string[] = data.user?.roles ?? [];
+      if (roles.includes('super_admin')) router.push('/super-admin/dashboard');
+      else if (roles.includes('admin')) router.push('/admin/inspections');
+      else router.push('/home');
+    },
+  });
+}
+
+/** Called from the forced-change-password page. Uses the tempToken (not the
+ *  cookie-based session) to authorise the PATCH, then redirects to login. */
+export function useForceChangePassword() {
+  const tempToken = useAuthStore((s) => s.pendingTempToken);
+  const setPendingTempToken = useAuthStore((s) => s.setPendingTempToken);
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: (newPassword: string) => {
+      if (!tempToken) throw new Error('No pending session — please log in again');
+      // Pass the tempToken explicitly; BFF proxy forwards it as Bearer since
+      // there is no access_token cookie in the change-password flow.
+      return http.post<{ success: boolean }>('auth/change-password', { newPassword }, { bearerToken: tempToken });
+    },
+    onSuccess: () => {
+      setPendingTempToken(null);
+      router.push('/auth/login');
     },
   });
 }
@@ -30,9 +63,9 @@ export function useRegister() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (userData: { 
-      username: string; 
-      email: string; 
+    mutationFn: async (userData: {
+      username: string;
+      email: string;
       password: string;
       fullName: string;
       phone: string;

@@ -4,11 +4,14 @@ import { ChevronDown, LogOut, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/stores/auth';
 import { useLogout } from '@/hooks/useAuth';
+import { useAgencies } from '@/hooks/useAgencies';
 import { useState, useRef, useEffect } from 'react';
 
 export function AdminHeader() {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
+  const { data: agencies = [] } = useAgencies();
+  const userAgency = agencies.find((a) => a.id === user?.agencyId);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +40,7 @@ export function AdminHeader() {
   };
 
   const displayName = user?.fullName || 'ชนธัญ เพชรรสสกุล';
-  const displayAgency = user?.agency || 'กรมโรงงานอุตสาหกรรม';
+  const displayAgency = userAgency?.nameTh ?? userAgency?.code ?? 'กรมโรงงานอุตสาหกรรม';
 
   return (
     <header className="h-[80px] bg-background border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-10">
@@ -74,7 +77,7 @@ export function AdminHeader() {
             <div className="absolute right-0 mt-2 w-56 rounded-square border border-gray-200 bg-white shadow-smooth-medium py-1.5 z-20 animate-in fade-in-0 zoom-in-95 duration-100">
               <div className="px-4 py-2 border-b border-gray-100 mb-1">
                 <p className="text-[13px] font-bold text-main truncate">{displayName}</p>
-                <p className="text-[11px] text-placeholder truncate">{user?.agency || 'DIW Agency'}</p>
+                <p className="text-[11px] text-placeholder truncate">{userAgency ? `${userAgency.code} — ${userAgency.nameTh}` : '—'}</p>
               </div>
               <button
                 onClick={handleLogout}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import holderPin from "@/assets/establishment/holding.png";
@@ -8,22 +8,130 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InspectionTaskCard } from "@/components/shared/inspection-task-card";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { MOCK_ESTABLISHMENTS } from "@/constants/mock-establishments";
+
+// Helper to determine category from licenses list
+const getCategoryFromLicenses = (licenses: any[]) => {
+  for (const lic of licenses) {
+    const code = lic.licenseType.code.toLowerCase();
+    const name = lic.licenseType.nameTh.toLowerCase();
+    if (name.includes("โรงแรม") || code.includes("hotel")) return "hotel";
+    if (
+      name.includes("โรงพยาบาล") ||
+      name.includes("แพทย์") ||
+      name.includes("รักษาพยาบาล") ||
+      code.includes("hospital") ||
+      code.includes("medical")
+    )
+      return "hospital";
+    if (
+      name.includes("โรงงาน") ||
+      name.includes("การผลิต") ||
+      code.includes("factory") ||
+      code.includes("diw") ||
+      code.includes("ร.ง.")
+    )
+      return "factory";
+    if (
+      name.includes("โรงเรียน") ||
+      name.includes("สถานศึกษา") ||
+      name.includes("ศึกษา") ||
+      code.includes("school") ||
+      code.includes("education") ||
+      code.includes("university")
+    )
+      return "education";
+  }
+  return "";
+};
 
 export function EstablishmentPageView() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
+  const categoriesParam = searchParams.get("categories") ?? "";
+  const regionFilter = searchParams.get("region") ?? "";
+
+  const categoriesList = useMemo(() => {
+    return categoriesParam.split(",").filter(Boolean);
+  }, [categoriesParam]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query), 400);
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  const { data, isLoading } = useBusinesses(debouncedQuery);
+  // Hook enabled when search query OR filters are active
+  const hasFilters = categoriesList.length > 0 || !!regionFilter;
+  const { data, isLoading } = useBusinesses(debouncedQuery, hasFilters);
   const results = data?.data ?? [];
   const isDebouncing = Boolean(query) && query !== debouncedQuery;
 
-  if (!query) {
+  // Filter establishments (combine real backend data with mock list for full category & province coverage)
+  const filteredResults = useMemo(() => {
+    // 1. Map backend data to unified schema
+    const backendItems = results.map((item) => ({
+      id: item.id,
+      nameTh: item.nameTh,
+      address: item.address,
+      province: item.province,
+      category: getCategoryFromLicenses(item.licenses),
+      businessType: item.licenses[0]?.licenseType.nameTh ?? "-",
+      licenseCount: item.licenses.length,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    }));
+
+    // 2. Map static mock list to unified schema
+    const mockItems = MOCK_ESTABLISHMENTS.map((item) => ({
+      id: item.id,
+      nameTh: item.nameTh,
+      address: item.address,
+      province: item.province,
+      category: item.category,
+      businessType: item.businessType,
+      licenseCount: 1,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    }));
+
+    // 3. Combine and de-duplicate by ID (in case backend already returned some mock IDs)
+    const combined = [...backendItems, ...mockItems];
+    const unique = combined.filter(
+      (item, idx, self) => self.findIndex((t) => t.id === item.id) === idx,
+    );
+
+    // 4. Apply filters
+    return unique.filter((item) => {
+      // A. Category Filter
+      if (categoriesList.length > 0) {
+        if (!item.category || !categoriesList.includes(item.category)) {
+          return false;
+        }
+      }
+
+      // B. Region/Province Filter
+      if (regionFilter) {
+        if (item.province !== regionFilter) {
+          return false;
+        }
+      }
+
+      // C. Search query filter (ignore if query is "ตัวอย่าง" to act as general list)
+      if (debouncedQuery && debouncedQuery !== "ตัวอย่าง") {
+        const qLower = debouncedQuery.toLowerCase();
+        const matchesName = item.nameTh.toLowerCase().includes(qLower);
+        const matchesAddress = item.address.toLowerCase().includes(qLower);
+        if (!matchesName && !matchesAddress) return false;
+      }
+
+      return true;
+    });
+  }, [results, categoriesList, regionFilter, debouncedQuery]);
+
+  // Show placeholder page only if no search term and no filters are selected
+  if (!query && categoriesList.length === 0 && !regionFilter) {
     return (
       <main className="flex min-h-[calc(100vh-57px)] justify-center bg-[#F9FAFB] px-4">
         <div className="flex max-w-sm flex-col items-center gap-3 p-6 text-center">
@@ -43,7 +151,7 @@ export function EstablishmentPageView() {
         <div className="px-1 space-x-1">
           <span className="text-sm text-slate-500">พบ</span>
           <span className="text-sm font-semibold text-slate-900">
-            {isLoading || isDebouncing ? "..." : results.length}
+            {isLoading || isDebouncing ? "..." : filteredResults.length}
           </span>
           <span className="text-sm text-slate-500">รายการ</span>
         </div>
@@ -71,18 +179,18 @@ export function EstablishmentPageView() {
                 </CardContent>
               </Card>
             ))
-          : results.length === 0
+          : filteredResults.length === 0
             ? (
               <div className="text-center py-12">
                 <p className="text-slate-500 text-sm">ไม่พบสถานประกอบการที่ค้นหา</p>
               </div>
             )
-            : results.map((item) => (
+            : filteredResults.map((item) => (
                 <InspectionTaskCard
                   key={item.id}
                   companyName={item.nameTh}
-                  businessType={item.licenses[0]?.licenseType.nameTh ?? "-"}
-                  certificateNumber={item.licenses.length}
+                  businessType={item.businessType}
+                  certificateNumber={item.licenseCount}
                   detailsHref={`/establishment/${item.id}`}
                   onSubmitClick={() => {}}
                   secondaryAction={{

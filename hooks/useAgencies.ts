@@ -11,6 +11,9 @@ export interface AgencyRecord {
   lastSyncedAt: string | null;
   isActive: boolean;
   licenseTypeCount: number;
+  adminCount: number;
+  officerCount: number;
+  licenseCount: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,11 +1,15 @@
+'use client';
+
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AdminHeader } from '@/components/admin/admin-header';
 import { RoleGate } from '@/components/auth/Guards';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <RoleGate 
+    <RoleGate
       roles={['admin']}
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-fuji-light font-kanit text-slate-600">
@@ -17,10 +21,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       }
     >
       <div className="flex min-h-screen bg-fuji-light font-kanit">
-        <AdminSidebar />
+        <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex-1 flex flex-col min-w-0">
-          <AdminHeader />
-          <main className="flex-1 p-8 overflow-y-auto">
+          <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 p-4 md:p-8 overflow-y-auto">
             <div className="max-w-[1200px] mx-auto">
               {children}
             </div>

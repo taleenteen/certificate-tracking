@@ -1,13 +1,13 @@
 'use client';
 
-import { ChevronDown, LogOut, User } from 'lucide-react';
+import { ChevronDown, LogOut, Menu } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/stores/auth';
 import { useLogout } from '@/hooks/useAuth';
 import { useAgencies } from '@/hooks/useAgencies';
 import { useState, useRef, useEffect } from 'react';
 
-export function AdminHeader() {
+export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const { data: agencies = [] } = useAgencies();
@@ -43,19 +43,47 @@ export function AdminHeader() {
   const displayAgency = userAgency?.nameTh ?? userAgency?.code ?? 'กรมโรงงานอุตสาหกรรม';
 
   return (
-    <header className="h-[80px] bg-background border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-10">
-      {/* Title & Agency Context */}
-      <div className="flex flex-col text-left">
-        <h1 className="text-[22px] font-bold text-main leading-tight">งานตรวจสอบ (มอบหมายงาน)</h1>
-        <p className="text-[12px] text-placeholder font-medium mt-0.5">หน่วยงาน: {displayAgency}</p>
+    <header className="h-[80px] bg-background border-b border-gray-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
+      {/* Left: hamburger + title/agency */}
+      <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1 mr-3">
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden shrink-0 p-2 text-sub hover:bg-fuji-light rounded-square border border-gray-200"
+          >
+            <Menu className="size-5" />
+          </button>
+        )}
+        <div className="flex flex-col text-left min-w-0">
+          <h1 className="text-[16px] md:text-[22px] font-bold text-main leading-snug line-clamp-2 md:truncate md:line-clamp-none">
+            งานตรวจสอบ (มอบหมายงาน)
+          </h1>
+          <p className="text-[11px] md:text-[12px] text-placeholder font-medium mt-0.5 truncate">
+            หน่วยงาน: {displayAgency}
+          </p>
+        </div>
       </div>
 
-      {/* User Profile Dropdown */}
-      <div className="flex items-center gap-5">
+      {/* Right: profile */}
+      <div className="flex items-center shrink-0">
         <div className="relative" ref={dropdownRef}>
-          <div 
+          {/* Mobile: circle only */}
+          <button
             onClick={() => setIsOpen(!isOpen)}
-            className="h-12 px-4 py-2 border border-gray-200 rounded-square flex items-center gap-3 hover:bg-fuji-light cursor-pointer transition-all select-none"
+            className="md:hidden"
+            aria-label="โปรไฟล์"
+          >
+            <Avatar className="size-10 border-2 border-brand-primary cursor-pointer hover:opacity-90 transition-opacity">
+              <AvatarFallback className="bg-brand-primary text-white text-xs font-bold">
+                {getInitials(displayName)}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+
+          {/* Desktop: full pill */}
+          <div
+            onClick={() => setIsOpen(!isOpen)}
+            className="hidden md:flex h-12 px-4 py-2 border border-gray-200 rounded-square items-center gap-3 hover:bg-fuji-light cursor-pointer transition-all select-none"
           >
             <Avatar className="size-8 border border-gray-200">
               <AvatarFallback className="bg-brand-primary text-white text-xs font-bold">

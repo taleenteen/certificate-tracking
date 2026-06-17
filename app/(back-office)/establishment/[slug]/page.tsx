@@ -4,6 +4,7 @@ import { use } from "react";
 import { notFound } from "next/navigation";
 import { EstablishmentPageDetailView, type EstablishmentDetailData } from "@/components/back-office/establishment-detail-page";
 import { useBusiness } from "@/hooks/useBusinesses";
+import { MOCK_ESTABLISHMENTS } from "@/constants/mock-establishments";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
@@ -21,7 +22,29 @@ function toDocStatus(status: string, expiresAt: string | null): StatusBadgeStatu
 }
 
 function EstablishmentDetailContent({ id }: { id: string }) {
-  const { data, isLoading, isError } = useBusiness(id);
+  const isMock = id.startsWith("mock-est-");
+  const mockItem = isMock ? MOCK_ESTABLISHMENTS.find((m) => m.id === id) : null;
+
+  const { data, isLoading, isError } = useBusiness(isMock ? "" : id);
+
+  if (isMock && mockItem) {
+    const detail: EstablishmentDetailData = {
+      companyName: mockItem.nameTh,
+      establishmentName: mockItem.nameTh,
+      address: mockItem.address,
+      phoneNumber: "02-123-4567",
+      email: `contact@${mockItem.id.split("-").pop() || "business"}.com`,
+      documents: [
+        {
+          id: mockItem.id + "-lic-1",
+          title: mockItem.businessType,
+          status: "active",
+          expireDate: "31 ธ.ค. 2570",
+        },
+      ],
+    };
+    return <EstablishmentPageDetailView data={detail} />;
+  }
 
   if (isLoading) {
     return (

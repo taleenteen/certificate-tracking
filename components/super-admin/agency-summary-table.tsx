@@ -1,17 +1,8 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { RefreshCw, FlaskConical } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useAgencies } from '@/hooks/useAgencies';
-
-function MockBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 text-[10px] font-bold">
-      <FlaskConical className="size-3" />
-      ข้อมูลจำลอง
-    </span>
-  );
-}
 
 function statusChip(isActive: boolean, apiStatus: string) {
   if (!isActive) return { label: 'ไม่ใช้งาน', bg: 'bg-[#f3f4f6]', text: 'text-[#4a5565]' };
@@ -38,13 +29,13 @@ export function AgencySummaryTable() {
                   ประเภทใบอนุญาต
                 </th>
                 <th className="px-[12px] py-[8px] text-[12px] font-semibold text-[#4a5565] border-b-[0.8px] border-[#e5e7eb] text-center w-[140px]">
-                  <div className="flex items-center justify-center gap-1">จำนวน Admin <MockBadge /></div>
+                  จำนวน Admin
                 </th>
                 <th className="px-[12px] py-[8px] text-[12px] font-semibold text-[#4a5565] border-b-[0.8px] border-[#e5e7eb] text-center w-[140px]">
-                  <div className="flex items-center justify-center gap-1">จำนวนเจ้าหน้าที่ <MockBadge /></div>
+                  จำนวนเจ้าหน้าที่
                 </th>
                 <th className="px-[12px] py-[8px] text-[12px] font-semibold text-[#4a5565] border-b-[0.8px] border-[#e5e7eb] text-center w-[140px]">
-                  <div className="flex items-center justify-center gap-1">จำนวนใบอนุญาต <MockBadge /></div>
+                  จำนวนใบอนุญาต
                 </th>
                 <th className="px-[12px] py-[8px] text-[12px] font-semibold text-[#4a5565] border-b-[0.8px] border-[#e5e7eb] w-[120px]">สถานะ</th>
               </tr>
@@ -88,10 +79,15 @@ export function AgencySummaryTable() {
                           {agency.licenseTypeCount} ประเภท
                         </span>
                       </td>
-                      {/* MOCK: replace with real counts when user/license endpoints support groupBy-agency */}
-                      <td className="px-[12px] py-[10px] text-center text-[12px] text-[#1c2b3a] border-b-[0.8px] border-[#f3f4f6]">—</td>
-                      <td className="px-[12px] py-[10px] text-center text-[12px] text-[#1c2b3a] border-b-[0.8px] border-[#f3f4f6]">—</td>
-                      <td className="px-[12px] py-[10px] text-center text-[12px] text-[#1c2b3a] border-b-[0.8px] border-[#f3f4f6]">—</td>
+                      <td className="px-[12px] py-[10px] text-center text-[12px] font-semibold text-[#1c2b3a] border-b-[0.8px] border-[#f3f4f6]">
+                        {agency.adminCount}
+                      </td>
+                      <td className="px-[12px] py-[10px] text-center text-[12px] font-semibold text-[#1c2b3a] border-b-[0.8px] border-[#f3f4f6]">
+                        {agency.officerCount}
+                      </td>
+                      <td className="px-[12px] py-[10px] text-center text-[12px] font-semibold text-[#1c2b3a] border-b-[0.8px] border-[#f3f4f6]">
+                        {agency.licenseCount.toLocaleString('th-TH')}
+                      </td>
                       <td className="px-[12px] py-[8px] border-b-[0.8px] border-[#f3f4f6]">
                         <span className={`${chip.bg} ${chip.text} text-[12px] font-medium px-[8px] py-[2px] rounded-[4px] inline-block leading-[16px]`}>
                           {chip.label}

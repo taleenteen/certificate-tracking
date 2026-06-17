@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,7 @@ type LicensePreviewProps = {
   label?: string;
   size?: "card" | "detail";
   className?: string;
+  previewImage?: any;
 };
 
 export function LicensePreview({
@@ -16,7 +18,28 @@ export function LicensePreview({
   label,
   size = "card",
   className,
+  previewImage,
 }: LicensePreviewProps) {
+  if (previewImage) {
+    return (
+      <div
+        className={cn(
+          "relative flex h-full w-full flex-col overflow-hidden rounded-[inherit] border border-slate-200 bg-white",
+          size === "detail" ? "min-h-[360px] p-2" : "min-h-[170px] p-2",
+          className,
+        )}
+      >
+        <Image
+          src={previewImage}
+          alt={label || "ใบอนุญาต"}
+          className="h-full w-full object-contain rounded-[inherit]"
+          style={{ maxHeight: size === "detail" ? 400 : 200 }}
+          priority
+        />
+      </div>
+    );
+  }
+
   if (type === "seal") {
     return (
       <div

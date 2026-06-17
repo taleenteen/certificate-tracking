@@ -80,7 +80,7 @@ export default function SuperAdminDashboardPage() {
 
       {/* Chart & Alerts — MOCK: telemetry endpoints not available in v1 */}
       <div className="flex gap-[12px] flex-col lg:flex-row items-stretch">
-        <div className="lg:w-[835px] shrink-0">
+        <div className="w-full lg:w-[835px] lg:shrink-0">
           {/* MOCK: replace with GET /api/system/metrics/hourly in UAT */}
           <TrendChart />
         </div>

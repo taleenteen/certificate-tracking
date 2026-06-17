@@ -164,7 +164,7 @@ export function LicenseDetailPageView({
             </div>
 
             <div className="overflow-hidden rounded-2xl bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] p-3">
-              <LicensePreview type={data.previewType} size="detail" />
+              <LicensePreview type={data.previewType} size="detail" previewImage={data.previewImage} />
             </div>
           </SectionCard>
 

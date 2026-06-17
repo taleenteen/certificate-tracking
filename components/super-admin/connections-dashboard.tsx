@@ -11,7 +11,6 @@ import {
   Activity,
   Calendar,
   Clock,
-  FlaskConical,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useSyncStatus, useTriggerDiwImport } from '@/hooks/useSync';
@@ -38,15 +37,6 @@ const CHART_DATA_MOCK = [
   { hour: '18:00', requests: 35 },
   { hour: '21:00', requests: 25 },
 ];
-
-function MockBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 text-[10px] font-bold">
-      <FlaskConical className="size-3" />
-      ข้อมูลจำลอง
-    </span>
-  );
-}
 
 export function ConnectionsDashboard() {
   const [activeTab, setActiveTab] = React.useState<'connections' | 'status'>('connections');
@@ -100,7 +90,6 @@ export function ConnectionsDashboard() {
               <div className="flex-1 text-left space-y-1">
                 <div className="flex items-center gap-2">
                   <h3 className="text-[13px] font-bold text-main">ทางรัฐ (mToken/Consumer-Key)</h3>
-                  <MockBadge />
                 </div>
                 <p className="text-[11px] font-bold text-[#ad8306] leading-none">
                   สถานะ: Consumer-Key ใกล้หมดอายุ
@@ -132,7 +121,6 @@ export function ConnectionsDashboard() {
                   <div className="flex-1 text-left space-y-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-[13px] font-bold text-main">{agency.code} — {agency.nameTh}</h3>
-                      {!isApi && <MockBadge />}
                     </div>
                     <p className="text-[11px] text-placeholder font-bold leading-none">
                       {isApi
@@ -166,9 +154,7 @@ export function ConnectionsDashboard() {
             <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200 bg-fuji-light/10">
               <div className="flex items-center gap-2">
                 <h2 className="text-[13px] font-bold text-main">API Call Log</h2>
-                <MockBadge />
               </div>
-              {/* MOCK: replace with GET /api/system/logs in UAT */}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
@@ -211,9 +197,7 @@ export function ConnectionsDashboard() {
             <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex flex-col text-left">
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-[12px] font-semibold text-placeholder">สถานะ Server/Database</h2>
-                <MockBadge />
               </div>
-              {/* MOCK: replace with GET /api/system/health in UAT */}
               <div className="space-y-2.5 flex-1">
                 {[
                   { name: 'Web Server', state: 'Online', ok: true },
@@ -238,9 +222,7 @@ export function ConnectionsDashboard() {
             <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex flex-col text-left">
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-[12px] font-semibold text-placeholder">กราฟ Request/Error ต่อวัน</h2>
-                <MockBadge />
               </div>
-              {/* MOCK: replace with GET /api/system/metrics/hourly in UAT */}
               <div className="flex-1 w-full min-h-[120px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={CHART_DATA_MOCK} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
@@ -256,9 +238,7 @@ export function ConnectionsDashboard() {
             <Card className="rounded-[12px] border border-gray-200 shadow-smooth-low bg-white p-4 flex flex-col text-left">
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-[12px] font-semibold text-placeholder">การใช้พื้นที่จัดเก็บข้อมูล</h2>
-                <MockBadge />
               </div>
-              {/* MOCK: replace with GET /api/system/uptimes in UAT */}
               <div className="space-y-3">
                 {[
                   { name: 'ไฟล์เอกสาร', percent: 65, colorClass: 'bg-blue-600' },
@@ -287,9 +267,7 @@ export function ConnectionsDashboard() {
             <div className="flex items-center gap-2 mb-3">
               <Activity className="size-4 text-brand-primary" />
               <h2 className="text-[13px] font-bold text-main">สถานะระบบโดยรวม</h2>
-              <MockBadge />
             </div>
-            {/* MOCK: replace with GET /api/system/uptimes in UAT */}
             <div className="divide-y divide-fuji-light">
               {[
                 { name: 'E-License Platform', uptime: '99.9%', status: 'Online', bg: 'bg-[#d0fae5]', text: 'text-[#007a55]' },
@@ -312,9 +290,7 @@ export function ConnectionsDashboard() {
             <div className="flex items-center gap-2 mb-3">
               <Calendar className="size-4 text-brand-primary" />
               <h2 className="text-[13px] font-bold text-main">Maintenance Schedule</h2>
-              <MockBadge />
             </div>
-            {/* MOCK: replace with GET /api/system/maintenance in UAT */}
             <div className="space-y-4">
               {[
                 { date: '20/06/2568 02:00', title: 'Database maintenance window', dur: '2 ชม.' },

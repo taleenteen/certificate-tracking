@@ -1,13 +1,13 @@
 'use client';
 
-import { Bell, ChevronDown, LogOut } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Menu } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/stores/auth';
 import { useLogout } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 
-export function SuperAdminHeader() {
+export function SuperAdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const pathname = usePathname();
@@ -41,19 +41,48 @@ export function SuperAdminHeader() {
     name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <header className="h-[80px] bg-background border-b border-gray-200 flex items-center justify-between px-8 shadow-sm sticky top-0 z-10">
-      <h1 className="text-[22px] font-bold text-main">{title}</h1>
+    <header className="h-[80px] bg-background border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shadow-sm sticky top-0 z-10">
+      {/* Left: hamburger + title */}
+      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1 mr-3">
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden shrink-0 p-2 text-sub hover:bg-fuji-light rounded-square border border-gray-200"
+          >
+            <Menu className="size-5" />
+          </button>
+        )}
+        {/* Allow wrapping on small screens; truncate on desktop */}
+        <h1 className="text-[16px] md:text-[22px] font-bold text-main leading-snug line-clamp-2 md:truncate md:line-clamp-none">
+          {title}
+        </h1>
+      </div>
 
-      <div className="flex items-center gap-5">
-        <button className="size-11 rounded-full bg-fuji-light flex items-center justify-center text-sub hover:bg-fuji-soft transition-colors border border-gray-200 relative">
-          <Bell className="size-5" />
-          <span className="absolute top-2.5 right-2.5 size-2 bg-semantic-critical rounded-full border border-background" />
+      {/* Right: bell + profile */}
+      <div className="flex items-center gap-2 md:gap-5 shrink-0">
+        <button className="size-10 md:size-11 rounded-full bg-fuji-light flex items-center justify-center text-sub hover:bg-fuji-soft transition-colors border border-gray-200 relative">
+          <Bell className="size-4 md:size-5" />
+          <span className="absolute top-2 right-2 size-2 bg-semantic-critical rounded-full border border-background" />
         </button>
 
         <div className="relative" ref={dropdownRef}>
+          {/* Mobile: circle avatar only */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden"
+            aria-label="โปรไฟล์"
+          >
+            <Avatar className="size-10 border-2 border-brand-primary cursor-pointer hover:opacity-90 transition-opacity">
+              <AvatarFallback className="bg-brand-primary text-white text-xs font-bold">
+                {getInitials(displayName)}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+
+          {/* Desktop: full pill with name + chevron */}
           <div
             onClick={() => setIsOpen(!isOpen)}
-            className="h-12 px-4 py-2 border border-gray-200 rounded-square flex items-center gap-3 hover:bg-fuji-light cursor-pointer transition-all select-none"
+            className="hidden md:flex h-12 px-4 py-2 border border-gray-200 rounded-square items-center gap-3 hover:bg-fuji-light cursor-pointer transition-all select-none"
           >
             <Avatar className="size-8 border border-gray-200">
               <AvatarFallback className="bg-brand-primary text-white text-xs font-bold">
@@ -91,3 +120,4 @@ export function SuperAdminHeader() {
     </header>
   );
 }
+

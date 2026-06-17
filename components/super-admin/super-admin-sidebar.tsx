@@ -36,66 +36,94 @@ const SidebarItem = ({
   </Link>
 );
 
-export function SuperAdminSidebar() {
+export function SuperAdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[260px] bg-background border-r border-gray-200 flex flex-col shrink-0 h-screen sticky top-0">
-      <div className="h-[80px] flex items-center px-6 border-b border-gray-200">
-         <Image 
-           src="/assets/brand/e-license-logo.png" 
-           alt="E-License Verification Platform" 
-           width={156} 
-           height={35} 
-           className="w-auto h-8 object-contain"
-           priority
-         />
-      </div>
+    <>
+      {/* Mobile drawer overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
-      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-        <div>
-          <p className="px-4 mb-3 text-[12px] font-bold text-placeholder uppercase tracking-[1.5px]">เมนูระบบ</p>
-          <div className="space-y-1">
-            <SidebarItem 
-              icon={LayoutDashboard} 
-              label="แดชบอร์ดระบบ" 
-              href="/dashboard" 
-              active={pathname === '/dashboard'} 
-            />
-            <SidebarItem 
-              icon={UserCog} 
-              label="จัดการบัญชี Admin" 
-              href="/admin-accounts" 
-              active={pathname === '/admin-accounts'} 
-            />
-            <SidebarItem 
-              icon={Building2} 
-              label="หน่วยงาน & ข้อมูลหลัก" 
-              href="/agencies"
-              active={pathname === '/agencies'}
-            />
-            <SidebarItem 
-              icon={Network} 
-              label="การเชื่อมต่อระบบ & สถานะ" 
-              href="/connections"
-              active={pathname === '/connections'}
-            />
-            <SidebarItem 
-              icon={History} 
-              label="Audit Log (ทั้งระบบ)" 
-              href="/audit-logs"
-              active={pathname === '/audit-logs'}
-            />
-          </div>
+      {/* Sidebar — fixed drawer on mobile, sticky sidebar on desktop */}
+      <aside
+        className={[
+          'w-[260px] bg-background border-r border-gray-200 flex flex-col shrink-0 h-screen',
+          // mobile: fixed drawer, slides in/out
+          'fixed inset-y-0 left-0 z-50 transition-transform duration-300',
+          isOpen ? 'translate-x-0' : '-translate-x-full',
+          // desktop: back to normal sticky flow
+          'lg:static lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto',
+        ].join(' ')}
+      >
+        <div className="h-[80px] flex items-center px-6 border-b border-gray-200 justify-between">
+          <Image
+            src="/assets/brand/e-license-logo.png"
+            alt="E-License Verification Platform"
+            width={156}
+            height={35}
+            className="w-auto h-8 object-contain"
+            priority
+          />
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1.5 text-placeholder hover:text-main hover:bg-fuji-light rounded-square"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+          )}
         </div>
-      </nav>
 
-      <div className="p-4 border-t border-gray-200">
-        <button className="flex items-center justify-center gap-2 text-placeholder py-3 w-full rounded-square hover:bg-fuji-light hover:text-main transition-colors">
-          <ChevronLeft className="size-4" />
-          <span className="text-[13px] font-medium">ซ่อนแถบเมนู</span>
-        </button>
-      </div>
-    </aside>
+        <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+          <div>
+            <p className="px-4 mb-3 text-[12px] font-bold text-placeholder uppercase tracking-[1.5px]">เมนูระบบ</p>
+            <div className="space-y-1">
+              <SidebarItem
+                icon={LayoutDashboard}
+                label="แดชบอร์ดระบบ"
+                href="/dashboard"
+                active={pathname === '/dashboard'}
+              />
+              <SidebarItem
+                icon={UserCog}
+                label="จัดการบัญชี Admin"
+                href="/admin-accounts"
+                active={pathname === '/admin-accounts'}
+              />
+              <SidebarItem
+                icon={Building2}
+                label="หน่วยงาน & ข้อมูลหลัก"
+                href="/agencies"
+                active={pathname === '/agencies'}
+              />
+              <SidebarItem
+                icon={Network}
+                label="การเชื่อมต่อระบบ & สถานะ"
+                href="/connections"
+                active={pathname === '/connections'}
+              />
+              <SidebarItem
+                icon={History}
+                label="Audit Log (ทั้งระบบ)"
+                href="/audit-logs"
+                active={pathname === '/audit-logs'}
+              />
+            </div>
+          </div>
+        </nav>
+
+        <div className="p-4 border-t border-gray-200 hidden lg:block">
+          <button className="flex items-center justify-center gap-2 text-placeholder py-3 w-full rounded-square hover:bg-fuji-light hover:text-main transition-colors">
+            <ChevronLeft className="size-4" />
+            <span className="text-[13px] font-medium">ซ่อนแถบเมนู</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

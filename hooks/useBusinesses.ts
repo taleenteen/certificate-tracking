@@ -36,14 +36,14 @@ export interface BusinessDetailResponse {
   licenses: BusinessLicense[];
 }
 
-export function useBusinesses(query: string) {
+export function useBusinesses(query: string, hasFilters?: boolean) {
   return useQuery({
     queryKey: ['businesses', query],
     queryFn: () =>
       http.get<BusinessListResponse>(
-        query ? `businesses?q=${encodeURIComponent(query)}&limit=20` : 'businesses?limit=20',
+        query ? `businesses?q=${encodeURIComponent(query)}&limit=50` : 'businesses?limit=50',
       ),
-    enabled: query.length > 0,
+    enabled: query.length > 0 || !!hasFilters,
   });
 }
 

@@ -19,6 +19,7 @@ export type LicenseDetailData = {
   issuedAt: string;
   expiresAt: string;
   previewType: LicensePreviewType;
+  previewImage?: any;
   businessName: string;
   businessType: string;
   address: string;

@@ -10,6 +10,7 @@ import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
 import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import type { LicenseDetailData } from "@/components/back-office/license-data";
+import licenseImg from "@/assets/license.png";
 
 dayjs.extend(buddhistEra);
 dayjs.locale("th");
@@ -67,6 +68,7 @@ function LicenseDetailContent({ id, hideVerify }: { id: string; hideVerify?: boo
     issuedAt: formatDate(data.issuedAt),
     expiresAt: formatDate(data.expiresAt),
     previewType: "document",
+    previewImage: licenseImg,
     businessName: data.business.nameTh,
     businessType: data.licenseType.nameTh,
     address: data.business.address,

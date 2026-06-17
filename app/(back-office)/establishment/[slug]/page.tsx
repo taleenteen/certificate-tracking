@@ -1,30 +1,73 @@
-import {
-  EstablishmentPageDetailView,
-  type EstablishmentDetailData,
-} from "@/components/back-office/establishment-detail-page";
+'use client';
 
-const mockEstablishmentDetail: EstablishmentDetailData = {
-  companyName: "บริษัท เอส.เค.ดี จำกัด",
-  establishmentName: "บริษัท ศิริพัฒนา โฮเทล แอนด์ เซอร์วิส จำกัด",
-  address: "123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110",
-  phoneNumber: "02-123-4567",
-  email: "contact@sawadee.com",
-  documents: [
-    {
-      id: "license-1",
-      title: "ใบอนุญาตประกอบกิจการ",
-      status: "active",
-      expireDate: "31 ธ.ค. 2569",
-    },
-    {
-      id: "license-2",
-      title: "ใบรับรองมาตรฐานสถานประกอบการ",
-      status: "expiringSoon",
-      expireDate: "15 เม.ย. 2569",
-    },
-  ],
-};
+import { use } from "react";
+import { notFound } from "next/navigation";
+import { EstablishmentPageDetailView, type EstablishmentDetailData } from "@/components/back-office/establishment-detail-page";
+import { useBusiness } from "@/hooks/useBusinesses";
+import dayjs from "dayjs";
+import "dayjs/locale/th";
+import buddhistEra from "dayjs/plugin/buddhistEra";
+import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 
-export default function EstablishmentDetailPage() {
-  return <EstablishmentPageDetailView data={mockEstablishmentDetail} />;
+dayjs.extend(buddhistEra);
+dayjs.locale("th");
+
+function toDocStatus(status: string, expiresAt: string | null): StatusBadgeStatus {
+  if (status === "EXPIRED") return "expired";
+  if (status === "SUSPENDED" || status === "REVOKED") return "suspended";
+  if (status === "ACTIVE" && expiresAt && dayjs(expiresAt).isBefore(dayjs().add(30, "day")))
+    return "expiringSoon";
+  return "active";
+}
+
+function EstablishmentDetailContent({ id }: { id: string }) {
+  const { data, isLoading, isError } = useBusiness(id);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
+        <p className="text-slate-500 animate-pulse">กำลังโหลดข้อมูลสถานประกอบการ...</p>
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
+        <div className="text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 max-w-sm mx-4">
+          <p className="text-destructive font-semibold mb-2">เกิดข้อผิดพลาด</p>
+          <p className="text-sm text-slate-500">ไม่พบข้อมูลสถานประกอบการ กรุณาลองใหม่อีกครั้ง</p>
+        </div>
+      </div>
+    );
+  }
+
+  const detail: EstablishmentDetailData = {
+    companyName: data.nameTh,
+    establishmentName: data.nameTh,
+    address: data.address,
+    // TODO(api-gap): phone/email not in GET /businesses/{id} response
+    phoneNumber: "-",
+    email: "-",
+    documents: data.licenses.map((lic) => ({
+      id: lic.id,
+      title: lic.licenseType.nameTh,
+      status: toDocStatus(lic.status, lic.expiresAt),
+      expireDate: lic.expiresAt ? dayjs(lic.expiresAt).format("D MMM BBBB") : "ไม่มีวันหมดอายุ",
+    })),
+  };
+
+  return <EstablishmentPageDetailView data={detail} />;
+}
+
+export default function EstablishmentDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
+
+  if (!slug) notFound();
+
+  return <EstablishmentDetailContent id={slug} />;
 }

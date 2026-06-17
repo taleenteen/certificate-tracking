@@ -1,82 +1,60 @@
-import { Suspense } from "react";
-import {
-  ReportsPageView,
-  type ReportItem,
-} from "@/components/back-office/reports-page";
+'use client';
 
-const mockReports: ReportItem[] = [
-  {
-    id: "report-1",
-    companyName: "บริษัท ศิริพัฒนา โฮเทล แอนด์ เซอร์วิส จำกัด",
-    businessType: "โรงแรม",
-    inspectionDateTime: "10 มี.ค. 2567 - 09:00 น.",
-    location: "กรุงเทพมหานคร, คลองสามวา",
-    inspectorName: "นางสาววิภา ใจดี",
-    category: "hotel",
-    region: "กรุงเทพมหานคร",
-    detailsHref: "/reports/1",
-  },
-  {
-    id: "report-2",
-    companyName: "โรงแรมริเวอร์ไซด์",
-    businessType: "โรงแรม",
-    inspectionDateTime: "10 มี.ค. 2567 - 09:00 น.",
-    location: "กรุงเทพมหานคร, คลองสามวา",
-    inspectorName: "นางสาววิภา ใจดี",
-    category: "hotel",
-    region: "กรุงเทพมหานคร",
-    detailsHref: "/reports/2",
-  },
-  {
-    id: "report-3",
-    companyName: "ร้านอาหารบ้านนา",
-    businessType: "โรงแรม",
-    inspectionDateTime: "10 มี.ค. 2567 - 09:00 น.",
-    location: "กรุงเทพมหานคร, คลองสามวา",
-    inspectorName: "นางสาววิภา ใจดี",
-    category: "hotel",
-    region: "กรุงเทพมหานคร",
-    detailsHref: "/reports/3",
-  },
-  {
-    id: "report-4",
-    companyName: "โรงพยาบาลวัฒนาเวช",
-    businessType: "โรงพยาบาล",
-    inspectionDateTime: "14 มี.ค. 2567 - 13:30 น.",
-    location: "เชียงใหม่, เมืองเชียงใหม่",
-    inspectorName: "นายธนกฤต แสงทอง",
-    category: "hospital",
-    region: "เชียงใหม่",
-    detailsHref: "/reports/4",
-  },
-  {
-    id: "report-5",
-    companyName: "โรงงานไทยอุตสาหกรรม",
-    businessType: "โรงงาน",
-    inspectionDateTime: "15 มี.ค. 2567 - 10:15 น.",
-    location: "ชลบุรี, ศรีราชา",
-    inspectorName: "นางสาวกมลชนก พรหมมา",
-    category: "factory",
-    region: "ชลบุรี",
-    detailsHref: "/reports/5",
-  },
-  {
-    id: "report-6",
-    companyName: "วิทยาลัยเทคโนโลยีการจัดการ",
-    businessType: "สถานศึกษา",
-    inspectionDateTime: "18 มี.ค. 2567 - 08:45 น.",
-    location: "นครราชสีมา, เมืองนครราชสีมา",
-    inspectorName: "นายปกรณ์ ศรีสุข",
-    category: "education",
-    region: "นครราชสีมา",
-    detailsHref: "/reports/6",
-  },
-];
+import { Suspense, useMemo } from "react";
+import { ReportsPageView, type ReportItem } from "@/components/back-office/reports-page";
+import { useInspectionTasks } from "@/hooks/useInspectionTasks";
+import dayjs from "dayjs";
+import "dayjs/locale/th";
+import buddhistEra from "dayjs/plugin/buddhistEra";
+
+dayjs.extend(buddhistEra);
+dayjs.locale("th");
+
+function ReportsContent() {
+  const { data: tasks, isLoading, isError } = useInspectionTasks();
+
+  const reports = useMemo<ReportItem[]>(() => {
+    if (!tasks) return [];
+    return tasks.map((task) => ({
+      id: task.id,
+      companyName: task.business?.nameTh ?? "-",
+      businessType: task.license?.licenseType.nameTh ?? "-",
+      inspectionDateTime: dayjs(task.updatedAt).format("D MMM BBBB - HH:mm น."),
+      location: task.business?.province ?? "-",
+      inspectorName: task.assignee?.fullName ?? "-",
+      // TODO(api-gap): no category field in task — defaulting to 'hotel'; needs enum mapping
+      category: "hotel" as const,
+      region: task.business?.province ?? "-",
+      detailsHref: `/my-licenses/${task.id}/inspection`,
+    }));
+  }, [tasks]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
+        <p className="text-slate-500 animate-pulse">กำลังโหลดข้อมูลรายงาน...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
+        <div className="text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 max-w-sm mx-4">
+          <p className="text-destructive font-semibold mb-2">เกิดข้อผิดพลาด</p>
+          <p className="text-sm text-slate-500">ไม่สามารถดึงข้อมูลรายงานได้ กรุณาลองใหม่อีกครั้ง</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <ReportsPageView reports={reports} />;
+}
 
 export default function ReportsPage() {
   return (
     <Suspense fallback={<PageFallback />}>
-      <ReportsPageView reports={mockReports} />
+      <ReportsContent />
     </Suspense>
   );
 }

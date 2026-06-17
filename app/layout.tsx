@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/providers/Providers";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "Certificate Tracking UI",
-  description: "Clean starter project with shadcn/ui and map components.",
-  icons: {
-    icon: "/logo-mark.png?v=2",
-    apple: "/logo-mark.png?v=2",
-  },
+  title: "ระบบตรวจสอบใบอนุญาต",
+  description: "ระบบบริหารจัดการและตรวจสอบใบอนุญาต",
 };
 
 export default function RootLayout({
@@ -16,9 +24,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning={true}>
-        {children}
+    <html lang="th">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

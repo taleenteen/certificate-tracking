@@ -1,47 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import holderPin from "@/assets/establishment/holding.png";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InspectionTaskCard } from "@/components/shared/inspection-task-card";
-
-const mockEstablishments = [
-  {
-    id: "1",
-    companyName: "บริษัท เอส.เค.ดี จำกัด",
-    businessType: "โรงงานผลิตอาหาร",
-    certificateNumber: 19,
-  },
-  {
-    id: "2",
-    companyName: "บริษัท เอส.เค.ดี จำกัด",
-    businessType: "โรงงานผลิตอาหาร",
-    certificateNumber: 19,
-  },
-];
+import { useBusinesses } from "@/hooks/useBusinesses";
 
 export function EstablishmentPageView() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
-  const [settledQuery, setSettledQuery] = useState(query);
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setSettledQuery(query);
-    }, 700);
-
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 400);
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  const isLoading = Boolean(query) && query !== settledQuery;
-
-  const results = useMemo(() => {
-    if (!query) return [];
-    return mockEstablishments;
-  }, [query]);
+  const { data, isLoading } = useBusinesses(debouncedQuery);
+  const results = data?.data ?? [];
+  const isDebouncing = Boolean(query) && query !== debouncedQuery;
 
   if (!query) {
     return (
@@ -63,15 +43,12 @@ export function EstablishmentPageView() {
         <div className="px-1 space-x-1">
           <span className="text-sm text-slate-500">พบ</span>
           <span className="text-sm font-semibold text-slate-900">
-            {mockEstablishments.length}
+            {isLoading || isDebouncing ? "..." : results.length}
           </span>
           <span className="text-sm text-slate-500">รายการ</span>
-
-          {/* <p className="text-sm text-slate-500">ผลการค้นหา</p>
-          <h1 className="text-xl font-semibold text-slate-900">“{query}”</h1> */}
         </div>
 
-        {isLoading
+        {isLoading || isDebouncing
           ? Array.from({ length: 3 }).map((_, index) => (
               <Card
                 key={`loading-${index}`}
@@ -94,26 +71,34 @@ export function EstablishmentPageView() {
                 </CardContent>
               </Card>
             ))
-          : results.map((item) => (
-              <InspectionTaskCard
-                key={item.id}
-                companyName={item.companyName}
-                businessType={item.businessType}
-                certificateNumber={item.certificateNumber}
-                detailsHref={`/establishment/${item.id}`}
-                onSubmitClick={() => console.log("submit", item.id)}
-                secondaryAction={{
-                  label: "นำทาง",
-                  href: "/map",
-                  variant: "secondary",
-                }}
-                primaryAction={{
-                  label: "ดูรายละเอียด",
-                  href: "/establishment/1",
-                  variant: "primary",
-                }}
-              />
-            ))}
+          : results.length === 0
+            ? (
+              <div className="text-center py-12">
+                <p className="text-slate-500 text-sm">ไม่พบสถานประกอบการที่ค้นหา</p>
+              </div>
+            )
+            : results.map((item) => (
+                <InspectionTaskCard
+                  key={item.id}
+                  companyName={item.nameTh}
+                  businessType={item.licenses[0]?.licenseType.nameTh ?? "-"}
+                  certificateNumber={item.licenses.length}
+                  detailsHref={`/establishment/${item.id}`}
+                  onSubmitClick={() => {}}
+                  secondaryAction={{
+                    label: "นำทาง",
+                    href: item.latitude && item.longitude
+                      ? `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`
+                      : "/map",
+                    variant: "secondary",
+                  }}
+                  primaryAction={{
+                    label: "ดูรายละเอียด",
+                    href: `/establishment/${item.id}`,
+                    variant: "primary",
+                  }}
+                />
+              ))}
       </div>
     </main>
   );

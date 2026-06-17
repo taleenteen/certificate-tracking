@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Map, { MapRef, Marker } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -11,6 +11,7 @@ import { ListItemCard } from "@/components/shared/ListItemCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useBusinessesMap, licenseStatusToColor } from "@/hooks/useBusinessesMap";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const THAILAND_CENTER: [number, number] = [100.5018, 13.7563];
@@ -36,83 +37,30 @@ type MockMapPin = {
   documents: MapDocument[];
 };
 
-const MOCK_PINS: MockMapPin[] = [
-  {
-    id: "hotel-bangkok",
-    title: "โรงแรมวารีพฤกษ์",
-    licenseNumber: "กท-2567-001234",
-    address: "123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองเตย กรุงเทพมหานคร 10110",
-    longitude: 100.5653,
-    latitude: 13.7244,
-    color: "#3D9A80",
-    iconKey: "hotel",
-    detailsHref: "/establishment/1",
-    documents: [
-      {
-        id: "hotel-license",
-        title: "ใบอนุญาตประกอบกิจการโรงแรม",
-        status: "active",
-        expireDate: "31 ส.ค. 2567",
-        detailsHref: "/my-licenses/3",
-      },
-      {
-        id: "food-license",
-        title: "ใบอนุญาตร้านอาหาร",
-        status: "active",
-        expireDate: "15 พ.ย. 2567",
-        detailsHref: "/my-licenses/1",
-      },
-      {
-        id: "spa-license",
-        title: "ใบอนุญาตสระว่ายน้ำ",
-        status: "expired",
-        expireDate: "20 ต.ค. 2567",
-        detailsHref: "/my-licenses/2",
-      },
-    ],
-  },
-  {
-    id: "chiang-mai-market",
-    title: "ศูนย์บริการลานนา",
-    licenseNumber: "ชม-2567-000928",
-    address:
-      "88 ถนนนิมมานเหมินทร์ ตำบลสุเทพ อำเภอเมืองเชียงใหม่ เชียงใหม่ 50200",
-    longitude: 98.9686,
-    latitude: 18.7953,
-    color: "#D1554A",
-    iconKey: "market",
-    detailsHref: "/establishment/2",
-    documents: [
-      {
-        id: "retail-license",
-        title: "ใบอนุญาตประกอบกิจการค้าปลีก",
-        status: "active",
-        expireDate: "12 ธ.ค. 2567",
-        detailsHref: "/my-licenses/2",
-      },
-      {
-        id: "waste-license",
-        title: "ใบอนุญาตจัดการขยะ",
-        status: "expiringSoon",
-        expireDate: "8 มิ.ย. 2567",
-        detailsHref: "/my-licenses/1",
-      },
-      {
-        id: "sign-license",
-        title: "ใบอนุญาตติดตั้งป้าย",
-        status: "active",
-        expireDate: "5 ก.ย. 2567",
-        detailsHref: "/my-licenses/3",
-      },
-    ],
-  },
-];
+// Mock removed — now sourced from GET /businesses/map via useBusinessesMap hook
 
 export function EMapPageView() {
+  const { data: mapData, isLoading: mapLoading } = useBusinessesMap();
   const mapRef = useRef<MapRef>(null);
   const closeTimeoutRef = useRef<number | null>(null);
   const [selectedPin, setSelectedPin] = useState<MockMapPin | null>(null);
   const [isInfoCardOpen, setIsInfoCardOpen] = useState(false);
+
+  const pins = useMemo<MockMapPin[]>(() => {
+    if (!mapData?.features) return [];
+    return mapData.features.map((f) => ({
+      id: f.properties.id,
+      title: f.properties.nameTh,
+      licenseNumber: "-",
+      address: "-",
+      longitude: f.geometry.coordinates[0],
+      latitude: f.geometry.coordinates[1],
+      color: licenseStatusToColor(f.properties.licenseStatus),
+      iconKey: "hotel" as keyof typeof PIN_ICON_MAP,
+      detailsHref: `/establishment/${f.properties.id}`,
+      documents: [],
+    }));
+  }, [mapData]);
 
   useEffect(() => {
     return () => {
@@ -165,6 +113,11 @@ export function EMapPageView() {
 
   return (
     <main className="relative h-full overflow-hidden bg-[#eef2f5]">
+      {mapLoading && (
+        <div className="absolute inset-x-0 top-0 z-30 flex h-1 items-center justify-center">
+          <div className="h-1 w-full animate-pulse bg-[#3D9A80]/40" />
+        </div>
+      )}
       <div className="absolute inset-0">
         <Map
           ref={mapRef}
@@ -178,7 +131,7 @@ export function EMapPageView() {
           reuseMaps
           style={{ width: "100%", height: "100%" }}
         >
-          {MOCK_PINS.map((pin) => (
+          {pins.map((pin) => (
             <Marker
               key={pin.id}
               longitude={pin.longitude}

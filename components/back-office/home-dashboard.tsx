@@ -16,19 +16,12 @@ import {
 } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { AnimatedFolder } from "../shared/animated-folder";
+import { useAuthStore } from "@/stores/auth";
+import { useDashboard, primaryRole, type InspectorDashboardResponse, type SupervisorDashboardResponse, type AdminDashboardResponse } from "@/hooks/useDashboard";
+import { useLicenses } from "@/hooks/useLicenses";
+import dayjs from "dayjs";
 
-const summaryStats = [
-  { label: "ปกติ", value: 20, color: "bg-emerald-500" },
-  { label: "ใกล้หมดอายุ", value: 12, color: "bg-amber-400" },
-  { label: "หมดอายุ", value: 18, color: "bg-rose-400" },
-  { label: "ถูกระงับ", value: 10, color: "bg-violet-500" },
-];
-
-const totalSummaryStats = summaryStats.reduce(
-  (total, item) => total + item.value,
-  0,
-);
-
+// TODO(api-gap): no issue-category aggregation endpoint — static placeholder until backend adds it
 const issueBars = [
   { label: "เอกสารไม่ครบ", value: 74, color: "bg-[#6f7cf6]" },
   { label: "หมดอายุแล้ว", value: 58, color: "bg-[#5db4dd]" },
@@ -37,6 +30,7 @@ const issueBars = [
   { label: "ไม่มีวันหมดอายุ", value: 20, color: "bg-[#e47b9b]" },
 ];
 
+// TODO(api-gap): no time-series endpoint in dashboard — static placeholder until backend adds trend data
 const inspectionTrendData = {
   day: [
     { label: "จ.", inspections: 8 },
@@ -87,8 +81,68 @@ const inspectionTrendConfig = {
 } satisfies ChartConfig;
 
 export function HomeDashboard() {
+  const user = useAuthStore((s) => s.user);
   const [selectedTrendRange, setSelectedTrendRange] =
     useState<(typeof trendRanges)[number]["value"]>("month");
+
+  const { data: dashboardData } = useDashboard();
+  const { data: licenses } = useLicenses();
+
+  const role = primaryRole(user?.roles ?? []);
+
+  const summaryStats = useMemo<{ label: string; value: number; color: string }[]>(() => {
+    if (role === 'inspector' && dashboardData) {
+      const d = dashboardData as InspectorDashboardResponse;
+      return [
+        { label: "รอตรวจ", value: d.pendingTasks, color: "bg-amber-400" },
+        { label: "กำลังตรวจ", value: d.inProgress, color: "bg-blue-400" },
+        { label: "ส่งคืน", value: d.returnedToFix, color: "bg-rose-400" },
+        { label: "เดือนนี้", value: d.completedThisMonth, color: "bg-emerald-500" },
+      ];
+    }
+    if (role === 'supervisor' && dashboardData) {
+      const d = dashboardData as SupervisorDashboardResponse;
+      const c = d.taskCountsByStatus;
+      return [
+        { label: "รอตรวจ", value: c.ASSIGNED ?? 0, color: "bg-amber-400" },
+        { label: "กำลังตรวจ", value: c.IN_PROGRESS ?? 0, color: "bg-blue-400" },
+        { label: "รอผล", value: c.PENDING_REVIEW ?? 0, color: "bg-violet-500" },
+        { label: "เสร็จสิ้น", value: c.APPROVED ?? 0, color: "bg-emerald-500" },
+      ];
+    }
+    if (role === 'admin' && dashboardData) {
+      const d = dashboardData as AdminDashboardResponse;
+      const c = d.licenseCounts;
+      return [
+        { label: "ปกติ", value: c.ACTIVE ?? 0, color: "bg-emerald-500" },
+        // TODO(api-gap): no expiring-soon count in admin dashboard
+        { label: "ใกล้หมดอายุ", value: 0, color: "bg-amber-400" },
+        { label: "หมดอายุ", value: c.EXPIRED ?? 0, color: "bg-rose-400" },
+        { label: "ถูกระงับ", value: c.SUSPENDED ?? 0, color: "bg-violet-500" },
+      ];
+    }
+    // public role: derive from own licenses
+    if (licenses) {
+      const now = dayjs();
+      return [
+        { label: "ปกติ", value: licenses.filter(l => l.status === 'ACTIVE' && !dayjs(l.expiresAt).isBefore(now.add(30, 'day'))).length, color: "bg-emerald-500" },
+        { label: "ใกล้หมดอายุ", value: licenses.filter(l => l.status === 'ACTIVE' && dayjs(l.expiresAt).isBefore(now.add(30, 'day'))).length, color: "bg-amber-400" },
+        { label: "หมดอายุ", value: licenses.filter(l => l.status === 'EXPIRED').length, color: "bg-rose-400" },
+        { label: "ถูกระงับ", value: licenses.filter(l => l.status === 'SUSPENDED' || l.status === 'REVOKED').length, color: "bg-violet-500" },
+      ];
+    }
+    return [
+      { label: "ปกติ", value: 0, color: "bg-emerald-500" },
+      { label: "ใกล้หมดอายุ", value: 0, color: "bg-amber-400" },
+      { label: "หมดอายุ", value: 0, color: "bg-rose-400" },
+      { label: "ถูกระงับ", value: 0, color: "bg-violet-500" },
+    ];
+  }, [role, dashboardData, licenses]);
+
+  const totalSummaryStats = summaryStats.reduce((t, i) => t + i.value, 0);
+
+  const myLicensesCount = licenses?.length ?? 0;
+  const expiredLicensesCount = licenses?.filter(l => l.status === 'EXPIRED').length ?? 0;
 
   const activeInspectionTrendData = useMemo(
     () => [...inspectionTrendData[selectedTrendRange]],
@@ -106,12 +160,14 @@ export function HomeDashboard() {
   return (
     <main className="mx-auto w-full max-w-[430px] overflow-x-hidden bg-[#f4f5f7] text-slate-900 md:max-w-none">
       <section className="bg-[#114e4b] px-4 pb-6 pt-5 text-white sm:px-6">
-        {/* <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <p className="text-xl font-semibold leading-tight">
-              ยินดีต้อนรับ, คุณสมชาย
+              ยินดีต้อนรับ, {user?.fullName || "ผู้เข้าใช้งาน"}
             </p>
-            <p className="mt-1 text-sm text-white/70">เจ้าหน้าที่</p>
+            <p className="mt-1 text-sm text-white/70">
+              {user?.agency || (user?.roles?.includes('public') ? "ผู้ประกอบการ/ประชาชน" : "เจ้าหน้าที่")}
+            </p>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
@@ -119,7 +175,7 @@ export function HomeDashboard() {
               <Search className="h-4 w-4" />
             </div>
           </div>
-        </div> */}
+        </div>
 
         <div className="space-y-3">
           <Link
@@ -180,16 +236,16 @@ export function HomeDashboard() {
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <MiniTile
             title="ใบอนุญาตของฉัน"
-            description="3 รายการ"
+            description={`${myLicensesCount} รายการ`}
             href="/my-licenses"
             isActive
-            currentState={3}
+            currentState={myLicensesCount}
           />
           <MiniTile
             title="ใบอนุญาตหมดอายุ"
-            description="2 รายการ"
+            description={`${expiredLicensesCount} รายการ`}
             href="/expired-licenses"
-            currentState={2}
+            currentState={expiredLicensesCount}
           />
         </div>
         {/* <Button onClick={() => setTestValue(testValue + 1)}>click</Button> */}
@@ -214,13 +270,13 @@ export function HomeDashboard() {
             <CardContent className="space-y-5 p-4">
               <div>
                 <h3 className="text-lg font-semibold text-[#145b57]">
-                  สถานะใบอนุญาตที่ตรวจ
+                  {role === 'inspector' || role === 'supervisor' ? "สถานะงานตรวจสอบ" : "สถานะใบอนุญาตที่ตรวจ"}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   <span className="text-3xl font-semibold text-slate-900">
-                    60
+                    {totalSummaryStats}
                   </span>{" "}
-                  ใบอนุญาต
+                  {role === 'inspector' || role === 'supervisor' ? "งาน" : "ใบอนุญาต"}
                 </p>
               </div>
 
@@ -288,6 +344,7 @@ export function HomeDashboard() {
 
                 <div className="min-w-0 overflow-hidden rounded-[18px] bg-[linear-gradient(180deg,#e7f0ef_0%,#ffffff_100%)]">
                   <ChartContainer
+                    id="home-inspection-trend"
                     config={inspectionTrendConfig}
                     className="h-[180px] min-w-0 w-full px-1 pt-4"
                   >

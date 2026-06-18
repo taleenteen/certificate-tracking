@@ -15,10 +15,18 @@ export const ACCESS_COOKIE = "access_token";
 export const REFRESH_COOKIE = "refresh_token";
 
 const isProd = process.env.NODE_ENV === "production";
+// `Secure` cookies are dropped by browsers on plain-HTTP origins. The prototype
+// is served over http://<ip>:3005 (no TLS), so default to NODE_ENV but allow an
+// explicit override: set COOKIE_SECURE=false to make auth cookies work over HTTP.
+// Re-enable (COOKIE_SECURE=true or remove the var) once the site is behind HTTPS.
+const cookieSecure =
+  process.env.COOKIE_SECURE !== undefined
+    ? process.env.COOKIE_SECURE === "true"
+    : isProd;
 const cookieBase = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: isProd,
+  secure: cookieSecure,
   path: "/",
 };
 

@@ -58,3 +58,20 @@ export function useDevSeedLicense() {
     },
   });
 }
+
+export interface JuristicMembershipResponse {
+  juristicId: string;
+  nameTh: string;
+  nameEn?: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER';
+  position?: string;
+  joinedAt: string;
+}
+
+export function useJuristicMemberships() {
+  return useQuery({
+    queryKey: ['my-juristic-memberships'],
+    queryFn: () => http.get<JuristicMembershipResponse[]>('juristic'),
+  });
+}
+

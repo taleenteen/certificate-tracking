@@ -12,9 +12,10 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { LucideIcon } from 'lucide-react';
 
 interface SidebarItemProps {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   active?: boolean;
   disabled?: boolean;
@@ -108,8 +109,8 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
               <SidebarItem
                 icon={ClipboardList}
                 label="งานตรวจสอบ (มอบหมายงาน)"
-                href="/admin/inspections"
-                active={pathname.startsWith('/admin/inspections')}
+                href="/agency-admin/inspections"
+                active={pathname.startsWith('/agency-admin/inspections')}
               />
               <SidebarItem icon={History} label="Audit Log & ตั้งค่า" disabled />
               <SidebarItem icon={FileText} label="ใบอนุญาตของฉัน" disabled />

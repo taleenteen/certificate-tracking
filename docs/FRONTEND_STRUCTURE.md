@@ -24,7 +24,7 @@ certificate-tracking/           ← repo root (single tree, no src/)
 ├── server/                     ← server-only BFF code (never imported by Client Components)
 │   └── backend.ts              ← cookie helpers, token harvest, refresh logic
 ├── stores/                     ← Zustand client state (display-only, no tokens)
-│   ├── auth.ts                 ← user, activeJuristicId, juristicRole
+│   ├── auth.ts                 ← user and display-only auth state; active juristic/business context must be tab-scoped
 │   └── useMapStore.ts
 ├── services/                   ← typed API service functions (thin wrappers over http)
 ├── types/                      ← shared TypeScript interfaces / enums
@@ -90,12 +90,24 @@ calls same-origin `/api/*`; the server-side proxy (`server/backend.ts`) forwards
 ### 5. Tokens never touch the client
 `accessToken` and `refreshToken` are **not** stored in Zustand or localStorage. The
 BFF proxy harvests them from the backend JSON response and sets them as httpOnly
-cookies. The auth store holds display-only state: `user`, `activeJuristicId`,
-`juristicRole`.
+cookies. The auth store holds display-only state such as `user` and role labels.
+Active juristic/business context must not be stored in `localStorage`; use
+`sessionStorage` for tab-isolated context and reflect context in URLs where practical,
+for example `/businesses/[businessId]/licenses`.
 
 ### 6. Mandatory cache clear on context switch
 After `POST /auth/context` (tenant switch), call `queryClient.clear()` before any
 new queries. All cached data is tenant-scoped; mixing caches causes data leakage.
+
+### 7. Use Prisma-aligned naming
+DBML v0.1 terms are deprecated. Use current schema naming:
+
+- `Business` and `/businesses`, not `establishments`.
+- `InspectionTask` and `/inspection-tasks`, not `work_orders`.
+- `Zone` / `UserZone`, not `scope_nodes`.
+- `AuthProviderLink` is only for Tang Rat identity-provider linkage and session creation.
+- Officer card/credential verification is a separate domain feature; do not replace it with `AuthProviderLink`.
+- Do not include `complaints` in plans unless explicitly requested.
 
 ---
 

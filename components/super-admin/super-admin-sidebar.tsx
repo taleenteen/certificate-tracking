@@ -11,6 +11,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { LucideIcon } from 'lucide-react';
 
 const SidebarItem = ({ 
   icon: Icon, 
@@ -18,7 +19,7 @@ const SidebarItem = ({
   active = false,
   href = "#"
 }: { 
-  icon: any, 
+  icon: LucideIcon, 
   label: string, 
   active?: boolean,
   href?: string
@@ -86,32 +87,32 @@ export function SuperAdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClo
               <SidebarItem
                 icon={LayoutDashboard}
                 label="แดชบอร์ดระบบ"
-                href="/dashboard"
-                active={pathname === '/dashboard'}
+                href="/super-admin/dashboard"
+                active={pathname === '/super-admin/dashboard'}
               />
               <SidebarItem
                 icon={UserCog}
                 label="จัดการบัญชี Admin"
-                href="/admin-accounts"
-                active={pathname === '/admin-accounts'}
+                href="/super-admin/admin-accounts"
+                active={pathname === '/super-admin/admin-accounts'}
               />
               <SidebarItem
                 icon={Building2}
                 label="หน่วยงาน & ข้อมูลหลัก"
-                href="/agencies"
-                active={pathname === '/agencies'}
+                href="/super-admin/agencies"
+                active={pathname === '/super-admin/agencies'}
               />
               <SidebarItem
                 icon={Network}
                 label="การเชื่อมต่อระบบ & สถานะ"
-                href="/connections"
-                active={pathname === '/connections'}
+                href="/super-admin/connections"
+                active={pathname === '/super-admin/connections'}
               />
               <SidebarItem
                 icon={History}
                 label="Audit Log (ทั้งระบบ)"
-                href="/audit-logs"
-                active={pathname === '/audit-logs'}
+                href="/super-admin/audit-logs"
+                active={pathname === '/super-admin/audit-logs'}
               />
             </div>
           </div>

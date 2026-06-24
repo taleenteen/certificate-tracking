@@ -17,7 +17,7 @@ juristic, juristic-requests, notification, user, zone, export, audit, sync).
 
 The **frontend foundation is built and verified**: BFF proxy, `@/lib/http`, auth
 store, auth hooks, guards, React Query provider, login + dev-login. **One page is
-fully wired** — `/my-licenses` list (`app/(back-office)/my-licenses/page.tsx` +
+fully wired** — `/licenses` list (`app/(back-office)/licenses/page.tsx` +
 `hooks/useLicenses.ts`). **Treat it as the reference pattern; copy it.**
 
 Everything else is still **wireframe + mock data**. This roadmap finishes it.
@@ -26,7 +26,7 @@ Everything else is still **wireframe + mock data**. This roadmap finishes it.
 
 ## 1. The reference pattern (copy this for every page)
 
-Proven in `app/(back-office)/my-licenses/page.tsx` + `hooks/useLicenses.ts`:
+Proven in `app/(back-office)/licenses/page.tsx` + `hooks/useLicenses.ts`:
 
 ```ts
 // hooks/useThing.ts
@@ -35,7 +35,7 @@ import { http } from '@/lib/http';
 import { useAuthStore } from '@/stores/auth';
 
 export function useThing(id: string) {
-  const activeJuristicId = useAuthStore((s) => s.activeJuristicId);
+  const activeJuristicId = getActiveJuristicIdFromSessionStorage();
   return useQuery({
     queryKey: ['thing', id, activeJuristicId],   // tenant-scoped key if context-aware
     queryFn: () => http.get<ThingResponse>(`things/${id}`),
@@ -58,6 +58,10 @@ Then in the page (a `'use client'` component):
 - Never render a full citizen ID — only `citizenIdVerified` + `citizenIdLast4`.
 - After a context switch (`POST /auth/context`), `queryClient.clear()` — already
   handled inside `useSwitchContext` (`hooks/useAuth.ts`).
+- Active juristic/business context must be tab-isolated in `sessionStorage`, not
+  `localStorage`; prefer URL context such as `/businesses/[businessId]/licenses`.
+- Backend APIs must revalidate juristic/business requests against `JuristicMember`.
+- Use Prisma-aligned names: `Business`, `InspectionTask`, `Zone`/`UserZone`.
 - `ChartContainer` must always get an explicit `id` prop (hydration rule).
 - One page = one commit.
 
@@ -92,12 +96,12 @@ produces `types/api.d.ts`; `npx tsc --noEmit` = 0.
 | # | Page (file) | Hook → endpoint | Notes |
 |---|---|---|---|
 | C1 | `/home` — `components/back-office/home-dashboard.tsx` | `useDashboard()` → `GET /dashboard/{inspector\|supervisor\|admin}` (pick by role) | Stats tiles + trend chart. Keep `ChartContainer id="home-inspection-trend"`. |
-| C2 | `/my-licenses/[slug]` — `components/back-office/license-detail-page.tsx` | `useLicense(id)` → `GET /licenses/{id}` | **RNG4:** `expiresAt === null` → "ไม่มีวันหมดอายุ (ชำระค่าธรรมเนียมรายปี)", never "Invalid Date". SUSPENDED → show `suspensionReason`. Docs via presigned URL; MinIO 403 → refetch detail. |
-| C3 | `/establishment` + `/establishment/[slug]` | `useBusinesses()` → `GET /businesses`; `useBusiness(id)` → `GET /businesses/{id}` | Context-aware list (tenant-scoped key). |
-| C4 | `/license-search` | search input + `GET /licenses/{id}/qr-verify` | Debounce 400ms. QR scan: dynamic-import `ssr:false`; scanned text = license UUID → `/my-licenses/{id}`; invalid → Thai toast "QR ไม่ถูกต้อง". |
+| C2 | `/licenses/[slug]` — `components/back-office/license-detail-page.tsx` | `useLicense(id)` → `GET /licenses/{id}` | **RNG4:** `expiresAt === null` → "ไม่มีวันหมดอายุ (ชำระค่าธรรมเนียมรายปี)", never "Invalid Date". SUSPENDED → show `suspensionReason`. Docs via presigned URL; MinIO 403 → refetch detail. |
+| C3 | `/businesses` + `/businesses/[businessId]` + `/businesses/[businessId]/licenses` | `useBusinesses()` → `GET /businesses`; `useBusiness(id)` → `GET /businesses/{id}` | Context-aware list. Active context belongs in `sessionStorage` and route params where practical. |
+| C4 | `/license-search` | search input + `GET /licenses/{id}/qr-verify` | Debounce 400ms. QR scan: dynamic-import `ssr:false`; scanned text = license UUID → `/licenses/{id}`; invalid → Thai toast "QR ไม่ถูกต้อง". |
 | C5 | `/expired-licenses` | reuse `useLicenses` filtered `status=EXPIRED` | Thin variant of the list page. |
 | C6 | `/reports` — `components/back-office/reports-page.tsx` | `useInspectionTasks()` → `GET /inspection-tasks` | Inspection history; filter by status. |
-| C7 | `/my-licenses/[slug]/inspection` | `useInspectionTask(id)` → `GET /inspection-tasks/{id}`; submit via `PUT /inspection-reports/{id}` + `PATCH .../submit`; photos `POST .../evidence`, `DELETE .../evidence/{docId}` | Checklist rendered from `checklistTemplate.items` (never hardcode). Photo client-validate ≤10MB jpeg/png/pdf. Submit disabled until `result` chosen. RETURNED task → show `reviewComment` banner. |
+| C7 | `/licenses/[slug]/inspection` | `useInspectionTask(id)` → `GET /inspection-tasks/{id}`; submit via `PUT /inspection-reports/{id}` + `PATCH .../submit`; photos `POST .../evidence`, `DELETE .../evidence/{docId}` | Checklist rendered from `checklistTemplate.items` (never hardcode). Photo client-validate ≤10MB jpeg/png/pdf. Submit disabled until `result` chosen. RETURNED task → show `reviewComment` banner. |
 | C8 | `/map` + `/e-map` | `useBusinessesMap()` → `GET /businesses/map` | Mapbox is already wired to `services/mock-map-data.ts`; swap the data source. Pin color: ACTIVE green / SUSPENDED amber / EXPIRED red / else grey. "นำทาง" → Google Maps directions URL. |
 
 **Per-page verification:** mock deleted (grep clean), all 4 states reachable, data
@@ -134,8 +138,10 @@ matches seed incl. edge rows (RNG4 null-expiry, SUSPENDED, RETURNED w/ comment).
 
 ## 6. Note on app shape
 
-The actual wireframe is a **back-office (staff) app** — routes are `/home`,
-`/establishment`, `/my-licenses`, `/license-search`, `/e-map`, `/expired-licenses`,
-`/reports` (not the public-user route names in the backend `FRONTEND_GUIDE_AI.md`).
+The actual wireframe is being realigned into a mobile-first app plus web-only back office.
+Use Prisma-aligned business routes such as `/businesses`,
+`/businesses/[businessId]`, and `/businesses/[businessId]/licenses` instead of
+legacy `/businesses` routes. Other existing routes include `/home`,
+`/licenses`, `/license-search`, `/e-map`, `/expired-licenses`, and `/reports`.
 The **endpoints are the same**; map each back-office page to its endpoint per the
 tables above. When in doubt, the contract (`openapi.json`) wins.

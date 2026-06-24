@@ -3,6 +3,26 @@ import { http } from '@/lib/http';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'next/navigation';
 
+type AuthUser = {
+  id: string;
+  fullName: string;
+  roles: string[];
+  agencyId?: string | null;
+};
+
+type AuthResponse = {
+  user?: AuthUser;
+  activeJuristicId?: string | null;
+  juristicRole?: string | null;
+  requiresPasswordChange?: boolean;
+  tempToken?: string;
+};
+
+type ContextSwitchResponse = {
+  activeJuristicId: string | null;
+  juristicRole: string | null;
+};
+
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const setPendingTempToken = useAuthStore((s) => s.setPendingTempToken);
@@ -11,9 +31,9 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (credentials: { username?: string; password?: string; totpCode?: string; mToken?: string; type: 'tang-rat' | 'password' | 'self' }) => {
       const { type, ...body } = credentials;
-      if (type === 'tang-rat') return http.post<any>('auth/tang-rat', { mToken: body.mToken });
-      if (type === 'self') return http.post<any>('auth/self', { username: body.username, password: body.password, totpCode: body.totpCode });
-      return http.post<any>('auth/login', { username: body.username, password: body.password });
+      if (type === 'tang-rat') return http.post<AuthResponse>('auth/tang-rat', { mToken: body.mToken });
+      if (type === 'self') return http.post<AuthResponse>('auth/self', { username: body.username, password: body.password, totpCode: body.totpCode });
+      return http.post<AuthResponse>('auth/login', { username: body.username, password: body.password });
     },
     onSuccess: (data) => {
       // Backend returns this shape when the account requires a password change
@@ -30,8 +50,8 @@ export function useLogin() {
         juristicRole: data.juristicRole,
       });
       const roles: string[] = data.user?.roles ?? [];
-      if (roles.includes('super_admin')) router.push('/dashboard');
-      else if (roles.includes('admin')) router.push('/admin/inspections');
+      if (roles.includes('super_admin')) router.push('/super-admin/dashboard');
+      else if (roles.includes('admin')) router.push('/agency-admin/inspections');
       else router.push('/home');
     },
   });
@@ -70,7 +90,7 @@ export function useRegister() {
       fullName: string;
       phone: string;
     }) => {
-      return http.post<any>('auth/register', userData);
+      return http.post<AuthResponse>('auth/register', userData);
     },
     onSuccess: (data) => {
       setAuth({
@@ -104,7 +124,7 @@ export function useSwitchContext() {
 
   return useMutation({
     mutationFn: async (juristicId: string | null) => {
-      return http.post<any>('auth/context', { juristicId });
+      return http.post<ContextSwitchResponse>('auth/context', { juristicId });
     },
     onSuccess: (data) => {
       setAuth({

@@ -18,7 +18,7 @@
 
 - **2026-06-17 (Build roadmap — sequenced plan to finish backend integration)** —
   Created `docs/FRONTEND_BUILD_ROADMAP.md`: the executable checklist for the remaining
-  work. State: backend 100% complete; frontend foundation built; only `/my-licenses`
+  work. State: backend 100% complete; frontend foundation built; only `/licenses`
   list is wired (the reference pattern). Roadmap sequences **Phase 0** (close
   foundation gaps: session hydration never invoked, no route protection, no typed
   contract) → **Phase C** (wire 8 wireframe pages) → **Phase D** (4 new surfaces:
@@ -104,7 +104,7 @@
 | **BFF proxy** (`app/api/[...path]/route.ts` + `server/backend.ts`) | **done** | Catch-all; injects auth from httpOnly cookies, refresh-on-401, token harvesting. Verified e2e. |
 | **Browser client** (`lib/http.ts`) | **done** | `http.get/post/...`, same-origin `/api/*`, throws `ApiError`. |
 | `lib/api.ts` (direct axios) | **deleted** | Gone; `@/lib/http` is the only HTTP client. |
-| Auth + juristic store (`stores/auth.ts`) | **partial** | Holds `user`/`activeJuristicId`/`juristicRole` for UI. No `accessToken` field (token is a server cookie). |
+| Auth + juristic context (`stores/auth.ts` + session context) | **partial** | Holds display-only user/role state for UI. Active juristic/business context is tab-isolated through `sessionStorage` via Zustand persist, not `localStorage`. URL-scoped business context should be preferred where practical. No `accessToken` field (token is a server cookie). |
 | `useSwitchContext` hook | **pending** | Wrap `http.post("auth/context", { juristicId })` + `queryClient.clear()`. |
 | React Query provider + tenant-scoped keys | **partial** | `Providers.tsx` has `QueryClientProvider`; keys not yet tenant-scoped; `queryClient` is module-level (fix per §2). |
 | `openapi-typescript` contract types | **pending** | `npm run gen:api` not yet wired |

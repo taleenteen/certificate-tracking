@@ -44,7 +44,7 @@ multi-tenant context — not redesigning**. The wireframe is approved.
    see "BFF rule") · auth+juristic store for **display state only** (no token;
    hydrate via `http.get("my/profile")`) · **context switching** (`POST /api/auth/context`
    re-mints the cookie token server-side → `queryClient.clear()` after) · React
-   Query (tenant-scoped keys include `activeJuristicId`) · typed contract
+   Query (tenant-scoped keys include tab-isolated active juristic/business context from `sessionStorage`, not `localStorage`) · typed contract
    (`openapi-typescript` → `npm run gen:api`) · `RoleGate` + `JuristicGate` ·
    `/dev-login` (4 auth paths).
 3. **Phase C** wire original wireframe (public → inspector → supervisor).

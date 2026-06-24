@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { BackOfficeShell } from "@/components/back-office/back-office-shell";
 import { BackOfficeAuthGuard } from "@/components/auth/BackOfficeAuthGuard";
 
 export default function BackOfficeLayout({
@@ -9,7 +8,7 @@ export default function BackOfficeLayout({
 }) {
   return (
     <BackOfficeAuthGuard>
-      <BackOfficeShell>{children}</BackOfficeShell>
+      <div className="min-h-screen bg-slate-100">{children}</div>
     </BackOfficeAuthGuard>
   );
 }

@@ -43,6 +43,7 @@ import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { SearchSheetOverlay } from "@/components/shared/search-sheet-overlay";
 import { cn } from "@/lib/utils";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
+import { ComplaintsSheetOverlay } from "@/components/shared/complaints-sheet-overlay";
 
 type InspectionTrendDotProps = {
   key?: string | number;
@@ -414,6 +415,8 @@ export function HomeDashboard() {
 
   const role = primaryRole(user?.roles ?? []);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+  const [scannerMode, setScannerMode] = useState<"license" | "officer">("license");
+  const [isComplaintsSheetOpen, setIsComplaintsSheetOpen] = useState(false);
 
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -429,6 +432,10 @@ export function HomeDashboard() {
 
   const handleScanMock = async (value: string) => {
     setIsQrScannerOpen(false);
+    if (scannerMode === "officer") {
+      router.push(`/verify-officer?state=success`);
+      return;
+    }
     const cleanValue = extractIdFromScannedValue(value);
     try {
       await http.get(`licenses/${cleanValue}/qr-verify`);
@@ -546,7 +553,7 @@ export function HomeDashboard() {
     };
 
     const handleComplaintClick = () => {
-      toast.info("ระบบรับแจ้งเรื่องร้องเรียนจะเปิดให้บริการเร็ว ๆ นี้");
+      setIsComplaintsSheetOpen(true);
     };
 
     return (
@@ -569,6 +576,7 @@ export function HomeDashboard() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  setScannerMode("license");
                   setIsQrScannerOpen(true);
                 }}
                 className="absolute right-4 text-[#145b57] hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center z-10"
@@ -705,6 +713,11 @@ export function HomeDashboard() {
             {/* Card 2: ตรวจสอบเจ้าหน้าที่ */}
             <Link
               href="/verify-officer"
+              onClick={(e) => {
+                e.preventDefault();
+                setScannerMode("officer");
+                setIsQrScannerOpen(true);
+              }}
               className="group bg-white hover:bg-[#114e4b] border border-slate-100 rounded-3xl p-4 text-center shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(17,78,75,0.08)] transition-all flex flex-col items-center justify-center space-y-2 h-[120px] cursor-pointer"
             >
               <OfficerVerifyGraphic />
@@ -867,6 +880,11 @@ export function HomeDashboard() {
           isOpen={isSearchSheetOpen}
           onClose={() => setIsSearchSheetOpen(false)}
         />
+
+        <ComplaintsSheetOverlay
+          isOpen={isComplaintsSheetOpen}
+          onClose={() => setIsComplaintsSheetOpen(false)}
+        />
       </main>
     );
   }
@@ -913,7 +931,10 @@ export function HomeDashboard() {
             </Link>
             <button
               type="button"
-              onClick={() => setIsQrScannerOpen(true)}
+              onClick={() => {
+                setScannerMode("license");
+                setIsQrScannerOpen(true);
+              }}
               className="text-[#145b57] cursor-pointer hover:opacity-80 transition-opacity"
               aria-label="Scan QR Code"
             >

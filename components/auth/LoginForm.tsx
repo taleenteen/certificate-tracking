@@ -32,7 +32,8 @@ export function LoginForm({ onToggle }: { onToggle: () => void }) {
   };
 
   const handleTangRatLogin = () => {
-    const tangRatUrl = process.env.NEXT_PUBLIC_IAM_GOV_FRONTEND_URL;
+    const tangRatUrl = "test";
+    console.log(tangRatUrl);
     if (tangRatUrl && !isDev) {
       window.location.href = tangRatUrl;
     } else {

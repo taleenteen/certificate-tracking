@@ -11,7 +11,10 @@ import { ListItemCard } from "@/components/shared/ListItemCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useBusinessesMap, licenseStatusToColor } from "@/hooks/useBusinessesMap";
+import {
+  useBusinessesMap,
+  licenseStatusToColor,
+} from "@/hooks/useBusinessesMap";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const THAILAND_CENTER: [number, number] = [100.5018, 13.7563];
@@ -221,7 +224,7 @@ function PinInfoSheet({
   onClose: () => void;
 }) {
   return (
-    <Card className="pointer-events-auto mx-auto max-w-md rounded-none border-0 py-0 shadow-[0_-10px_30px_rgba(15,23,42,0.18)]">
+    <Card className="pointer-events-auto mx-auto max-w-md rounded-none border-0 py-0 shadow-[0_-10px_30px_rgba(15,23,42,0.18)] rounded-t-3xl">
       <CardContent className="space-y-4 p-4">
         <div className="flex items-start justify-between gap-3 mb-0">
           <div className="min-w-0">

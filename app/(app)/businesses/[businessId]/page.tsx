@@ -1,8 +1,11 @@
-'use client';
+"use client";
 
 import { use } from "react";
 import { notFound } from "next/navigation";
-import { BusinessesPageDetailView, type BusinessDetailData } from "@/components/app/businesses/business-detail-page";
+import {
+  BusinessesPageDetailView,
+  type BusinessDetailData,
+} from "@/components/app/businesses/business-detail-page";
 import { useBusiness } from "@/hooks/useBusinesses";
 import { MOCK_BUSINESSES } from "@/constants/mock-businesses";
 import dayjs from "dayjs";
@@ -13,10 +16,17 @@ import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 dayjs.extend(buddhistEra);
 dayjs.locale("th");
 
-function toDocStatus(status: string, expiresAt: string | null): StatusBadgeStatus {
+function toDocStatus(
+  status: string,
+  expiresAt: string | null,
+): StatusBadgeStatus {
   if (status === "EXPIRED") return "expired";
   if (status === "SUSPENDED" || status === "REVOKED") return "suspended";
-  if (status === "ACTIVE" && expiresAt && dayjs(expiresAt).isBefore(dayjs().add(30, "day")))
+  if (
+    status === "ACTIVE" &&
+    expiresAt &&
+    dayjs(expiresAt).isBefore(dayjs().add(30, "day"))
+  )
     return "expiringSoon";
   return "active";
 }
@@ -49,7 +59,9 @@ function BusinessDetailContent({ id }: { id: string }) {
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
-        <p className="text-slate-500 animate-pulse">กำลังโหลดข้อมูลสถานประกอบการ...</p>
+        <p className="text-slate-500 animate-pulse">
+          กำลังโหลดข้อมูลสถานประกอบการ...
+        </p>
       </div>
     );
   }
@@ -59,7 +71,9 @@ function BusinessDetailContent({ id }: { id: string }) {
       <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
         <div className="text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 max-w-sm mx-4">
           <p className="text-destructive font-semibold mb-2">เกิดข้อผิดพลาด</p>
-          <p className="text-sm text-slate-500">ไม่พบข้อมูลสถานประกอบการ กรุณาลองใหม่อีกครั้ง</p>
+          <p className="text-sm text-slate-500">
+            ไม่พบข้อมูลสถานประกอบการ กรุณาลองใหม่อีกครั้ง
+          </p>
         </div>
       </div>
     );
@@ -76,7 +90,9 @@ function BusinessDetailContent({ id }: { id: string }) {
       id: lic.id,
       title: lic.licenseType.nameTh,
       status: toDocStatus(lic.status, lic.expiresAt),
-      expireDate: lic.expiresAt ? dayjs(lic.expiresAt).format("D MMM BBBB") : "ไม่มีวันหมดอายุ",
+      expireDate: lic.expiresAt
+        ? dayjs(lic.expiresAt).format("D MMM BBBB")
+        : "ไม่มีวันหมดอายุ",
     })),
   };
 

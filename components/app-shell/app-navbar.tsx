@@ -131,7 +131,8 @@ export function AppNavbar() {
     (isHome ||
       pathname === "/licenses" ||
       pathname === "/license-search" ||
-      pathname.startsWith("/licenses/")) &&
+      pathname.startsWith("/licenses/") ||
+      pathname.startsWith("/complaints")) &&
     entry === "public";
 
   const searchPageConfig = SEARCH_PAGE_CONFIG[pathname];

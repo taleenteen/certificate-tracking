@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { XIcon } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
@@ -21,39 +21,99 @@ export function QrScannerDialog({
 }: QrScannerDialogProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const startPromiseRef = useRef<Promise<unknown> | null>(null);
+  const cleanupPromiseRef = useRef<Promise<void> | null>(null);
+  const isScannerActiveRef = useRef(false);
+  const hasHandledScanRef = useRef(false);
 
   // DECISION: Clean up and stop camera scanner process to release resources
-  const cleanupScanner = async () => {
-    // HTML5-QRCode stop with promise sequence handling to prevent race conditions
-    if (scannerRef.current) {
-      const scanner = scannerRef.current;
-      scannerRef.current = null;
+  const cleanupScanner = useCallback(async () => {
+    isScannerActiveRef.current = false;
 
-      if (startPromiseRef.current) {
+    if (cleanupPromiseRef.current) {
+      return cleanupPromiseRef.current;
+    }
+
+    // HTML5-QRCode stop with promise sequence handling to prevent race conditions
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+
+    if (!scanner) {
+      return;
+    }
+
+    const cleanupPromise = (async () => {
+      const startPromise = startPromiseRef.current;
+      startPromiseRef.current = null;
+
+      if (startPromise) {
         try {
-          await startPromiseRef.current;
-        } catch (e) {
-          // If start rejected, camera is not streaming
-          return;
-        } finally {
-          startPromiseRef.current = null;
+          await startPromise;
+        } catch {
+          // If start rejected, camera is not streaming, but DOM may still need clearing.
         }
       }
 
       if (scanner.isScanning) {
         try {
           await scanner.stop();
-        } catch (err) {
+        } catch {
           // Silent catch if already stopped
         }
       }
-    }
-  };
+
+      try {
+        scanner.clear();
+      } catch {
+        // Silent catch if the container has already been unmounted.
+      }
+    })().finally(() => {
+      if (cleanupPromiseRef.current === cleanupPromise) {
+        cleanupPromiseRef.current = null;
+      }
+    });
+
+    cleanupPromiseRef.current = cleanupPromise;
+    return cleanupPromise;
+  }, []);
+
+  const handleDialogOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        hasHandledScanRef.current = true;
+        void cleanupScanner();
+      }
+
+      onOpenChange(nextOpen);
+    },
+    [cleanupScanner, onOpenChange]
+  );
+
+  const handleDecodedScan = useCallback(
+    async (decodedText: string) => {
+      if (!isScannerActiveRef.current || hasHandledScanRef.current) {
+        return;
+      }
+
+      hasHandledScanRef.current = true;
+      isScannerActiveRef.current = false;
+      onOpenChange(false);
+      await cleanupScanner();
+      onScanMock(decodedText);
+    },
+    [cleanupScanner, onOpenChange, onScanMock]
+  );
 
   useEffect(() => {
     if (open) {
+      isScannerActiveRef.current = true;
+      hasHandledScanRef.current = false;
+
       // Start camera streaming after layout settles
       const timer = setTimeout(() => {
+        if (!isScannerActiveRef.current) {
+          return;
+        }
+
         const scannerId = id;
         const html5QrCode = new Html5Qrcode(scannerId);
         scannerRef.current = html5QrCode;
@@ -66,9 +126,7 @@ export function QrScannerDialog({
           },
           (decodedText) => {
             // Successfully scanned real QR code
-            cleanupScanner().then(() => {
-              onScanMock(decodedText);
-            });
+            void handleDecodedScan(decodedText);
           },
           () => {
             // Silent error callback on frames scanning ticks
@@ -84,15 +142,15 @@ export function QrScannerDialog({
 
       return () => {
         clearTimeout(timer);
-        cleanupScanner();
+        void cleanupScanner();
       };
     } else {
-      cleanupScanner();
+      void cleanupScanner();
     }
-  }, [open, id]);
+  }, [cleanupScanner, handleDecodedScan, id, open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent 
         showCloseButton={false}
         className="fixed top-0 md:top-[5dvh] left-1/2 -translate-x-1/2 translate-y-0 max-w-[430px] w-full h-[100dvh] md:h-[90dvh] border-0 bg-black p-0 text-white shadow-none rounded-[28px] overflow-hidden flex flex-col justify-between items-center pb-12"
@@ -176,7 +234,7 @@ export function QrScannerDialog({
           </DialogClose>
           <Button
             type="button"
-            onClick={() => onScanMock("5621-17/965")}
+            onClick={() => void handleDecodedScan("5621-17/965")}
             className="h-11 flex-1 rounded-2xl bg-white text-[#114e4b] hover:bg-white/90 text-[13px] font-bold"
           >
             สแกนตัวอย่าง

@@ -6,7 +6,7 @@ import {
   BusinessesPageDetailView,
   type BusinessDetailData,
 } from "@/components/app/businesses/business-detail-page";
-import { useBusiness } from "@/hooks/useBusinesses";
+import { useBusiness, useJuristicBusiness, type JuristicBusinessDetailResponse } from "@/hooks/useBusinesses";
 import { MOCK_BUSINESSES } from "@/constants/mock-businesses";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
@@ -35,7 +35,8 @@ function BusinessDetailContent({ id }: { id: string }) {
   const isMock = id.startsWith("mock-est-");
   const mockItem = isMock ? MOCK_BUSINESSES.find((m) => m.id === id) : null;
 
-  const { data, isLoading, isError } = useBusiness(isMock ? "" : id);
+  const juristicQuery = useJuristicBusiness(isMock ? "" : id);
+  const publicQuery = useBusiness(isMock || juristicQuery.data ? "" : id);
 
   if (isMock && mockItem) {
     const detail: BusinessDetailData = {
@@ -48,13 +49,23 @@ function BusinessDetailContent({ id }: { id: string }) {
         {
           id: mockItem.id + "-lic-1",
           title: mockItem.businessType,
+          licenseNumber: "ก 1234-56/789",
           status: "active",
-          expireDate: "31 ธ.ค. 2570",
+          issuedAt: "1 ม.ค. 2568",
+          expiresAt: "31 ธ.ค. 2570",
         },
       ],
     };
     return <BusinessesPageDetailView data={detail} />;
   }
+
+  const isLoading = !isMock && (
+    juristicQuery.isLoading ||
+    (juristicQuery.isError && publicQuery.isLoading)
+  );
+
+  const isError = !isMock && juristicQuery.isError && publicQuery.isError;
+  const activeData = juristicQuery.data || publicQuery.data;
 
   if (isLoading) {
     return (
@@ -66,7 +77,7 @@ function BusinessDetailContent({ id }: { id: string }) {
     );
   }
 
-  if (isError || !data) {
+  if (isError || !activeData) {
     return (
       <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
         <div className="text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 max-w-sm mx-4">
@@ -79,19 +90,29 @@ function BusinessDetailContent({ id }: { id: string }) {
     );
   }
 
+  const isJuristic = "juristic" in activeData;
+  const companyName = isJuristic
+    ? (activeData as JuristicBusinessDetailResponse).juristic.nameTh
+    : activeData.nameTh;
+  const businessName = activeData.nameTh;
+  const phoneNumber = isJuristic
+    ? ((activeData as JuristicBusinessDetailResponse).phone || "-")
+    : "-";
+
   const detail: BusinessDetailData = {
-    companyName: data.nameTh,
-    businessName: data.nameTh,
-    address: data.address,
-    // TODO(api-gap): phone/email not in GET /businesses/{id} response
-    phoneNumber: "-",
+    companyName,
+    businessName,
+    address: activeData.address,
+    phoneNumber,
     email: "-",
-    documents: data.licenses.map((lic) => ({
+    documents: activeData.licenses.map((lic) => ({
       id: lic.id,
       title: lic.licenseType.nameTh,
+      licenseNumber: lic.licenseNumber,
       status: toDocStatus(lic.status, lic.expiresAt),
-      expireDate: lic.expiresAt
-        ? dayjs(lic.expiresAt).format("D MMM BBBB")
+      issuedAt: dayjs(lic.issuedAt).format("D ม.ค. BBBB"),
+      expiresAt: lic.expiresAt
+        ? dayjs(lic.expiresAt).format("D ม.ค. BBBB")
         : "ไม่มีวันหมดอายุ",
     })),
   };

@@ -29,11 +29,101 @@ export function useLicenses() {
   const activeJuristicId = useAuthStore((s) => s.activeJuristicId);
 
   return useQuery({
-    queryKey: ['my-licenses', activeJuristicId],
-    queryFn: async () => {
-      const mode = activeJuristicId ? 'juristic' : 'personal';
-      return http.get<LicenseResponse[]>(`my/licenses?mode=${mode}`);
-    },
+    queryKey: ['my-licenses', activeJuristicId ?? 'personal'],
+    queryFn: () => http.get<LicenseResponse[]>('my/licenses'),
+  });
+}
+
+export interface CitizenLicensesSearchFilters {
+  q?: string;
+  licenseNumber?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CitizenLicensesSearchResponse {
+  data: LicenseResponse[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
+export function useCitizenLicensesSearch(filters: CitizenLicensesSearchFilters, enabled: boolean) {
+  const queryParams = new URLSearchParams();
+  if (filters.q) queryParams.set("q", filters.q);
+  if (filters.licenseNumber) queryParams.set("licenseNumber", filters.licenseNumber);
+  if (filters.status) queryParams.set("status", filters.status);
+  if (filters.page) queryParams.set("page", String(filters.page));
+  if (filters.limit) queryParams.set("limit", String(filters.limit));
+
+  return useQuery({
+    queryKey: ["citizen-licenses-search", filters],
+    queryFn: () => http.get<CitizenLicensesSearchResponse>(`licenses/search?${queryParams.toString()}`),
+    enabled: enabled,
+  });
+}
+
+export interface CitizenLicensesSearchGroupedResponse {
+  data: {
+    id: string;
+    nameTh: string;
+    address: string;
+    province: string;
+    latitude: string;
+    longitude: string;
+    juristic?: {
+      id: string;
+      nameTh: string;
+      registrationId: string;
+    };
+    ownership?: {
+      mode: string;
+    };
+    licenseCount: number;
+    licenses: {
+      id: string;
+      licenseNumber: string;
+      status: LicenseStatus;
+      issuedAt: string;
+      expiresAt: string | null;
+      licenseType: {
+        id: string;
+        code: string;
+        nameTh: string;
+        agency: {
+          id: string;
+          code: string;
+          nameTh: string;
+        };
+      };
+    }[];
+  }[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
+// VERSION NOTE: There are 2 versions of citizen license search:
+// 1. Flattened list: useCitizenLicensesSearch (GET /api/licenses/search)
+// 2. Grouped by business: useCitizenLicensesSearchGrouped (GET /api/licenses/search/grouped-by-business)
+// Currently, we use the Grouped version (Version 2) as requested.
+export function useCitizenLicensesSearchGrouped(filters: CitizenLicensesSearchFilters, enabled: boolean) {
+  const queryParams = new URLSearchParams();
+  if (filters.q) queryParams.set("q", filters.q);
+  if (filters.licenseNumber) queryParams.set("licenseNumber", filters.licenseNumber);
+  if (filters.status) queryParams.set("status", filters.status);
+  if (filters.page) queryParams.set("page", String(filters.page));
+  if (filters.limit) queryParams.set("limit", String(filters.limit));
+
+  return useQuery({
+    queryKey: ["citizen-licenses-search-grouped", filters],
+    queryFn: () => http.get<CitizenLicensesSearchGroupedResponse>(`licenses/search/grouped-by-business?${queryParams.toString()}`),
+    enabled: enabled,
   });
 }
 
@@ -72,6 +162,54 @@ export function useJuristicMemberships() {
   return useQuery({
     queryKey: ['my-juristic-memberships'],
     queryFn: () => http.get<JuristicMembershipResponse[]>('juristic'),
+  });
+}
+
+export interface JuristicLicenseGroupResponse {
+  juristicId: string;
+  nameTh: string;
+  nameEn?: string;
+  registrationId: string;
+  myRole: string;
+  businessCount: number;
+  licenseCount: number;
+  businesses: {
+    id: string;
+    nameTh: string;
+    province: string;
+    licenseCount: number;
+    licenses: {
+      id: string;
+      licenseNumber: string;
+      issuedAt: string;
+      expiresAt: string | null;
+      status: LicenseStatus;
+      licenseType: {
+        id: string;
+        code: string;
+        nameTh: string;
+        nameEn: string;
+        agency: string;
+      };
+    }[];
+  }[];
+}
+
+export function useJuristicLicenseGroups() {
+  return useQuery({
+    queryKey: ['my-juristic-license-groups'],
+    queryFn: () => http.get<JuristicLicenseGroupResponse[]>('my/juristic-license-groups'),
+  });
+}
+
+export function useDevSeedJuristicLicense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => http.post<{ success: boolean }>('my/dev/seed-juristic-license-demo'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-juristic-license-groups'] });
+      qc.invalidateQueries({ queryKey: ['my-juristic-memberships'] });
+    },
   });
 }
 

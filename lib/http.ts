@@ -28,13 +28,15 @@ interface RequestOpts {
 
 async function request<T>(method: string, path: string, body?: unknown, opts?: RequestOpts): Promise<T> {
   const headers: Record<string, string> = {};
-  if (body !== undefined) headers["content-type"] = "application/json";
+  if (body !== undefined && !(body instanceof FormData)) {
+    headers["content-type"] = "application/json";
+  }
   if (opts?.bearerToken) headers["authorization"] = `Bearer ${opts.bearerToken}`;
 
   const res = await fetch(`/api/${path.replace(/^\/+/, "")}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
   });
 
   const isJson = res.headers.get("content-type")?.includes("application/json");
@@ -47,6 +49,27 @@ async function request<T>(method: string, path: string, body?: unknown, opts?: R
         "message" in data &&
         String((data as { message: unknown }).message)) ||
       `Request failed (${res.status})`;
+
+    if (res.status === 403 && path !== "auth/context") {
+      import("@/stores/auth").then(({ useAuthStore }) => {
+        useAuthStore.getState().setAuth({ activeJuristicId: null, juristicRole: null });
+      }).catch((err) => {
+        console.error("Failed to import useAuthStore in ApiError handler:", err);
+      });
+
+      fetch("/api/auth/context", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ juristicId: null }),
+      }).catch((err) => {
+        console.error("Failed to automatically reset server-side context on 403 Forbidden:", err);
+      });
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/home";
+      }
+    }
+
     throw new ApiError(res.status, message, data);
   }
 

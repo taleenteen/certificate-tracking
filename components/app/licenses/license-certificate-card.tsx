@@ -12,6 +12,11 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import licenseImg from "@/assets/license.png";
 
+import approvedIcon from "@/assets/icon/approved.svg";
+import almostExpireIcon from "@/assets/icon/almost-expire.svg";
+import expiredIcon from "@/assets/icon/expired.svg";
+import suspendedIcon from "@/assets/icon/suspended.svg";
+
 export type LicenseCardItem = {
   id: string;
   holderName: string;
@@ -26,6 +31,20 @@ export type LicenseCardItem = {
 
 type LicenseCertificateCardProps = {
   item: LicenseCardItem;
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  active: "มีผลบังคับใช้",
+  expiringSoon: "ใกล้หมดอายุ",
+  expired: "หมดอายุ",
+  suspended: "ถูกระงับ",
+};
+
+const STATUS_STAMP_MAP = {
+  active: approvedIcon,
+  expiringSoon: almostExpireIcon,
+  expired: expiredIcon,
+  suspended: suspendedIcon,
 };
 
 export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
@@ -45,77 +64,59 @@ export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
 
   return (
     <Card className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.015)] select-none text-left">
-      <CardContent className="p-0 space-y-3.5">
+      <CardContent className="p-0 space-y-4">
         {/* Card Header Info */}
         <div>
           <h3 className="text-[14px] font-bold text-slate-800 leading-snug">
-            {item.holderName}
-          </h3>
-          <p className="text-[12px] font-semibold text-slate-400 mt-0.5">
             {item.licenseName}
-          </p>
+          </h3>
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 mt-1">
+            <span>เลขที่ใบอนุญาต</span>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1 text-[#2d57bb] font-bold hover:underline transition-all text-[10px]"
+              title="คลิกเพื่อคัดลอกเลขใบอนุญาต"
+            >
+              <span>{item.licenseNumber}</span>
+              {isCopied ? (
+                <Check className="h-2.5 w-2.5 text-emerald-600" />
+              ) : (
+                <Copy className="h-2.5 w-2.5 opacity-60" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Divider Line */}
-        <div className="h-px bg-slate-100" />
-
-        {/* Card Body - Split Layout */}
-        <div className="grid grid-cols-[100px_1fr] gap-4 items-start">
-          {/* Left: Certificate Thumbnail Preview */}
-          <div className="aspect-[3/4] w-[100px] overflow-hidden rounded-xl border border-slate-200/60 bg-slate-50 relative shadow-sm">
+        {/* Certificate Large Preview Area */}
+        <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 flex items-center justify-center relative shadow-inner p-4 border border-slate-200/50">
+          <div className="relative aspect-[3/4] h-full shadow-md rounded-md overflow-hidden">
             <Image
               src={licenseImg}
               alt="ใบอนุญาต"
               fill
               className="object-cover object-center"
-              sizes="100px"
+              sizes="(max-width: 430px) 150px, 200px"
               priority
             />
           </div>
 
-          {/* Right: Details List */}
-          <div className="space-y-1.5 text-[12px] leading-relaxed text-slate-700 font-medium">
-            <div className="flex items-center gap-1">
-              <span>ใบอนุญาตที่</span>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="inline-flex items-center gap-1 text-[#2d57bb] underline hover:text-[#1a3a82] transition-colors"
-                title="คลิกเพื่อคัดลอกเลขใบอนุญาต"
-              >
-                <span>{item.licenseNumber}</span>
-                {isCopied ? (
-                  <Check className="h-3 w-3 text-emerald-600" />
-                ) : (
-                  <Copy className="h-3 w-3 opacity-60" />
-                )}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span>สถานะ :</span>
-              <StatusBadge
-                status={item.status}
-                className="px-2 py-0.5 text-[10px] font-bold tracking-wide rounded-md shadow-none border-0"
-              />
-            </div>
-
-            <div>
-              <span>วันออก : </span>
-              <span className="text-slate-800">{item.issuedAt}</span>
-            </div>
-
-            <div>
-              <span>วันหมดอายุ : </span>
-              <span className="text-slate-800">{item.expiresAt}</span>
-            </div>
+          {/* Status Stamp Overlay using imported SVGs */}
+          <div className="absolute right-4 bottom-4 pointer-events-none z-10 w-[95px] h-[95px]">
+            <Image
+              src={STATUS_STAMP_MAP[item.status]}
+              alt={STATUS_LABELS[item.status]}
+              width={95}
+              height={95}
+              className="object-contain rotate-[-12deg]"
+            />
           </div>
         </div>
 
         {/* Card Action Button */}
         <Link
           href={item.detailsHref ?? "#"}
-          className="flex h-10 w-full items-center justify-center rounded-xl bg-[#145b57] text-[13px] font-bold text-white hover:bg-[#0c403d] transition-colors shadow-sm cursor-pointer"
+          className="flex h-11 w-full items-center justify-center rounded-xl bg-[#145b57] text-[13px] font-bold text-white hover:bg-[#0c403d] transition-colors shadow-sm cursor-pointer"
         >
           ดูรายละเอียด
         </Link>

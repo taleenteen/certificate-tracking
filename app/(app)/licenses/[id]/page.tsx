@@ -5,6 +5,7 @@ import { notFound, useSearchParams } from "next/navigation";
 import { LicenseDetailPageView } from "@/components/app/licenses/license-detail-page";
 import { useLicense } from "@/hooks/useLicense";
 import { useIsStaff } from "@/hooks/useIsStaff";
+import { useAuthStore } from "@/stores/auth";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
@@ -38,6 +39,7 @@ function toUiStatus(
 function LicenseDetailContent({ id, hideVerify }: { id: string; hideVerify?: boolean }) {
   const { data, isLoading, isError } = useLicense(id);
   const isStaff = useIsStaff();
+  const user = useAuthStore((s) => s.user);
 
   if (isLoading) {
     return (
@@ -102,7 +104,10 @@ function LicenseDetailContent({ id, hideVerify }: { id: string; hideVerify?: boo
     detail.purpose = `${data.licenseType.nameTh} — ถูกระงับ: ${data.suspensionReason}`;
   }
 
-  return <LicenseDetailPageView data={detail} isStaff={isStaff} rawApiStatus={data.status} hideVerify={hideVerify} />;
+  // Per spec §1: officers may inspect licenses from any agency; backend records audit trail
+  const isAuthorizedStaff = isStaff;
+
+  return <LicenseDetailPageView data={detail} isStaff={isAuthorizedStaff} rawApiStatus={data.status} hideVerify={hideVerify} />;
 }
 
 export default function MyLicenseDetailPage({

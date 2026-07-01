@@ -44,6 +44,11 @@ async function proxy(
   const { path } = await ctx.params;
   const store = await cookies();
 
+  // Strip framework-internal query params such as Next.js _rsc
+  const queryParams = new URLSearchParams(req.nextUrl.search);
+  queryParams.delete("_rsc");
+  const cleanSearch = queryParams.toString() ? `?${queryParams.toString()}` : "";
+
   const body =
     req.method === "GET" || req.method === "HEAD"
       ? undefined
@@ -55,7 +60,7 @@ async function proxy(
       if (!STRIP_REQUEST_HEADERS.has(key.toLowerCase())) headers.set(key, value);
     });
     if (accessToken) headers.set("authorization", `Bearer ${accessToken}`);
-    return fetch(backendUrl(path, req.nextUrl.search), {
+    return fetch(backendUrl(path, cleanSearch), {
       method: req.method,
       headers,
       body: body ? Buffer.from(body) : undefined,

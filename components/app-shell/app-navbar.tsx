@@ -35,6 +35,7 @@ import { useAgencies } from "@/hooks/useAgencies";
 import { useIsStaff } from "@/hooks/useIsStaff";
 import { http } from "@/lib/http";
 import { cn } from "@/lib/utils";
+import mainLogo from "@/assets/icon/main-logo.svg";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -120,7 +121,6 @@ export function AppNavbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
-  const activeJuristicId = useAuthStore((s) => s.activeJuristicId);
   const logout = useLogout();
   const { data: agencies = [] } = useAgencies();
   const userAgencyName = agencies.find((a) => a.id === user?.agencyId)?.nameTh;
@@ -128,12 +128,15 @@ export function AppNavbar() {
   const isHome = pathname === "/home";
   const entry = searchParams.get("entry") || "public";
   const isPublicHome =
-    (isHome ||
+    pathname === "/officer-card" ||
+    pathname.startsWith("/inspection-tasks/") ||
+    ((isHome ||
       pathname === "/licenses" ||
       pathname === "/license-search" ||
       pathname.startsWith("/licenses/") ||
+      pathname.startsWith("/businesses/") ||
       pathname.startsWith("/complaints")) &&
-    entry === "public";
+      entry === "public");
 
   const searchPageConfig = SEARCH_PAGE_CONFIG[pathname];
   const searchPlaceholder = searchPageConfig?.placeholder;
@@ -199,8 +202,7 @@ export function AppNavbar() {
     } catch {
       try {
         // Fallback: fetch licenses and use the first one
-        const mode = activeJuristicId ? "juristic" : "personal";
-        const list = await http.get<LicenseListItem[]>(`my/licenses?mode=${mode}`);
+        const list = await http.get<LicenseListItem[]>("my/licenses");
         if (list && list.length > 0) {
           const fallbackId = list[0].id;
           toast.info("ไม่พบรหัสใบอนุญาตนี้ในระบบ จึงแสดงใบอนุญาตตัวอย่างแทน");
@@ -223,8 +225,14 @@ export function AppNavbar() {
     : user?.roles?.includes("admin")
       ? "ผู้ดูแลระบบ"
       : user?.roles?.includes("officer")
-        ? "เจ้าหน้าที่"
-        : "ผู้ประกอบการ / ประชาชน";
+        ? "เจ้าหน้าที่ผู้มีอำนาจตรวจสอบ"
+        : "บุคคลธรรมดา";
+
+  const buttonRoleLabel = user?.roles?.includes("officer")
+    ? "เจ้าหน้าที่"
+    : user?.roles?.includes("super_admin") || user?.roles?.includes("admin")
+      ? "ผู้ดูแลระบบ"
+      : "บุคคลธรรมดา";
 
   return (
     <header className="sticky top-0 z-30 border-white/10 bg-white text-black backdrop-blur">
@@ -331,7 +339,7 @@ export function AppNavbar() {
             {/* Brand Logo */}
             <Link href="/home?entry=public" className="flex items-center select-none">
               <Image
-                src="/assets/brand/e-license-logo.png"
+                src={mainLogo}
                 alt="E-License Verification Platform"
                 width={156}
                 height={35}
@@ -341,36 +349,6 @@ export function AppNavbar() {
             </Link>
 
             <div className="flex items-center gap-3">
-              {/* Notifications button */}
-              <div ref={notifRef} className="relative">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Notifications"
-                  onClick={() => togglePanel("notifications")}
-                  className={cn(
-                    "relative h-9 w-9 text-slate-700 hover:bg-slate-100 rounded-full",
-                    openPanel === "notifications" && "bg-slate-100",
-                  )}
-                >
-                  <Bell className="size-6 text-slate-600" strokeWidth={1.5} />
-                  {unreadCount > 0 && (
-                    <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
-                </Button>
-
-                {openPanel === "notifications" && (
-                  <NotificationsPanel
-                    notifications={notifData?.data ?? []}
-                    unreadCount={unreadCount}
-                    onMarkAll={() => markAllRead.mutate()}
-                  />
-                )}
-              </div>
-
               {/* Profile dropdown selector box */}
               <div ref={profileRef} className="relative">
                 <button
@@ -391,7 +369,7 @@ export function AppNavbar() {
                     <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#1e7c75] text-white">
                       <Check className="h-2 w-2" />
                     </span>
-                    <span className="text-[9px] font-bold text-slate-500">บุคคลทั่วไป</span>
+                    <span className="text-[9px] font-bold text-slate-500">{buttonRoleLabel}</span>
                   </div>
                 </button>
 
@@ -432,36 +410,6 @@ export function AppNavbar() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Notifications button */}
-              <div ref={notifRef} className="relative">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Notifications"
-                  onClick={() => togglePanel("notifications")}
-                  className={cn(
-                    "relative h-9 w-9 text-black hover:bg-white/10 hover:text-black",
-                    openPanel === "notifications" && "bg-white/10",
-                  )}
-                >
-                  <Bell className="size-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-black">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
-                </Button>
-
-                {openPanel === "notifications" && (
-                  <NotificationsPanel
-                    notifications={notifData?.data ?? []}
-                    unreadCount={unreadCount}
-                    onMarkAll={() => markAllRead.mutate()}
-                  />
-                )}
-              </div>
-
               {/* Profile button */}
               <div ref={profileRef} className="relative">
                 <Button
@@ -510,6 +458,7 @@ export function AppNavbar() {
 
   function updateUrlParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("_rsc");
     Object.entries(updates).forEach(([key, value]) => {
       if (value) params.set(key, value);
       else params.delete(key);
@@ -738,7 +687,7 @@ function ProfileAction({
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getDetailPageTitle(pathname: string, entry?: string) {
-  if (entry === "public" && pathname.startsWith("/licenses/")) {
+  if (entry === "public" && (pathname.startsWith("/licenses/") || pathname.startsWith("/businesses/"))) {
     return null;
   }
   if (

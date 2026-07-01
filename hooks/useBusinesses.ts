@@ -64,3 +64,58 @@ export function useBusiness(id: string) {
     enabled: !!id,
   });
 }
+
+export interface JuristicBusinessDetailResponse {
+  id: string;
+  nameTh: string;
+  address: string;
+  province: string;
+  latitude: string | null;
+  longitude: string | null;
+  phone: string | null;
+  zone: {
+    id: string;
+    code: string;
+    nameTh: string;
+    province: string;
+  } | null;
+  juristic: {
+    id: string;
+    nameTh: string;
+    nameEn: string | null;
+    registrationId: string;
+    myRole: string;
+  };
+  licenseSummary: {
+    total: number;
+    active: number;
+    suspended: number;
+    expired: number;
+    pending: number;
+    revoked: number;
+  };
+  licenses: {
+    id: string;
+    licenseNumber: string;
+    issuedAt: string;
+    expiresAt: string | null;
+    status: string;
+    suspendedAt: string | null;
+    suspensionReason: string | null;
+    licenseType: {
+      id: string;
+      code: string;
+      nameTh: string;
+      nameEn: string;
+      agency: string;
+    };
+  }[];
+}
+
+export function useJuristicBusiness(id: string) {
+  return useQuery({
+    queryKey: ['my-juristic-business', id],
+    queryFn: () => http.get<JuristicBusinessDetailResponse>(`my/juristic-businesses/${id}`),
+    enabled: !!id,
+  });
+}

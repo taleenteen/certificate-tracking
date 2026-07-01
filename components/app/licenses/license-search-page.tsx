@@ -1,112 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
-import { Search, X, Building2 } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import notFoundImage from "@/assets/search/not-found.png";
 import preparePageImage from "@/assets/search/prepare-page.png";
-import type { LicenseCardItem } from "@/components/app/licenses/license-certificate-card";
 import { LicenseCertificateCard } from "@/components/app/licenses/license-certificate-card";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
 import { http } from "@/lib/http";
+import type { GroupedBusinessItem } from "@/app/(app)/license-search/page";
 
 type LicenseSearchPageViewProps = {
-  items: LicenseCardItem[];
+  items: GroupedBusinessItem[];
 };
-
-// Helper for escaping regex characters
-function escapeRegExp(string: string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-// Helper to highlight matching text
-function highlightText(text: string, search: string) {
-  if (!search.trim()) return <span>{text}</span>;
-  const regex = new RegExp(`(${escapeRegExp(search)})`, "gi");
-  const parts = text.split(regex);
-  return (
-    <span>
-      {parts.map((part, i) =>
-        regex.test(part) ? (
-          <strong key={i} className="font-bold text-slate-900 bg-teal-50 px-0.5 rounded">
-            {part}
-          </strong>
-        ) : (
-          <span key={i}>{part}</span>
-        )
-      )}
-    </span>
-  );
-}
 
 export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const query = searchParams.get("q")?.trim() ?? "";
+  const queryQ = searchParams.get("q")?.trim() ?? "";
+  const queryNumber = searchParams.get("licenseNumber")?.trim() ?? "";
 
-  const [searchQuery, setSearchQuery] = useState(query);
-  const [isFocused, setIsFocused] = useState(false);
+  const [searchQueryQ, setSearchQueryQ] = useState(queryQ);
+  const [searchQueryNumber, setSearchQueryNumber] = useState(queryNumber);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [expandedBusinesses, setExpandedBusinesses] = useState<Record<string, boolean>>({});
+
+  const toggleBusiness = (businessId: string) => {
+    setExpandedBusinesses((prev) => ({
+      ...prev,
+      [businessId]: !prev[businessId],
+    }));
+  };
 
   // Sync state if URL query changes externally
   useEffect(() => {
-    setSearchQuery(query);
-  }, [query]);
-
-  // Handle click outside to close autocomplete popover
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setIsFocused(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    setSearchQueryQ(queryQ);
+    setSearchQueryNumber(queryNumber);
+  }, [queryQ, queryNumber]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsFocused(false);
-    updateUrlParams(searchQuery.trim() || null);
+    updateUrlParams(searchQueryQ.trim() || null, searchQueryNumber.trim() || null);
   };
-
-  const handleClear = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSearchQuery("");
-    updateUrlParams(null);
-  };
-
-  // Search autocomplete logic (max 5 items)
-  const autocompleteSuggestions = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const lowerQuery = searchQuery.toLowerCase().trim();
-    return items
-      .filter((item) =>
-        [item.holderName, item.licenseName, item.licenseNumber]
-          .join(" ")
-          .toLowerCase()
-          .includes(lowerQuery)
-      )
-      .slice(0, 5);
-  }, [items, searchQuery]);
-
-  // Main filtered search results
-  const results = useMemo(() => {
-    if (!query) return [];
-    const lowerQuery = query.toLowerCase();
-    return items.filter((item) =>
-      [item.holderName, item.licenseName, item.licenseNumber]
-        .join(" ")
-        .toLowerCase()
-        .includes(lowerQuery)
-    );
-  }, [items, query]);
 
   const extractIdFromScannedValue = (scannedText: string): string => {
     try {
@@ -132,186 +72,115 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
     const cleanValue = extractIdFromScannedValue(value);
     try {
       await http.get(`licenses/${cleanValue}/qr-verify`);
-      router.push(`/licenses/${cleanValue}?hideVerify=true`);
+      router.push(`/licenses/${cleanValue}?hideVerify=true&from=search`);
     } catch {
       if (items.length > 0) {
         const fallbackId = items[0].id;
         toast.info("ไม่พบรหัสใบอนุญาตนี้ในระบบ จึงแสดงใบอนุญาตตัวอย่างแทน");
-        router.push(`/licenses/${fallbackId}?hideVerify=true`);
+        router.push(`/licenses/${fallbackId}?hideVerify=true&from=search`);
       } else {
         toast.error("ไม่พบใบอนุญาตนี้ และไม่มีข้อมูลตัวอย่างในระบบ");
       }
     }
   };
 
-  const updateUrlParams = (q: string | null) => {
+  const updateUrlParams = (q: string | null, licenseNo: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("_rsc");
     if (q) params.set("q", q);
     else params.delete("q");
+
+    if (licenseNo) params.set("licenseNumber", licenseNo);
+    else params.delete("licenseNumber");
     
     const nextUrl = params.toString() ? `/license-search?${params.toString()}` : `/license-search`;
     router.replace(nextUrl, { scroll: false });
   };
 
+  const hasSearched = !!(queryQ || queryNumber);
+
   return (
     <main className="min-h-screen bg-[#f4f5f7] pb-12 text-slate-900">
       <div className="mx-auto max-w-[430px] bg-[#f4f5f7] min-h-screen text-left shadow-sm">
-        {/* Animated Expanding Hero Banner */}
-        <motion.div
-          initial={{ height: 120 }}
-          animate={{ height: 210 }}
-          transition={{ type: "spring", stiffness: 90, damping: 14 }}
-          className="relative bg-slate-950 flex flex-col justify-end p-4 pb-6 select-none z-20"
+        
+        {/* Banner with 2-field search card design */}
+        <div
+          className="text-white pt-10 pb-16 px-6 shadow-[0_10px_30px_rgba(20,91,87,0.1)] relative z-20"
+          style={{
+            background:
+              "radial-gradient(660.85% 601.5% at 53.98% -46.94%, #004D34 0%, #D8F3E1 100%)",
+          }}
         >
-          {/* Background decorations container wrapper to constrain visual elements without cutting off dropdown */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-            {/* Background image pattern overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#0f2e2b] via-[#1a3834] to-[#121212] opacity-90" />
-            {/* Subtle design circles */}
-            <div className="absolute right-[-20px] top-[-20px] w-48 h-48 rounded-full border border-white/5" />
+          <div className="text-center mb-6">
+            <h1 className="text-2xl sm:text-2xl font-bold tracking-tight text-white leading-8">
+              ค้นหาใบอนุญาตและสถานประกอบการ
+            </h1>
           </div>
 
-          {/* Banner Title */}
-          <motion.h2
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.3 }}
-            className="z-10 text-[20px] font-bold text-white leading-tight mb-4 pr-6 text-left"
-          >
-            ค้นหาใบอนุญาต <br />
-            และสถานประกอบการ
-          </motion.h2>
-
-          {/* Search form inside banner */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="relative z-10 w-full"
-          >
-            <div ref={searchContainerRef} className="relative flex items-center">
-              <Search className="absolute left-4 h-4.5 w-4.5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="ระบุเลขที่ใบอนุญาต หรือชื่อสถานประกอบการ"
-                value={searchQuery}
-                onFocus={() => setIsFocused(true)}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setIsFocused(true);
-                }}
-                className="w-full pl-11 pr-24 py-3.5 rounded-2xl border-0 bg-white text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none shadow-md transition-all font-semibold"
-              />
-              
-              {/* Reset/Clear button */}
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="absolute right-18 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+          {/* Search Card Container */}
+          <div className="mx-auto w-full bg-white rounded-lg border border-slate-100 shadow-[0_15px_45px_rgba(0,0,0,0.1)] p-5 sm:p-6 text-slate-800">
+            <form onSubmit={handleSearchSubmit} className="space-y-4">
+              {/* Name Search Input */}
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="business-name-input"
+                  className="block text-[12px] font-bold text-slate-500 text-left"
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-
-              {/* QR scanner / Search button toggle */}
-              <div className="absolute right-2 flex items-center gap-1.5">
-                <AnimatePresence mode="wait">
-                  {!searchQuery.trim() ? (
-                    <motion.button
-                      key="qr-button"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.15 }}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsQrScannerOpen(true);
-                      }}
-                      className="text-[#145b57] hover:opacity-80 transition-opacity cursor-pointer p-1.5 flex items-center justify-center z-10"
-                      aria-label="Scan QR Code"
-                    >
-                      <QrScannerIcon size={20} />
-                    </motion.button>
-                  ) : (
-                    <motion.button
-                      key="search-button"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.15 }}
-                      type="submit"
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="h-9 px-3.5 bg-[#145b57] text-white rounded-xl flex items-center justify-center cursor-pointer shadow-sm hover:bg-[#0c403d] transition-colors"
-                    >
-                      <Search className="h-4 w-4" />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
+                  ค้นหาใบอนุญาตของสถานประกอบการ
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    id="business-name-input"
+                    type="text"
+                    placeholder="ระบุชื่อสถานประกอบการ"
+                    value={searchQueryQ}
+                    onChange={(e) => setSearchQueryQ(e.target.value)}
+                    className="w-full pl-4 pr-24 py-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] h-[46px]"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-1.5 h-[36px] px-3.5 bg-[#145b57] hover:bg-[#0c403d] text-white text-[12px] font-bold rounded-[9px] flex items-center gap-1 cursor-pointer transition-colors shadow-sm border-0"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    <span>ค้นหา</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Autocomplete suggestions dropdown popover */}
-              <AnimatePresence>
-                {isFocused && searchQuery.trim() !== "" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.08)] overflow-hidden z-30"
-                  >
-                    <div className="p-3 border-b border-slate-100 bg-slate-50/50">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        ผลการค้นหาแนะนำ
-                      </p>
-                    </div>
+              {/* License Number Search Input */}
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="license-number-input"
+                  className="block text-[12px] font-bold text-slate-500 text-left"
+                >
+                  เลขที่ใบอนุญาตของสถานประกอบการ
+                </label>
+                <input
+                  id="license-number-input"
+                  type="text"
+                  placeholder="ระบุเลขใบอนุญาตให้ครบถ้วน"
+                  value={searchQueryNumber}
+                  onChange={(e) => setSearchQueryNumber(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-0 bg-slate-100/90 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] h-[46px]"
+                />
+              </div>
+            </form>
 
-                    {autocompleteSuggestions.length > 0 ? (
-                      <ul className="divide-y divide-slate-50">
-                        {autocompleteSuggestions.map((item) => (
-                          <li key={item.id}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsFocused(false);
-                                router.push(`/licenses/${item.id}`);
-                              }}
-                              className="w-full text-left px-4 py-3 hover:bg-slate-50/80 transition-colors flex items-start gap-3 cursor-pointer group"
-                            >
-                              <Building2 className="h-4 w-4 text-slate-400 mt-0.5 group-hover:text-[#145b57] transition-colors" />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-slate-800 truncate leading-snug">
-                                  {highlightText(item.holderName, searchQuery)}
-                                </p>
-                                <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500 font-semibold">
-                                  <span className="truncate">
-                                    {highlightText(item.licenseName, searchQuery)}
-                                  </span>
-                                  <span className="h-1 w-1 bg-slate-300 rounded-full" />
-                                  <span className="text-[#2d57bb] underline">
-                                    {highlightText(item.licenseNumber, searchQuery)}
-                                  </span>
-                                </div>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="p-4 text-center text-xs text-slate-400 font-semibold">
-                        ไม่พบข้อมูลแนะนำที่สอดคล้องกับคำค้นหา
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </form>
-        </motion.div>
+            {/* QR Scan Button */}
+            <button
+              type="button"
+              onClick={() => setIsQrScannerOpen(true)}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-[#145b57] bg-white text-[#145b57] hover:bg-emerald-50/30 text-xs font-bold transition-colors cursor-pointer h-[46px]"
+            >
+              <QrScannerIcon size={18} />
+              <span>สแกน QR Code ใบอนุญาต</span>
+            </button>
+          </div>
+        </div>
 
         {/* Search Results Display Area */}
         <div className="px-4 py-6">
-          {!query ? (
+          {!hasSearched ? (
             /* Prepare/Ready to search page state */
             <div className="flex flex-col items-center gap-3 p-6 text-center select-none bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] mt-4">
               <Image
@@ -328,20 +197,96 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
                 เพื่อตรวจสอบข้อมูลสถานะในระบบ
               </p>
             </div>
-          ) : results.length > 0 ? (
+          ) : items.length > 0 ? (
             /* Active Results Populated List */
             <div className="space-y-4">
               <div className="px-1 flex items-center gap-1">
                 <span className="text-xs text-slate-500 font-semibold">พบ</span>
                 <span className="text-xs font-extrabold text-slate-900">
-                  {results.length}
+                  {items.length}
                 </span>
                 <span className="text-xs text-slate-500 font-semibold">รายการ</span>
               </div>
 
               <div className="space-y-4">
-                {results.map((item) => (
-                  <LicenseCertificateCard key={item.id} item={item} />
+                {items.map((business) => (
+                  <div
+                    key={business.id}
+                    className="bg-white border border-slate-100/60 rounded-3xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.02)] space-y-4 text-left"
+                  >
+                    <div>
+                      <h3 className="text-[15px] font-bold text-slate-800 leading-snug">
+                        {business.nameTh}
+                      </h3>
+                      <p className="text-[12px] font-semibold text-slate-400 mt-1">
+                        จังหวัด: {business.province}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <Link
+                        href={`/businesses/${business.id}?from=search`}
+                        className="flex h-10 items-center justify-center rounded-xl bg-[#145b57] text-[12px] font-bold text-white hover:bg-[#0c403d] transition-colors"
+                      >
+                        ดูรายละเอียด
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleBusiness(business.id)}
+                        className="flex h-10 items-center justify-center gap-1.5 text-[12px] font-bold text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl transition-all cursor-pointer bg-transparent"
+                      >
+                        <span>
+                          {expandedBusinesses[business.id]
+                            ? "ซ่อนใบอนุญาต"
+                            : `${business.licenseCount} ใบอนุญาต`}
+                        </span>
+                        <ChevronDown
+                          className="h-4 w-4 text-slate-400 transition-transform duration-200"
+                          style={{
+                            transform: expandedBusinesses[business.id]
+                              ? "rotate(180deg)"
+                              : "none",
+                          }}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Nested licenses list under the business */}
+                    {expandedBusinesses[business.id] && (
+                      <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-150">
+                        <h4 className="text-[13px] font-bold text-[#145b57]">
+                          ใบอนุญาต ({business.licenseCount})
+                        </h4>
+                        <div className="space-y-4">
+                          {business.licenses.length > 0 ? (
+                            business.licenses.map((lib) => {
+                              const cardItem = {
+                                id: lib.id,
+                                holderName: business.nameTh,
+                                licenseName: lib.licenseType.nameTh,
+                                licenseNumber: lib.licenseNumber,
+                                status: lib.status,
+                                issuedAt: lib.issuedAt,
+                                expiresAt: lib.expiresAt || "ไม่มีวันหมดอายุ",
+                                detailsHref: `/licenses/${lib.id}?from=search`,
+                              };
+                              return (
+                                <LicenseCertificateCard
+                                  key={lib.id}
+                                  item={cardItem}
+                                />
+                              );
+                            })
+                          ) : (
+                            <div className="p-3 text-center text-xs text-slate-400 font-semibold bg-slate-50 rounded-xl border border-slate-100">
+                              ไม่มีข้อมูลใบอนุญาตภายใต้สถานประกอบการนี้
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

@@ -23,6 +23,34 @@ type ContextSwitchResponse = {
   juristicRole: string | null;
 };
 
+type DgaAuthorizeResponse = {
+  authorizeUrl: string;
+  state: string;
+  expiresAt: string;
+};
+
+type LogoutResponse = {
+  success: boolean;
+  endSessionUrl?: string;
+};
+
+const DGA_STATE_KEY = "dga_oidc_state";
+const DGA_REDIRECT_URI_KEY = "dga_oidc_redirect_uri";
+
+function routeAfterLogin(roles: string[], router: ReturnType<typeof useRouter>) {
+  if (roles.includes('super_admin')) router.push('/super-admin/dashboard');
+  else if (roles.includes('admin')) router.push('/agency-admin/inspections');
+  else router.push('/home');
+}
+
+export function dgaRedirectUri() {
+  if (process.env.NEXT_PUBLIC_DGA_REDIRECT_URI) {
+    return process.env.NEXT_PUBLIC_DGA_REDIRECT_URI;
+  }
+  if (typeof window === "undefined") return undefined;
+  return `${window.location.origin}/auth/login-callback`;
+}
+
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const setPendingTempToken = useAuthStore((s) => s.setPendingTempToken);
@@ -49,10 +77,56 @@ export function useLogin() {
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
       });
-      const roles: string[] = data.user?.roles ?? [];
-      if (roles.includes('super_admin')) router.push('/super-admin/dashboard');
-      else if (roles.includes('admin')) router.push('/agency-admin/inspections');
-      else router.push('/home');
+      routeAfterLogin(data.user?.roles ?? [], router);
+    },
+  });
+}
+
+export function useDgaAuthorize() {
+  return useMutation({
+    mutationFn: async () => {
+      const redirectUri = dgaRedirectUri();
+      const response = await http.post<DgaAuthorizeResponse>('auth/dga/authorize', {
+        redirectUri,
+        scope: 'openid citizen_id given_name family_name',
+      });
+      sessionStorage.setItem(DGA_STATE_KEY, response.state);
+      if (redirectUri) sessionStorage.setItem(DGA_REDIRECT_URI_KEY, redirectUri);
+      else sessionStorage.removeItem(DGA_REDIRECT_URI_KEY);
+      return response;
+    },
+  });
+}
+
+export function useDgaCallback() {
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async ({ code, state }: { code: string; state: string }) => {
+      const expectedState = sessionStorage.getItem(DGA_STATE_KEY);
+      const redirectUri = sessionStorage.getItem(DGA_REDIRECT_URI_KEY);
+      if (!expectedState || !redirectUri) {
+        throw new Error('ไม่พบ session การเข้าสู่ระบบทางรัฐ กรุณาเริ่มเข้าสู่ระบบใหม่');
+      }
+      if (expectedState !== state) {
+        throw new Error('State จากทางรัฐไม่ตรงกับ session ปัจจุบัน');
+      }
+      return http.post<AuthResponse>('auth/dga/callback', {
+        code,
+        state,
+        redirectUri,
+      });
+    },
+    onSuccess: (data) => {
+      sessionStorage.removeItem(DGA_STATE_KEY);
+      sessionStorage.removeItem(DGA_REDIRECT_URI_KEY);
+      setAuth({
+        user: data.user,
+        activeJuristicId: data.activeJuristicId,
+        juristicRole: data.juristicRole,
+      });
+      routeAfterLogin(data.user?.roles ?? [], router);
     },
   });
 }
@@ -109,10 +183,14 @@ export function useLogout() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: () => http.post('auth/logout'),
-    onSuccess: () => {
+    mutationFn: () => http.post<LogoutResponse>('auth/logout'),
+    onSuccess: (data) => {
       clear();
       queryClient.clear();
+      if (data.endSessionUrl) {
+        window.location.href = data.endSessionUrl;
+        return;
+      }
       router.push('/auth/login');
     },
   });

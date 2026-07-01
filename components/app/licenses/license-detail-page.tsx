@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import {
   ChevronLeft,
   Building2,
@@ -11,6 +13,7 @@ import {
   FileText,
   Check,
   Copy,
+  ClipboardCheck,
 } from "lucide-react";
 
 import type { LicenseDetailData } from "./license-data";
@@ -18,6 +21,8 @@ import { LicensePreview } from "./license-preview";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
+import heroRightImage from "@/assets/hero/hero-right.png";
 
 type LicenseDetailPageViewProps = {
   data: LicenseDetailData;
@@ -33,7 +38,12 @@ export function LicenseDetailPageView({
   hideVerify = false,
 }: LicenseDetailPageViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isCopied, setIsCopied] = useState(false);
+
+  const fromParam = searchParams.get("from");
+  const fromLabel = fromParam === "search" ? "ค้นหาใบอนุญาต..." : "ใบอนุญาตของฉัน";
+  const fromHref = fromParam === "search" ? "/license-search" : "/licenses";
 
   const handleCopy = async () => {
     try {
@@ -46,18 +56,49 @@ export function LicenseDetailPageView({
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f5f7] px-4 py-4 pb-24 text-slate-900">
-      <div className="mx-auto max-w-[430px] space-y-4">
-        {/* Back Button Link */}
-        <div className="flex items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1 text-sm font-bold text-slate-800 hover:opacity-80 transition-opacity cursor-pointer py-1"
-          >
-            <ChevronLeft className="h-4.5 w-4.5" />
-            <span>ย้อนกลับ</span>
-          </button>
-        </div>
+    <main className="min-h-screen bg-[#f4f5f7] px-6 py-6 pb-24 text-slate-900 text-left">
+      <div className="mx-auto max-w-[430px] space-y-6">
+        {/* Breadcrumb matching mockup layout */}
+        <AppBreadcrumb
+          items={[
+            { label: "หน้าแรก", href: "/home" },
+            { label: fromLabel, href: fromHref },
+            { label: data.licenseName },
+          ]}
+          variant="dark"
+        />
+
+        {/* Officer Inspection Banner */}
+        {isStaff && (
+          <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#17524e] to-[#256e69] p-4.5 text-white flex items-center justify-between shadow-[0_10px_25px_rgba(20,91,87,0.12)] gap-3 select-none">
+            {/* Left illustration */}
+            <div className="flex items-center gap-3">
+              <div className="relative w-[75px] h-[75px] shrink-0">
+                <Image
+                  src={heroRightImage}
+                  alt="Officer illustration"
+                  fill
+                  className="object-contain object-bottom scale-[1.3] origin-bottom -translate-y-1"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Right inspection button */}
+            <Link
+              href={`/inspection-tasks/${data.id}`}
+              className="flex items-center gap-2 px-4 py-3 bg-[#0d423e] hover:bg-[#082e2c] border border-[#1a5550] rounded-xl text-[13px] font-bold text-white transition-all shadow-[0_4px_12px_rgba(0,0,0,0.1)] shrink-0 cursor-pointer"
+            >
+              <ClipboardCheck className="h-4.5 w-4.5 text-white" />
+              <span>บันทึกผลการตรวจสอบ</span>
+            </Link>
+          </div>
+        )}
+
+        {/* Centered Page Title */}
+        <h2 className="text-[20px] font-bold text-slate-800 text-center tracking-wide my-4">
+          {data.licenseName}
+        </h2>
 
         {/* Card 1: Business Info Card */}
         <Card className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] text-left">
@@ -192,6 +233,7 @@ export function LicenseDetailPageView({
                 type={data.previewType}
                 size="detail"
                 previewImage={data.previewImage}
+                status={data.status}
                 className="border-0 shadow-none p-1 min-h-[300px]"
               />
             </div>

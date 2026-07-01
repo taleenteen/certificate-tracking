@@ -1,9 +1,9 @@
 "use client";
-import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 
+import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { SectionCard } from "@/components/shared/SectionCard";
-import { ListItemCard } from "@/components/shared/ListItemCard";
 import { NavigationFooter } from "@/components/shared/NavigationFooter";
+import { useSearchParams } from "next/navigation";
 import {
   MdOutlineDescription,
   MdOutlineEmail,
@@ -11,12 +11,19 @@ import {
   MdOutlinePerson,
   MdOutlinePhone,
 } from "react-icons/md";
+import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
+import {
+  LicenseCertificateCard,
+  type LicenseCardItem,
+} from "@/components/app/licenses/license-certificate-card";
 
 export type BusinessDocument = {
   id: string;
   title: string;
+  licenseNumber: string;
   status: StatusBadgeStatus;
-  expireDate?: string;
+  issuedAt: string;
+  expiresAt: string;
 };
 
 export type BusinessDetailData = {
@@ -35,10 +42,30 @@ type BusinessesPageDetailViewProps = {
 export function BusinessesPageDetailView({
   data,
 }: BusinessesPageDetailViewProps) {
+  const searchParams = useSearchParams();
+  const fromParam = searchParams.get("from");
+  const fromLabel = fromParam === "search" ? "ค้นหาใบอนุญาต..." : "ใบอนุญาตของฉัน";
+  const fromHref = fromParam === "search" ? "/license-search" : "/licenses";
+
   return (
     <>
-      <main className="min-h-[calc(100vh-57px)] bg-[#F9FAFB] px-4 py-4">
-        <div className="mx-auto max-w-3xl">
+      <main className="min-h-[calc(100vh-57px)] bg-[#F9FAFB] px-6 py-6 text-left">
+        <div className="mx-auto max-w-3xl space-y-6">
+          {/* Breadcrumb matching mockup layout */}
+          <AppBreadcrumb
+            items={[
+              { label: "หน้าแรก", href: "/home" },
+              { label: fromLabel, href: fromHref },
+              { label: data.businessName },
+            ]}
+            variant="dark"
+          />
+
+          {/* Centered Page Title */}
+          <h2 className="text-[20px] font-bold text-slate-800 text-center tracking-wide my-4">
+            {data.businessName}
+          </h2>
+
           <SectionCard
             icon={<MdOutlineHomeWork className="h-5 w-5 text-slate-700" />}
             title="ข้อมูลสถานประกอบการ"
@@ -46,14 +73,16 @@ export function BusinessesPageDetailView({
             <p className="text-sm text-gray-600">
               ชื่อสถานประกอบการ
               <br />
-              <span className="text-base text-slate-800">
+              <span className="text-base text-slate-800 font-bold">
                 {data.businessName}
               </span>
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mt-2">
               ที่ตั้ง
               <br />
-              <span className="text-base text-slate-800">{data.address}</span>
+              <span className="text-base text-slate-800 font-semibold">
+                {data.address}
+              </span>
             </p>
           </SectionCard>
 
@@ -61,19 +90,29 @@ export function BusinessesPageDetailView({
             icon={<MdOutlineDescription className="h-5 w-5 text-slate-700" />}
             title="ข้อมูลใบอนุญาต"
           >
-            <div className="flex justify-between px-1">
-              <p className="text-slate-600">ใบอนุญาตทั้งหมด</p>
-              <p className="text-slate-600">{data.documents.length} รายการ</p>
+            <div className="flex justify-between px-1 text-[13px] font-semibold text-slate-500 mb-2">
+              <p>ใบอนุญาตสาธารณะ ทั้งหมด</p>
+              <p>{data.documents.length} รายการ</p>
             </div>
-            <div className="space-y-3">
-              {data.documents.map((document) => (
-                <ListItemCard
-                  key={document.id}
-                  title={document.title}
-                  status={document.status}
-                  expireDate={document.expireDate}
-                />
-              ))}
+            <div className="space-y-5">
+              {data.documents.map((document) => {
+                const cardItem: LicenseCardItem = {
+                  id: document.id,
+                  holderName: data.businessName,
+                  licenseName: document.title,
+                  licenseNumber: document.licenseNumber,
+                  status: document.status,
+                  issuedAt: document.issuedAt,
+                  expiresAt: document.expiresAt,
+                  detailsHref: `/licenses/${document.id}?from=${fromParam || "my-licenses"}`,
+                };
+                return (
+                  <LicenseCertificateCard
+                    key={document.id}
+                    item={cardItem}
+                  />
+                );
+              })}
             </div>
           </SectionCard>
 
@@ -83,20 +122,22 @@ export function BusinessesPageDetailView({
           >
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">เบอร์โทรศัพท์</p>
-                <div className="mt-1 flex items-center gap-2">
+                <p className="text-sm text-gray-600 font-medium">เบอร์โทรศัพท์</p>
+                <div className="mt-1.5 flex items-center gap-2">
                   <MdOutlinePhone className="h-4 w-4 text-slate-700" />
-                  <span className="text-base text-slate-800">
+                  <span className="text-base text-slate-800 font-semibold">
                     {data.phoneNumber}
                   </span>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">อีเมล</p>
-                <div className="mt-1 flex items-center gap-2">
+                <p className="text-sm text-gray-600 font-medium">อีเมล</p>
+                <div className="mt-1.5 flex items-center gap-2">
                   <MdOutlineEmail className="h-4 w-4 text-slate-700" />
-                  <span className="text-base text-slate-800">{data.email}</span>
+                  <span className="text-base text-slate-800 font-semibold">
+                    {data.email}
+                  </span>
                 </div>
               </div>
             </div>

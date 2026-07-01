@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
-import { toast } from "sonner";
 
 import { LicenseListPageView } from "@/components/app/licenses/license-list-page";
 import type { LicenseCardItem } from "@/components/app/licenses/license-certificate-card";
@@ -12,7 +11,8 @@ import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import {
   useLicenses,
   useDevSeedLicense,
-  useJuristicMemberships,
+  useJuristicLicenseGroups,
+  useDevSeedJuristicLicense,
   type LicenseResponse,
 } from "@/hooks/useLicenses";
 import { useSwitchContext } from "@/hooks/useAuth";
@@ -24,28 +24,24 @@ dayjs.locale("th");
 
 export default function MyLicensesPage() {
   const activeJuristicId = useAuthStore((s) => s.activeJuristicId);
+  const [activeTab, setActiveTab] = useState<"personal" | "juristic">(
+    activeJuristicId ? "juristic" : "personal"
+  );
 
-  const { data: licenses, isLoading, isError } = useLicenses();
-  const { data: memberships = [] } = useJuristicMemberships();
+  const { data: personalLicenses = [], isLoading: isPersonalLoading, isError: isPersonalError } = useLicenses();
+  const { data: juristicGroups = [], isLoading: isJuristicLoading, isError: isJuristicError } = useJuristicLicenseGroups();
   const switchContext = useSwitchContext();
   const { mutate: seedLicense, isPending: isSeeding } = useDevSeedLicense();
+  const { mutate: seedJuristicLicense, isPending: isSeedingJuristic } = useDevSeedJuristicLicense();
 
-  const activeTab = activeJuristicId ? "juristic" : "personal";
-
-  const formattedLicenses = useMemo<LicenseCardItem[]>(() => {
-    if (!licenses) return [];
-
-    return licenses.map((lib: LicenseResponse) => {
-      // Map API status to UI status
-      // API: ACTIVE, EXPIRED, SUSPENDED, REVOKED, PENDING
-      // UI: active, expired, suspended, expiringSoon
+  const formattedPersonalLicenses = useMemo<LicenseCardItem[]>(() => {
+    return personalLicenses.map((lib: LicenseResponse) => {
       let uiStatus: StatusBadgeStatus = "active";
       if (lib.status === "EXPIRED") uiStatus = "expired";
       if (lib.status === "SUSPENDED" || lib.status === "REVOKED") uiStatus = "suspended";
 
-      // Check if expiring soon (within 30 days)
       const expiryDate = dayjs(lib.expiresAt);
-      if (lib.status === "ACTIVE" && expiryDate.isBefore(dayjs().add(30, "day"))) {
+      if (lib.status === "ACTIVE" && lib.expiresAt && expiryDate.isBefore(dayjs().add(30, "day"))) {
         uiStatus = "expiringSoon";
       }
 
@@ -55,30 +51,52 @@ export default function MyLicensesPage() {
         licenseName: lib.licenseType.nameTh,
         licenseNumber: lib.licenseNumber,
         status: uiStatus,
-        issuedAt: dayjs(lib.issuedAt).format("D ม.ค. BBBB"), // matches dynamic Thai formatting
+        issuedAt: dayjs(lib.issuedAt).format("D ม.ค. BBBB"),
         expiresAt: lib.expiresAt ? dayjs(lib.expiresAt).format("D ม.ค. BBBB") : "ไม่มีวันหมดอายุ",
         detailsHref: `/licenses/${lib.id}`,
       };
     });
-  }, [licenses]);
+  }, [personalLicenses]);
 
   const handleTabChange = (tab: "personal" | "juristic") => {
-    if (tab === "personal") {
+    setActiveTab(tab);
+    if (tab === "personal" && activeJuristicId !== null) {
       switchContext.mutate(null);
-    } else {
-      if (memberships.length > 0) {
-        // If we have companies, switch to the first one as default
-        const defaultCompanyId = memberships[0].juristicId;
-        switchContext.mutate(defaultCompanyId);
-      } else {
-        toast.error("ไม่พบข้อมูลนิติบุคคลที่เกี่ยวข้องกับบัญชีของท่าน");
-      }
     }
   };
 
-  const handleSwitchJuristicCompany = (juristicId: string | null) => {
-    switchContext.mutate(juristicId);
-  };
+  const isLoading = activeTab === "personal" ? isPersonalLoading : isJuristicLoading;
+  const isError = activeTab === "personal" ? isPersonalError : isJuristicError;
+
+  const devSeedButton = useMemo(() => {
+    if (activeTab === "personal") {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => seedLicense()}
+          disabled={isSeeding}
+          className="text-xs border-dashed border-slate-300 text-slate-500 hover:text-slate-700 bg-white"
+        >
+          {isSeeding ? "กำลังสร้าง..." : "[DEV] สร้างใบอนุญาตทดสอบ"}
+        </Button>
+      );
+    } else {
+      // Only show the juristic seed button when there are no juristic groups yet
+      if (juristicGroups.length > 0) return null;
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => seedJuristicLicense()}
+          disabled={isSeedingJuristic}
+          className="text-xs border-dashed border-slate-300 text-slate-500 hover:text-slate-700 bg-white"
+        >
+          {isSeedingJuristic ? "กำลังสร้าง..." : "สร้างข้อมูลนิติบุคคลตัวอย่าง"}
+        </Button>
+      );
+    }
+  }, [activeTab, seedLicense, isSeeding, seedJuristicLicense, isSeedingJuristic, juristicGroups]);
 
   if (isLoading && !switchContext.isPending) {
     return (
@@ -106,24 +124,11 @@ export default function MyLicensesPage() {
 
   return (
     <LicenseListPageView
-      items={formattedLicenses}
+      personalLicenses={formattedPersonalLicenses}
+      juristicGroups={juristicGroups}
       activeTab={activeTab}
       onTabChange={handleTabChange}
-      memberships={memberships}
-      activeJuristicId={activeJuristicId}
-      onSwitchJuristicCompany={handleSwitchJuristicCompany}
-      isSwitching={switchContext.isPending}
-      devSeedButton={
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => seedLicense()}
-          disabled={isSeeding}
-          className="text-xs border-dashed border-slate-300 text-slate-500 hover:text-slate-700 bg-white"
-        >
-          {isSeeding ? "กำลังสร้าง..." : "[DEV] สร้างใบอนุญาตทดสอบ"}
-        </Button>
-      }
+      devSeedButton={devSeedButton}
     />
   );
 }

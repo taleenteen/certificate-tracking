@@ -18,6 +18,13 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
+import { useVerifyOfficer } from "@/hooks/useOfficer";
+import dayjs from "dayjs";
+import "dayjs/locale/th";
+import buddhistEra from "dayjs/plugin/buddhistEra";
+
+dayjs.extend(buddhistEra);
+dayjs.locale("th");
 
 // DECISION: Custom high-fidelity scanner viewfinder target icon
 const ScanIcon = () => (
@@ -40,28 +47,37 @@ const ScanIcon = () => (
   </svg>
 );
 
-type VerifyOfficerContentProps = {
-  initialState: string;
-};
-
-// DECISION: Dual-state premium layout reproducing mockup screens exactly (Authorized check vs Red Alert warning block)
-export default function VerifyOfficerContent({ initialState }: VerifyOfficerContentProps) {
+// DECISION: Dual-state premium layout — valid/invalid based on live API response from GET /api/public/officers/verify/:token
+export default function VerifyOfficerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
-  // Sync state from query parameters, fallback to initialState prop
-  const state = searchParams.get("state") || initialState;
+  const token = searchParams.get("token") || "";
+  const { data: verifyData, isLoading: isVerifyLoading } = useVerifyOfficer(token);
+
+  // Determine active states
+  const hasToken = !!token;
+  const isSuccess = hasToken ? (verifyData?.valid === true) : false;
 
   const handleScanMock = (value: string) => {
     setIsScannerOpen(false);
-    if (value.includes("fail") || value === "error") {
-      router.push("/verify-officer?state=failed");
-      toast.error("ตรวจสอบไม่สำเร็จ: ไม่พบข้อมูลเจ้าหน้าที่ในระบบ");
-    } else {
-      router.push("/verify-officer?state=success");
-      toast.success("ตรวจสอบสำเร็จ: ยืนยันตัวตนเจ้าหน้าที่เรียบร้อย");
+    // Extract token from scanned URL (supports both /verify-officer?token=... and raw token)
+    try {
+      const url = new URL(value);
+      const extractedToken = url.searchParams.get("token");
+      if (extractedToken) {
+        router.push(`/verify-officer?token=${encodeURIComponent(extractedToken)}`);
+        return;
+      }
+    } catch {
+      // Not a valid URL — treat raw value as token if it looks like one
+      if (value && !value.includes(" ")) {
+        router.push(`/verify-officer?token=${encodeURIComponent(value)}`);
+        return;
+      }
     }
+    toast.error("ไม่สามารถอ่าน QR Code ของเจ้าหน้าที่ได้ กรุณาลองใหม่");
   };
 
   const handleConfirm = () => {
@@ -69,37 +85,60 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
     router.push("/home");
   };
 
+  const officerName = hasToken
+    ? (verifyData?.valid ? verifyData.officer.fullName : "—")
+    : "นายสมชาย ใจดี";
+
+  const officerAgency = hasToken
+    ? (verifyData?.valid ? verifyData.officer.agency.nameTh : "—")
+    : "กรมโรงงานอุตสาหกรรม";
+
+  const officerArea = hasToken
+    ? (verifyData?.valid ? `ขอบเขตปฏิบัติงานทั่วประเทศ (${verifyData.officer.agency.code})` : "—")
+    : "จังหวัดสมุทรปราการ";
+
+  const scannedTime = hasToken
+    ? (verifyData ? dayjs(verifyData.scannedAt).format("DD/MM/BBBB HH:mm") : "—")
+    : "21/06/2569 16:45";
+
+  // Permissions: new spec returns array of {agencyCode, agencyNameTh, licenseTypeCode, licenseTypeNameTh}
+  const officerPermissionsList: string[] = hasToken && verifyData?.valid
+    ? verifyData.officer.permissions.map((p) => {
+        // Support both old shape (labelTh / licenseTypeCodes) and new shape (licenseTypeNameTh)
+        const label = (p as any).licenseTypeNameTh
+          || (p as any).labelTh
+          || (p as any).licenseTypeCodes?.join(", ")
+          || "";
+        const agencyCode = (p as any).agencyCode || (p as any).agency || "";
+        return agencyCode ? `${label} (${agencyCode})` : label;
+      }).filter(Boolean)
+    : [];
+
+  // Mapped failure message
+  const rawReason = hasToken && !verifyData?.valid ? verifyData?.reason : "";
+  const failMessage = rawReason === "INVALID_TOKEN"
+    ? "รหัสโทเคนอ้างอิงไม่ถูกต้อง หรือไม่พบข้อมูลเจ้าหน้าที่ในฐานข้อมูลระบบ"
+    : rawReason === "EXPIRED_TOKEN"
+      ? "QR Code ของเจ้าหน้าที่หมดอายุแล้ว (อายุการใช้งานรหัสจำกัดที่ 60 วินาที)"
+      : rawReason === "NOT_OFFICER"
+        ? "บัญชีผู้ใช้ที่สแกนไม่มีบทบาทเป็นเจ้าหน้าที่ปฏิบัติงาน"
+        : rawReason === "OFFICER_NOT_ACTIVE"
+          ? "บัญชีเจ้าหน้าที่ถูกสั่งระงับการปฏิบัติหน้าที่ชั่วคราว"
+          : "ไม่สามารถยืนยันตัวตนเจ้าหน้าที่ได้ กรุณาลองใหม่อีกครั้ง";
+
+  if (hasToken && isVerifyLoading) {
+    return (
+      <main className="min-h-screen bg-[#f4f5f7] px-4 py-4 pb-24 text-slate-900 text-left flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0c604c] mx-auto"></div>
+          <p className="text-xs text-slate-500 font-semibold">กำลังตรวจสอบข้อมูลเจ้าหน้าที่...</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f5f7] px-4 py-4 pb-24 text-slate-900 text-left">
-      {/* Dev Switcher Controls (Toggle mockup states for demo/review) */}
-      <div className="mx-auto max-w-[430px] mb-4 p-2.5 bg-[#e2e8f0] rounded-2xl flex items-center justify-between text-[11px] font-bold text-slate-700 shadow-sm">
-        <span>Dev State Switcher:</span>
-        <div className="flex gap-1.5">
-          <button
-            type="button"
-            onClick={() => router.push("/verify-officer?state=success")}
-            className={`px-3 py-1.5 rounded-xl transition-all shadow-sm ${
-              state === "success"
-                ? "bg-[#0c604c] text-white"
-                : "bg-white text-[#0c604c] hover:bg-slate-50"
-            }`}
-          >
-            ได้รับอนุญาต (State 1)
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/verify-officer?state=failed")}
-            className={`px-3 py-1.5 rounded-xl transition-all shadow-sm ${
-              state === "failed"
-                ? "bg-rose-600 text-white"
-                : "bg-white text-rose-600 hover:bg-slate-50"
-            }`}
-          >
-            ไม่พบข้อมูล (State 2)
-          </button>
-        </div>
-      </div>
-
       <div className="mx-auto max-w-[430px] space-y-4">
         {/* Back Button */}
         <div className="flex items-center">
@@ -117,7 +156,7 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
           
           {/* Top Banner Status */}
           <div className="text-center pt-4 pb-6 space-y-3">
-            {state === "success" ? (
+            {isSuccess ? (
               <>
                 <div className="flex justify-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-[#0c604c]">
@@ -144,8 +183,8 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
                   <h1 className="text-[20px] font-extrabold text-rose-600 tracking-tight">
                     ไม่พบข้อมูลของเจ้าหน้าที่
                   </h1>
-                  <p className="text-[12px] text-slate-400 font-semibold px-4">
-                    ไม่สามารถยืนยันตัวตนเจ้าหน้าที่ได้ กรุณาลองใหม่อีกครั้ง
+                  <p className="text-[12px] text-slate-400 font-semibold px-4 leading-normal mt-0.5">
+                    {failMessage}
                   </p>
                 </div>
               </>
@@ -154,7 +193,7 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
 
           {/* Details Section */}
           <div className="flex-1 space-y-4 py-4">
-            {state === "success" ? (
+            {isSuccess ? (
               <>
                 {/* Row 1: ชื่อเจ้าหน้าที่ */}
                 <div className="space-y-3">
@@ -164,7 +203,7 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
                       <span>ชื่อเจ้าหน้าที่</span>
                     </div>
                     <span className="font-extrabold text-slate-800 text-right">
-                      นายสมชาย ใจดี
+                      {officerName}
                     </span>
                   </div>
                   <div className="border-b border-dashed border-slate-200/80 w-full" />
@@ -178,7 +217,7 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
                       <span>หน่วยงาน</span>
                     </div>
                     <span className="font-extrabold text-slate-800 text-right">
-                      กรมโรงงานอุตสาหกรรม
+                      {officerAgency}
                     </span>
                   </div>
                   <div className="border-b border-dashed border-slate-200/80 w-full" />
@@ -192,7 +231,7 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
                       <span>พื้นที่รับผิดชอบ</span>
                     </div>
                     <span className="font-extrabold text-slate-800 text-right">
-                      จังหวัดสมุทรปราการ
+                      {officerArea}
                     </span>
                   </div>
                   <div className="border-b border-dashed border-slate-200/80 w-full" />
@@ -205,8 +244,8 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
                       <Calendar className="h-4.5 w-4.5 text-[#0c604c] shrink-0" />
                       <span>ตรวจสอบเมื่อ</span>
                     </div>
-                    <span className="font-extrabold text-slate-800 text-right">
-                      21/06/2569 16:45
+                    <span className="font-extrabold text-slate-800 text-right font-mono">
+                      {scannedTime}
                     </span>
                   </div>
                   <div className="border-b border-dashed border-slate-200/80 w-full" />
@@ -214,15 +253,26 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
 
                 {/* Row 5: สิทธิ์ของเจ้าหน้าที่ */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2.5 text-slate-500 font-bold">
+                  <div className="flex items-start gap-2.5 text-xs">
+                    <div className="flex items-center gap-2.5 text-slate-500 font-bold shrink-0 pt-0.5">
                       <FileText className="h-4.5 w-4.5 text-[#0c604c] shrink-0" />
-                      <span>สิทธิ์ของเจ้าหน้าที่</span>
+                      <span>สิทธิ์ตรวจสอบ</span>
                     </div>
-                    <span className="font-extrabold text-slate-800 text-right">
-                      ร.ง.4 ,วอ.8
-                    </span>
                   </div>
+                  {officerPermissionsList.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {officerPermissionsList.map((perm, i) => (
+                        <span
+                          key={i}
+                          className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-lg"
+                        >
+                          {perm}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 font-semibold pl-7">ไม่มีสิทธิ์ที่กำหนด</p>
+                  )}
                 </div>
               </>
             ) : (
@@ -259,7 +309,7 @@ export default function VerifyOfficerContent({ initialState }: VerifyOfficerCont
 
           {/* Action Area */}
           <div className="pt-8">
-            {state === "success" ? (
+            {isSuccess ? (
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   type="button"

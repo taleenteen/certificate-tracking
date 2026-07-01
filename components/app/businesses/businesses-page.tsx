@@ -198,7 +198,7 @@ export function BusinessesPageView() {
                   companyName={item.nameTh}
                   businessType={item.businessType}
                   certificateNumber={item.licenseCount}
-                  detailsHref={`/businesses/${item.id}`}
+                  detailsHref={`/businesses/${item.id}?from=search`}
                   onSubmitClick={() => {}}
                   secondaryAction={{
                     label: "นำทาง",
@@ -209,7 +209,7 @@ export function BusinessesPageView() {
                   }}
                   primaryAction={{
                     label: "ดูรายละเอียด",
-                    href: `/businesses/${item.id}`,
+                    href: `/businesses/${item.id}?from=search`,
                     variant: "primary",
                   }}
                 />

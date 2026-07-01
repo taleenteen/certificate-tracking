@@ -191,6 +191,7 @@ function ReportsPagination({
 
 function createPageHref(searchParams: ReadonlyURLSearchParams, page: number) {
   const params = new URLSearchParams(searchParams.toString());
+  params.delete("_rsc");
 
   if (page <= 1) {
     params.delete("page");

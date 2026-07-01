@@ -22,6 +22,7 @@ export interface LicenseDetailResponse {
     nameTh: string;
     nameEn: string;
     agency: string;
+    agencyId: string | null;
   };
   business: {
     id: string;

@@ -1,9 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
+import dayjs from "dayjs";
+import "dayjs/locale/th";
+import buddhistEra from "dayjs/plugin/buddhistEra";
 
 import {
   LicenseCertificateCard,
@@ -16,18 +20,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { http } from "@/lib/http";
-import type { JuristicMembershipResponse } from "@/hooks/useLicenses";
+import type { JuristicLicenseGroupResponse } from "@/hooks/useLicenses";
+import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
+import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
+
+dayjs.extend(buddhistEra);
+dayjs.locale("th");
 
 interface LicenseListPageViewProps {
-  items: LicenseCardItem[];
+  personalLicenses: LicenseCardItem[];
+  juristicGroups: JuristicLicenseGroupResponse[];
   activeTab: "personal" | "juristic";
   onTabChange: (tab: "personal" | "juristic") => void;
-  memberships?: JuristicMembershipResponse[];
-  activeJuristicId: string | null;
-  onSwitchJuristicCompany: (juristicId: string | null) => void;
-  isSwitching?: boolean;
   devSeedButton?: React.ReactNode;
 }
 
@@ -40,252 +45,334 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function LicenseListPageView({
-  items,
+  personalLicenses,
+  juristicGroups,
   activeTab,
   onTabChange,
-  memberships = [],
-  activeJuristicId,
-  onSwitchJuristicCompany,
-  isSwitching = false,
   devSeedButton,
 }: LicenseListPageViewProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+  const [expandedCompanies, setExpandedCompanies] = useState<Record<string, boolean>>({});
+  const [expandedBusinesses, setExpandedBusinesses] = useState<Record<string, boolean>>({});
 
-  // Find active company details
-  const activeCompany = useMemo(() => {
-    return memberships.find((m) => m.juristicId === activeJuristicId);
-  }, [memberships, activeJuristicId]);
+  const toggleCompany = (juristicId: string) => {
+    setExpandedCompanies((prev) => ({
+      ...prev,
+      [juristicId]: !prev[juristicId],
+    }));
+  };
 
-  // Extract ID helper for QR scan
-  const extractIdFromScannedValue = (scannedText: string): string => {
-    try {
-      if (scannedText.startsWith("http://") || scannedText.startsWith("https://")) {
-        const url = new URL(scannedText);
-        const parts = url.pathname.split("/").filter(Boolean);
-        const idx = parts.findIndex((p) => p === "my-licenses" || p === "licenses");
-        if (idx !== -1 && parts[idx + 1]) {
-          return parts.slice(idx + 1).join("/");
-        }
-        if (parts.length > 0) {
-          return parts[parts.length - 1];
-        }
-      }
-    } catch (e) {
-      console.error("Failed to parse URL:", e);
+  const toggleBusiness = (businessId: string) => {
+    setExpandedBusinesses((prev) => ({
+      ...prev,
+      [businessId]: !prev[businessId],
+    }));
+  };
+
+  // Helper to format raw grouped licenses into the card view model
+  const formatLicenseItem = (
+    lib: JuristicLicenseGroupResponse["businesses"][number]["licenses"][number],
+    companyName: string
+  ): LicenseCardItem => {
+    let uiStatus: StatusBadgeStatus = "active";
+    if (lib.status === "EXPIRED") uiStatus = "expired";
+    if (lib.status === "SUSPENDED" || lib.status === "REVOKED") uiStatus = "suspended";
+
+    const expiryDate = dayjs(lib.expiresAt);
+    if (lib.status === "ACTIVE" && lib.expiresAt && expiryDate.isBefore(dayjs().add(30, "day"))) {
+      uiStatus = "expiringSoon";
     }
-    return scannedText;
+
+    return {
+      id: lib.id,
+      holderName: companyName,
+      licenseName: lib.licenseType.nameTh,
+      licenseNumber: lib.licenseNumber,
+      status: uiStatus,
+      issuedAt: dayjs(lib.issuedAt).format("D ม.ค. BBBB"),
+      expiresAt: lib.expiresAt ? dayjs(lib.expiresAt).format("D ม.ค. BBBB") : "ไม่มีวันหมดอายุ",
+      detailsHref: `/licenses/${lib.id}?from=my-licenses`,
+    };
   };
 
   const handleScanMock = async (value: string) => {
     setIsQrScannerOpen(false);
-    const cleanValue = extractIdFromScannedValue(value);
-    try {
-      await http.get(`licenses/${cleanValue}/qr-verify`);
-      router.push(`/licenses/${cleanValue}?hideVerify=true`);
-    } catch {
-      if (items.length > 0) {
-        const fallbackId = items[0].id;
-        toast.info("ไม่พบรหัสใบอนุญาตนี้ในระบบ จึงแสดงใบอนุญาตตัวอย่างแทน");
-        router.push(`/licenses/${fallbackId}?hideVerify=true`);
-      } else {
-        toast.error("ไม่พบใบอนุญาตนี้ และไม่มีข้อมูลตัวอย่างในระบบ");
-      }
+    // Mock QR scan handler fallback
+    if (personalLicenses.length > 0) {
+      const fallbackId = personalLicenses[0].id;
+      toast.info("จำลองสแกนใบอนุญาตสำเร็จ");
+      router.push(`/licenses/${fallbackId}?hideVerify=true&from=my-licenses`);
+    } else {
+      toast.error("ไม่มีข้อมูลจำลองในระบบ");
     }
   };
 
-  // Local filtering logic for search query and status dropdown
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      // 1. Status Filter
-      if (statusFilter !== "all" && item.status !== statusFilter) {
-        return false;
-      }
-      // 2. Search Query Filter
-      if (searchQuery.trim() !== "") {
-        const query = searchQuery.toLowerCase().trim();
-        const matchesName = item.holderName.toLowerCase().includes(query);
-        const matchesType = item.licenseName.toLowerCase().includes(query);
-        const matchesNumber = item.licenseNumber.toLowerCase().includes(query);
-        return matchesName || matchesType || matchesNumber;
+  // Filter personal licenses
+  const filteredPersonalLicenses = useMemo(() => {
+    return personalLicenses.filter((item) => {
+      if (statusFilter !== "all" && item.status !== statusFilter) return false;
+      return true;
+    });
+  }, [personalLicenses, statusFilter]);
+
+  // Filter and format juristic license groups
+  const filteredJuristicGroups = useMemo(() => {
+    return juristicGroups.map((group) => {
+      const filteredBusinesses = group.businesses.map((business) => {
+        const filteredLicenses = business.licenses.filter((lib) => {
+          let uiStatus: StatusBadgeStatus = "active";
+          if (lib.status === "EXPIRED") uiStatus = "expired";
+          if (lib.status === "SUSPENDED" || lib.status === "REVOKED") uiStatus = "suspended";
+          const expiryDate = dayjs(lib.expiresAt);
+          if (lib.status === "ACTIVE" && lib.expiresAt && expiryDate.isBefore(dayjs().add(30, "day"))) {
+            uiStatus = "expiringSoon";
+          }
+
+          if (statusFilter !== "all" && uiStatus !== statusFilter) return false;
+          return true;
+        });
+
+        return {
+          ...business,
+          filteredLicenses,
+        };
+      }).filter((business) => {
+        if (statusFilter !== "all") {
+          return business.filteredLicenses.length > 0;
+        }
+        return true;
+      });
+
+      return {
+        ...group,
+        filteredBusinesses,
+      };
+    }).filter((group) => {
+      if (statusFilter !== "all") {
+        return group.filteredBusinesses.length > 0;
       }
       return true;
     });
-  }, [items, searchQuery, statusFilter]);
+  }, [juristicGroups, statusFilter]);
+
+  // Calculate total license counts for dynamic display
+  const totalCount = useMemo(() => {
+    if (activeTab === "personal") {
+      return filteredPersonalLicenses.length;
+    }
+    return filteredJuristicGroups.reduce((acc, group) => {
+      const groupLicensesCount = group.filteredBusinesses.reduce((bAcc, b) => bAcc + b.filteredLicenses.length, 0);
+      return acc + groupLicensesCount;
+    }, 0);
+  }, [activeTab, filteredPersonalLicenses, filteredJuristicGroups]);
 
   return (
     <main className="min-h-screen bg-[#f4f5f7] pb-12 text-slate-900">
-      <div className="mx-auto max-w-[430px] bg-[#f4f5f7] min-h-screen px-4 pt-4 text-left shadow-sm">
-        {/* Search input with scan button */}
-        <div className="relative flex items-center mb-4">
-          <Search className="absolute left-4 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="ค้นหาใบอนุญาตของฉัน"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] shadow-sm transition-all"
+      <div className="mx-auto max-w-[430px] bg-[#f4f5f7] min-h-screen text-left shadow-sm">
+        {/* Title banner - full width, no rounded corners, no outer padding */}
+        <div className="relative overflow-hidden min-h-[150px] bg-gradient-to-b from-[#06422F] to-[#0A4D35] flex flex-col justify-between p-5 mb-6 shadow-sm">
+          <AppBreadcrumb
+            items={[
+              { label: "หน้าแรก", href: "/home" },
+              { label: "ใบอนุญาตของฉัน" }
+            ]}
           />
-          <button
-            type="button"
-            onClick={() => setIsQrScannerOpen(true)}
-            className="absolute right-4 text-[#145b57] hover:opacity-80 transition-opacity cursor-pointer"
-            aria-label="Scan QR Code"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 8V5C3 3.89543 3.89543 3 5 3H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <path d="M16 3H19C20.1046 3 21 3.89543 21 5V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <path d="M21 16V19C21 20.1046 20.1046 21 19 21H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <path d="M8 21H5C3.89543 21 3 20.1046 3 19V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeDasharray="3 3" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Title banner */}
-        <div className="relative rounded-3xl overflow-hidden h-[120px] bg-slate-950 flex items-center justify-center mb-6 shadow-sm">
-          {/* Decorative backdrop background gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#0f2e2b] via-[#1f3f3b] to-[#121212] opacity-85 z-0" />
-          {/* Subtle line patterns or blurred card illustration mockup */}
-          <div className="absolute right-0 bottom-0 opacity-10 w-1/2 h-full z-0 select-none">
-            <svg width="100%" height="100%" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="20" y="20" width="160" height="80" rx="10" stroke="white" strokeWidth="4" />
-              <line x1="40" y1="40" x2="160" y2="40" stroke="white" strokeWidth="2" />
-              <line x1="40" y1="60" x2="120" y2="60" stroke="white" strokeWidth="2" />
-            </svg>
-          </div>
-          <h2 className="z-10 text-[22px] font-bold text-white tracking-wide">
+          <h2 className="z-10 text-[24px] font-bold text-white tracking-wide text-center mb-2">
             ใบอนุญาตของฉัน
           </h2>
         </div>
 
-        {/* Customized Tabs Segment */}
-        <div className="flex border-b border-slate-200 mb-4 select-none">
-          {/* Juristic Tab */}
-          <button
-            type="button"
-            onClick={() => onTabChange("juristic")}
-            className={`flex-1 text-center pb-3 text-[14px] font-bold transition-all border-b-2 cursor-pointer ${
-              activeTab === "juristic"
-                ? "text-[#145b57] border-[#145b57]"
-                : "text-slate-400 border-transparent hover:text-slate-500"
-            }`}
-          >
-            นิติบุคคล <br />
-            <span className="text-[12px] font-semibold opacity-80">(บริษัทที่เกี่ยวข้อง)</span>
-          </button>
+        {/* Content area with horizontal padding */}
+        <div className="px-4">
+          {/* Customized Tabs Segment with page background color, no shadow, clean bottom border */}
+          <div className="flex border-b border-slate-200 mb-6 select-none bg-transparent">
+            {/* Personal Tab */}
+            <button
+              type="button"
+              onClick={() => onTabChange("personal")}
+              className={`flex-1 text-center pb-3.5 text-[14px] font-bold transition-all border-b-2 -mb-px cursor-pointer bg-transparent border-0 ${
+                activeTab === "personal"
+                  ? "text-[#0A4D35] border-[#0A4D35] border-b-2"
+                  : "text-slate-400 border-transparent hover:text-slate-500"
+              }`}
+            >
+              บุคคลธรรมดา
+            </button>
 
-          {/* Personal Tab */}
-          <button
-            type="button"
-            onClick={() => onTabChange("personal")}
-            className={`flex-1 text-center pb-3 text-[14px] font-bold transition-all border-b-2 cursor-pointer ${
-              activeTab === "personal"
-                ? "text-[#145b57] border-[#145b57]"
-                : "text-slate-400 border-transparent hover:text-slate-500"
-            }`}
-          >
-            บุคคลธรรมดา <br />
-            <span className="text-[12px] font-semibold opacity-80">(ตัวฉันเอง)</span>
-          </button>
-        </div>
+            {/* Juristic Tab */}
+            <button
+              type="button"
+              onClick={() => onTabChange("juristic")}
+              className={`flex-1 text-center pb-3.5 text-[14px] font-bold transition-all border-b-2 -mb-px cursor-pointer bg-transparent border-0 ${
+                activeTab === "juristic"
+                  ? "text-[#0A4D35] border-[#0A4D35] border-b-2"
+                  : "text-slate-400 border-transparent hover:text-slate-500"
+              }`}
+            >
+              นิติบุคคล
+            </button>
+          </div>
 
-        {/* Company context selector for Juristic mode */}
-        {activeTab === "juristic" && memberships.length > 0 && (
-          <div className="mb-4 bg-white border border-slate-100 rounded-2xl p-3 shadow-sm">
-            <label className="block text-[11px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">
-              เลือกนิติบุคคลที่ต้องการตรวจสอบ
-            </label>
+          {/* Statistics & Status selection row */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[13px] font-bold text-slate-500">
+              พบ {totalCount} รายการ
+            </p>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between h-11 px-3 border-slate-200 rounded-xl bg-white hover:bg-slate-50 font-semibold text-slate-800 text-sm"
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white rounded-xl shadow-sm text-[12px] font-bold text-slate-600 hover:bg-slate-50 cursor-pointer border-0"
                 >
-                  <span className="truncate">
-                    {activeCompany?.nameTh || "กรุณาเลือกนิติบุคคล..."}
-                  </span>
-                  <ChevronDown className="h-4 w-4 text-slate-500" />
-                </Button>
+                  <span>สถานะใบอนุญาต : {STATUS_LABELS[statusFilter]}</span>
+                  <ChevronDown className="h-3 w-3 text-slate-500" />
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[398px] max-h-[220px] overflow-y-auto rounded-xl">
-                {memberships.map((m) => (
+              <DropdownMenuContent align="end" className="rounded-xl">
+                {Object.entries(STATUS_LABELS).map(([key, label]) => (
                   <DropdownMenuItem
-                    key={m.juristicId}
-                    onClick={() => onSwitchJuristicCompany(m.juristicId)}
-                    className="flex justify-between items-center py-2.5 px-3 cursor-pointer text-slate-700 font-medium"
+                    key={key}
+                    onClick={() => setStatusFilter(key)}
+                    className="flex justify-between items-center py-2.5 px-3 cursor-pointer text-slate-700 font-medium text-xs"
                   >
-                    <span className="truncate">{m.nameTh}</span>
-                    {m.juristicId === activeJuristicId && (
-                      <Check className="h-4 w-4 text-[#145b57] shrink-0 ml-2" />
+                    <span>{label}</span>
+                    {statusFilter === key && (
+                      <Check className="h-3 w-3 text-[#145b57] shrink-0 ml-2" />
                     )}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        )}
 
-        {/* Statistics & Status selection row */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[13px] font-bold text-slate-500">
-            พบ {filteredItems.length} รายการ
-          </p>
+          {/* Main Content Area */}
+          {activeTab === "personal" ? (
+            filteredPersonalLicenses.length > 0 ? (
+              <div className="space-y-4">
+                {filteredPersonalLicenses.map((item) => (
+                  <LicenseCertificateCard key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-100 bg-white p-8 text-center text-[13px] text-slate-500 shadow-sm">
+                ไม่พบข้อมูลใบอนุญาตบุคคลธรรมดา
+              </div>
+            )
+          ) : (
+            filteredJuristicGroups.length > 0 ? (
+              <div className="space-y-6">
+                {filteredJuristicGroups.map((group) => (
+                  <div key={group.juristicId} className="space-y-4">
+                    {/* Collapsible company card (styled like the mockup card) */}
+                    <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.015)] text-left space-y-4">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-800 leading-snug">
+                          {group.nameTh}
+                        </h3>
+                        <p className="text-[12px] font-semibold text-slate-400 mt-1">
+                          เลขนิติบุคคล : {group.registrationId}
+                        </p>
+                        <p className="text-[12px] font-semibold text-slate-400 mt-0.5">
+                          บทบาท : {group.myRole}
+                        </p>
+                      </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white rounded-xl shadow-sm text-[12px] font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-              >
-                <span>สถานะใบอนุญาต : {STATUS_LABELS[statusFilter]}</span>
-                <ChevronDown className="h-3 w-3 text-slate-500" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl">
-              {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                <DropdownMenuItem
-                  key={key}
-                  onClick={() => setStatusFilter(key)}
-                  className="flex justify-between items-center py-2.5 px-3 cursor-pointer text-slate-700 font-medium text-xs"
-                >
-                  <span>{label}</span>
-                  {statusFilter === key && (
-                    <Check className="h-3 w-3 text-[#145b57] shrink-0 ml-2" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                      <button
+                        type="button"
+                        onClick={() => toggleCompany(group.juristicId)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 text-[13px] font-bold text-slate-600 hover:text-slate-800 border border-slate-200/60 rounded-xl transition-all"
+                      >
+                        <span>{expandedCompanies[group.juristicId] ? "ซ่อนสถานประกอบการ" : "แสดงสถานประกอบการ"}</span>
+                        <ChevronDown
+                          className="h-4 w-4 text-slate-400 transition-transform duration-200"
+                          style={{ transform: expandedCompanies[group.juristicId] ? "rotate(180deg)" : "none" }}
+                        />
+                      </button>
+
+                      {/* Collapsible nested businesses list inside company card */}
+                      {expandedCompanies[group.juristicId] && (
+                        <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-150">
+                          {group.filteredBusinesses.length > 0 ? (
+                            group.filteredBusinesses.map((business) => (
+                              <div key={business.id} className="bg-slate-50 border border-slate-200/60 rounded-[20px] p-4 space-y-3.5">
+                                <div>
+                                  <h4 className="text-[14px] font-bold text-slate-700 leading-snug">
+                                    {business.nameTh}
+                                  </h4>
+                                  <p className="text-[12px] font-semibold text-slate-400 mt-0.5">
+                                    จังหวัด : {business.province}
+                                  </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                  <Link
+                                    href={`/businesses/${business.id}?from=my-licenses`}
+                                    className="flex h-10 items-center justify-center rounded-xl bg-[#145b57] text-[12px] font-bold text-white hover:bg-[#0c403d] transition-colors"
+                                  >
+                                    ดูรายละเอียด
+                                  </Link>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleBusiness(business.id)}
+                                    className="flex h-10 items-center justify-center gap-1 text-[12px] font-bold text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl transition-all"
+                                  >
+                                    <span>{expandedBusinesses[business.id] ? "ซ่อนใบอนุญาต" : `${business.filteredLicenses.length} ใบอนุญาต`}</span>
+                                    <ChevronDown
+                                      className="h-4 w-4 text-slate-400 transition-transform duration-200"
+                                      style={{ transform: expandedBusinesses[business.id] ? "rotate(180deg)" : "none" }}
+                                    />
+                                  </button>
+                                </div>
+
+                                {/* Nested licenses list under the business */}
+                                {expandedBusinesses[business.id] && (
+                                  <div className="space-y-4 pt-4 border-t border-slate-200/50 animate-in fade-in duration-150">
+                                    <h5 className="text-[13px] font-bold text-[#145b57]">
+                                      ใบอนุญาต ({business.filteredLicenses.length})
+                                    </h5>
+                                    <div className="space-y-4">
+                                      {business.filteredLicenses.length > 0 ? (
+                                        business.filteredLicenses.map((lib) => {
+                                          const cardItem = formatLicenseItem(lib, business.nameTh);
+                                          return <LicenseCertificateCard key={lib.id} item={cardItem} />;
+                                        })
+                                      ) : (
+                                        <div className="p-3.5 text-center text-xs text-slate-400 font-semibold bg-white rounded-xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.01)]">
+                                          ไม่มีข้อมูลใบอนุญาตภายใต้สถานประกอบการนี้
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-4 text-center text-xs text-slate-400 font-semibold bg-white rounded-xl border border-slate-100">
+                              ไม่มีข้อมูลสถานประกอบการ
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-100 bg-white p-8 text-center text-[13px] text-slate-500 shadow-sm">
+                ไม่พบข้อมูลนิติบุคคลหรือใบอนุญาต
+              </div>
+            )
+          )}
+
+          {/* Developer Seeding Section */}
+          {devSeedButton && (
+            <div className="mt-8 text-center">{devSeedButton}</div>
+          )}
         </div>
-
-        {/* Main Content Area */}
-        {isSwitching ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#145b57] border-t-transparent mb-2" />
-            <p className="text-xs text-slate-500">กำลังสลับข้อมูล...</p>
-          </div>
-        ) : filteredItems.length > 0 ? (
-          <div className="space-y-4">
-            {filteredItems.map((item) => (
-              <LicenseCertificateCard key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-slate-100 bg-white p-8 text-center text-[13px] text-slate-500 shadow-sm">
-            ไม่พบข้อมูลใบอนุญาต
-            {activeTab === "juristic" && memberships.length === 0 && (
-              <p className="text-[11px] text-slate-400 mt-1">ท่านยังไม่มีนิติบุคคลที่เกี่ยวข้องในระบบ</p>
-            )}
-          </div>
-        )}
-
-        {/* Developer Seeding Section */}
-        {activeTab === "personal" && devSeedButton && (
-          <div className="mt-8 text-center">{devSeedButton}</div>
-        )}
       </div>
 
       <QrScannerDialog
@@ -389,4 +476,3 @@ export const EXPIRED_LICENSE_TABS: LicenseTab[] = [
     filter: (item) => item.status === "suspended",
   },
 ];
-

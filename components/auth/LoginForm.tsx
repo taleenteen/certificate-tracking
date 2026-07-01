@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, KeyRound, ShieldCheck, User } from "lucide-react";
 
 const isDev = process.env.NEXT_PUBLIC_ENV === "development";
 
 export function LoginForm({ onToggle }: { onToggle: () => void }) {
   const login = useLogin();
+  const router = useRouter();
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
@@ -32,13 +34,7 @@ export function LoginForm({ onToggle }: { onToggle: () => void }) {
   };
 
   const handleTangRatLogin = () => {
-    const tangRatUrl = "test";
-    console.log(tangRatUrl);
-    if (tangRatUrl && !isDev) {
-      window.location.href = tangRatUrl;
-    } else {
-      login.mutate({ type: "tang-rat", mToken: "mock-public-owner" });
-    }
+    router.push("/auth/dga");
   };
 
   if (adminMode) {
@@ -203,7 +199,7 @@ export function LoginForm({ onToggle }: { onToggle: () => void }) {
       <Button
         type="button"
         className="w-full h-12 rounded-xl bg-[#1a2a80] hover:bg-[#151f66] text-white font-semibold text-sm flex items-center justify-center gap-2.5 shadow-sm"
-        // onClick={handleTangRatLogin}
+        onClick={handleTangRatLogin}
         disabled={login.isPending}
       >
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[#1a2a80] font-extrabold text-[10px]">

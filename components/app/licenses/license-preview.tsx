@@ -4,6 +4,26 @@ import type { StaticImageData } from "next/image";
 
 import { cn } from "@/lib/utils";
 
+import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
+import approvedIcon from "@/assets/icon/approved.svg";
+import almostExpireIcon from "@/assets/icon/almost-expire.svg";
+import expiredIcon from "@/assets/icon/expired.svg";
+import suspendedIcon from "@/assets/icon/suspended.svg";
+
+const STATUS_STAMP_MAP = {
+  active: approvedIcon,
+  expiringSoon: almostExpireIcon,
+  expired: expiredIcon,
+  suspended: suspendedIcon,
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  active: "มีผลบังคับใช้",
+  expiringSoon: "ใกล้หมดอายุ",
+  expired: "หมดอายุ",
+  suspended: "ถูกระงับ",
+};
+
 export type LicensePreviewType = "document" | "seal";
 
 type LicensePreviewProps = {
@@ -12,6 +32,7 @@ type LicensePreviewProps = {
   size?: "card" | "detail";
   className?: string;
   previewImage?: StaticImageData;
+  status?: StatusBadgeStatus;
 };
 
 export function LicensePreview({
@@ -20,6 +41,7 @@ export function LicensePreview({
   size = "card",
   className,
   previewImage,
+  status,
 }: LicensePreviewProps) {
   if (previewImage) {
     return (
@@ -37,6 +59,19 @@ export function LicensePreview({
           style={{ maxHeight: size === "detail" ? 400 : 200 }}
           priority
         />
+
+        {/* Status Stamp Overlay for License Details Page */}
+        {status && (
+          <div className="absolute right-4 bottom-4 pointer-events-none z-10 w-[95px] h-[95px]">
+            <Image
+              src={STATUS_STAMP_MAP[status]}
+              alt={STATUS_LABELS[status] || "สถานะ"}
+              width={95}
+              height={95}
+              className="object-contain rotate-[-12deg]"
+            />
+          </div>
+        )}
       </div>
     );
   }

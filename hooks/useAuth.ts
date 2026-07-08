@@ -37,10 +37,24 @@ type LogoutResponse = {
 const DGA_STATE_KEY = "dga_oidc_state";
 const DGA_REDIRECT_URI_KEY = "dga_oidc_redirect_uri";
 
-function routeAfterLogin(roles: string[], router: ReturnType<typeof useRouter>) {
-  if (roles.includes('super_admin')) router.push('/super-admin/dashboard');
-  else if (roles.includes('admin')) router.push('/agency-admin/inspections');
-  else router.push('/home');
+function routeAfterLogin(
+  roles: string[],
+  router: ReturnType<typeof useRouter>,
+  setActivePortalMode: (mode: 'public' | 'officer' | null) => void,
+) {
+  if (roles.includes('super_admin')) {
+    setActivePortalMode(null);
+    router.push('/super-admin/dashboard');
+  } else if (roles.includes('admin')) {
+    setActivePortalMode(null);
+    router.push('/agency-admin/inspections');
+  } else if (roles.includes('officer')) {
+    setActivePortalMode(null);
+    router.push('/role-select');
+  } else {
+    setActivePortalMode('public');
+    router.push('/home?entry=public');
+  }
 }
 
 export function dgaRedirectUri() {
@@ -53,6 +67,7 @@ export function dgaRedirectUri() {
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const setActivePortalMode = useAuthStore((s) => s.setActivePortalMode);
   const setPendingTempToken = useAuthStore((s) => s.setPendingTempToken);
   const router = useRouter();
 
@@ -77,7 +92,7 @@ export function useLogin() {
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
       });
-      routeAfterLogin(data.user?.roles ?? [], router);
+      routeAfterLogin(data.user?.roles ?? [], router, setActivePortalMode);
     },
   });
 }
@@ -100,6 +115,7 @@ export function useDgaAuthorize() {
 
 export function useDgaCallback() {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const setActivePortalMode = useAuthStore((s) => s.setActivePortalMode);
   const router = useRouter();
 
   return useMutation({
@@ -126,7 +142,7 @@ export function useDgaCallback() {
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
       });
-      routeAfterLogin(data.user?.roles ?? [], router);
+      routeAfterLogin(data.user?.roles ?? [], router, setActivePortalMode);
     },
   });
 }
@@ -154,6 +170,7 @@ export function useForceChangePassword() {
 
 export function useRegister() {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const setActivePortalMode = useAuthStore((s) => s.setActivePortalMode);
   const router = useRouter();
 
   return useMutation({
@@ -172,7 +189,8 @@ export function useRegister() {
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
       });
-      router.push('/home');
+      setActivePortalMode('public');
+      router.push('/home?entry=public');
     },
   });
 }

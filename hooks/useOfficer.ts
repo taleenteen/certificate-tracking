@@ -122,14 +122,21 @@ export function useOfficerLicenses(filters: OfficerLicensesFilters, enabled: boo
 
 export interface CreateOfficerInspectionItemDto {
   licenseId: string;
-  // result is NOT sent per spec §2 — no item-level pass/fail status
   detailNote: string;
+  pictures?: CreateOfficerInspectionEvidenceDto[];
   findings?: Record<string, unknown>;
+}
+
+export interface CreateOfficerInspectionEvidenceDto {
+  fileName: string;
+  objectKey: string;
+  mimeType: string;
+  fileSizeBytes: number;
 }
 
 export interface CreateOfficerInspectionDto {
   businessId: string;
-  inspectedAt: string;
+  inspectedAt?: string;
   summaryNote: string;
   items: CreateOfficerInspectionItemDto[];
 }
@@ -150,14 +157,163 @@ export interface CreateOfficerInspectionResponse {
   createdAt: string;
 }
 
+export interface OfficerInspectionListFilters {
+  q?: string;
+  businessId?: string;
+  licenseId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface OfficerInspectionListItem {
+  inspectionId: string;
+  inspectionNo: string;
+  officer: {
+    id: string;
+    fullName: string;
+    agency: string | null;
+  };
+  business: {
+    id: string;
+    nameTh: string;
+    province: string | null;
+  };
+  juristic: {
+    id: string;
+    nameTh: string;
+  } | null;
+  itemCount: number;
+  status: string;
+  inspectedAt: string;
+  submittedAt: string;
+}
+
+export interface OfficerInspectionListResponse {
+  data: OfficerInspectionListItem[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
+export interface OfficerInspectionDetailResponse {
+  id: string;
+  inspectionNo: string;
+  status: string;
+  summaryNote: string | null;
+  inspectedAt: string;
+  submittedAt: string;
+  exportedAt: string | null;
+  officer: {
+    id: string;
+    fullName: string;
+    agencyId: string | null;
+  };
+  agency: {
+    id: string;
+    code: string;
+    nameTh: string;
+  };
+  business: {
+    id: string;
+    nameTh: string;
+    address: string;
+    province: string | null;
+    juristic: {
+      id: string;
+      registrationId: string;
+      nameTh: string;
+    } | null;
+  };
+  juristic: {
+    id: string;
+    registrationId: string;
+    nameTh: string;
+  } | null;
+  items: {
+    id: string;
+    sequence: number;
+    detailNote: string | null;
+    findings: unknown;
+    licenseSnapshot: unknown;
+    license: {
+      id: string;
+      licenseNumber: string;
+      status: string;
+      licenseType: {
+        id: string;
+        code: string;
+        nameTh: string;
+        agency: {
+          id: string;
+          code: string;
+          nameTh: string;
+        };
+      };
+    };
+    evidence: {
+      id: string;
+      fileName: string;
+      mimeType: string;
+      fileSizeBytes: number;
+      createdAt: string;
+      url: string;
+      urlExpiresInSeconds: number;
+    }[];
+  }[];
+}
+
+export function useOfficerInspections(filters: OfficerInspectionListFilters = {}) {
+  const queryParams = new URLSearchParams();
+  if (filters.q) queryParams.set("q", filters.q);
+  if (filters.businessId) queryParams.set("businessId", filters.businessId);
+  if (filters.licenseId) queryParams.set("licenseId", filters.licenseId);
+  if (filters.dateFrom) queryParams.set("dateFrom", filters.dateFrom);
+  if (filters.dateTo) queryParams.set("dateTo", filters.dateTo);
+  if (filters.page) queryParams.set("page", String(filters.page));
+  if (filters.limit) queryParams.set("limit", String(filters.limit));
+  const query = queryParams.toString();
+
+  return useQuery({
+    queryKey: ["officer-inspections", filters],
+    queryFn: () =>
+      http.get<OfficerInspectionListResponse>(
+        query ? `officer/inspections?${query}` : "officer/inspections"
+      ),
+  });
+}
+
+export function useOfficerInspection(inspectionId: string) {
+  return useQuery({
+    queryKey: ["officer-inspection", inspectionId],
+    queryFn: () =>
+      http.get<OfficerInspectionDetailResponse>(`officer/inspections/${inspectionId}`),
+    enabled: !!inspectionId,
+  });
+}
+
 export function useCreateOfficerInspection() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (dto: CreateOfficerInspectionDto) =>
       http.post<CreateOfficerInspectionResponse>("officer/inspections", dto),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["officer-inspections"] });
       qc.invalidateQueries({ queryKey: ["my-licenses"] });
       qc.invalidateQueries({ queryKey: ["my-juristic-license-groups"] });
+    },
+  });
+}
+
+export function useUploadTempEvidence() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return http.post<{ key: string; url: string }>("officer/inspections/upload", formData);
     },
   });
 }

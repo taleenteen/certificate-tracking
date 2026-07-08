@@ -2,7 +2,8 @@
 
 import { Suspense, useMemo } from "react";
 import { ReportsPageView, type ReportItem } from "@/components/app/inspection-tasks/reports-page";
-import { useInspectionTasks } from "@/hooks/useInspectionTasks";
+import { useOfficerInspections } from "@/hooks/useOfficer";
+import { useSearchParams } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
@@ -11,23 +12,36 @@ dayjs.extend(buddhistEra);
 dayjs.locale("th");
 
 function ReportsContent() {
-  const { data: tasks, isLoading, isError } = useInspectionTasks();
+  const searchParams = useSearchParams();
+  const filters = useMemo(
+    () => ({
+      dateFrom: searchParams.get("dateFrom") || undefined,
+      dateTo: searchParams.get("dateTo") || undefined,
+      limit: 100,
+    }),
+    [searchParams],
+  );
+  const { data: inspectionPage, isLoading, isError } = useOfficerInspections(filters);
 
   const reports = useMemo<ReportItem[]>(() => {
-    if (!tasks) return [];
-    return tasks.map((task) => ({
-      id: task.id,
-      companyName: task.business?.nameTh ?? "-",
-      businessType: task.license?.licenseType.nameTh ?? "-",
-      inspectionDateTime: dayjs(task.updatedAt).format("D MMM BBBB - HH:mm น."),
-      location: task.business?.province ?? "-",
-      inspectorName: task.assignee?.fullName ?? "-",
-      // TODO(api-gap): no category field in task — defaulting to 'hotel'; needs enum mapping
+    if (!inspectionPage) return [];
+    return inspectionPage.data.map((inspection) => ({
+      id: inspection.inspectionId,
+      companyName: inspection.business?.nameTh ?? "-",
+      businessType: `${inspection.inspectionNo} ${
+        inspection.juristic?.nameTh ?? "รายงานตรวจสอบภาคสนาม"
+      }`,
+      inspectionDateTime: dayjs(inspection.inspectedAt).format("D MMM BBBB - HH:mm น."),
+      location: inspection.business?.province ?? "-",
+      inspectorName: inspection.officer.fullName,
       category: "hotel" as const,
-      region: task.business?.province ?? "-",
-      detailsHref: `/inspection-tasks/${task.id}`,
+      region: inspection.business?.province ?? "-",
+      detailsHref: `/officer/inspections/${inspection.inspectionId}`,
+      exportHref: `/api/officer/inspections/${inspection.inspectionId}/export?format=pdf`,
+      updatedAt: inspection.submittedAt,
+      itemCount: inspection.itemCount,
     }));
-  }, [tasks]);
+  }, [inspectionPage]);
 
   if (isLoading) {
     return (

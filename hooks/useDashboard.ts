@@ -33,11 +33,21 @@ export function primaryRole(roles: string[]): 'admin' | 'officer' | 'public' {
   return 'public';
 }
 
+export function effectivePrimaryRole(
+  roles: string[],
+  activePortalMode?: 'public' | 'officer' | null,
+): 'admin' | 'officer' | 'public' {
+  if (roles.includes('super_admin') || roles.includes('admin')) return 'admin';
+  if (roles.includes('officer') && activePortalMode === 'officer') return 'officer';
+  return 'public';
+}
+
 type DashboardData = OfficerDashboardResponse | AdminDashboardResponse | null;
 
 export function useDashboard() {
   const roles = useAuthStore((s) => s.user?.roles ?? []);
-  const role = primaryRole(roles);
+  const activePortalMode = useAuthStore((s) => s.activePortalMode);
+  const role = effectivePrimaryRole(roles, activePortalMode);
 
   return useQuery<DashboardData>({
     queryKey: ['dashboard', role],

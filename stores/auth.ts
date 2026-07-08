@@ -16,6 +16,7 @@ interface AuthState {
   user: User | null;
   activeJuristicId: string | null;
   juristicRole: string | null;
+  activePortalMode: 'public' | 'officer' | null;
   // runtime-only: true once session hydration has settled (success or 401).
   // Never persisted — always starts false so the auth guard waits for it.
   hydrated: boolean;
@@ -25,6 +26,7 @@ interface AuthState {
 
   setAuth: (payload: { user?: User; activeJuristicId?: string | null; juristicRole?: string | null }) => void;
   setContext: (payload: { activeJuristicId: string | null; juristicRole: string | null }) => void;
+  setActivePortalMode: (mode: 'public' | 'officer' | null) => void;
   setHydrated: (v: boolean) => void;
   setPendingTempToken: (token: string | null) => void;
   clear: () => void;
@@ -36,6 +38,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       activeJuristicId: null,
       juristicRole: null,
+      activePortalMode: null,
       hydrated: false,
       pendingTempToken: null,
 
@@ -56,11 +59,20 @@ export const useAuthStore = create<AuthState>()(
           juristicRole: payload.juristicRole,
         }),
 
+      setActivePortalMode: (mode) => set({ activePortalMode: mode }),
+
       setHydrated: (v) => set({ hydrated: v }),
 
       setPendingTempToken: (token) => set({ pendingTempToken: token }),
 
-      clear: () => set({ user: null, activeJuristicId: null, juristicRole: null, pendingTempToken: null }),
+      clear: () =>
+        set({
+          user: null,
+          activeJuristicId: null,
+          juristicRole: null,
+          activePortalMode: null,
+          pendingTempToken: null,
+        }),
     }),
     {
       name: 'auth-storage',
@@ -70,6 +82,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         activeJuristicId: state.activeJuristicId,
         juristicRole: state.juristicRole,
+        activePortalMode: state.activePortalMode,
       }),
     }
   )

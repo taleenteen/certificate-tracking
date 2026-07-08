@@ -16,6 +16,13 @@
 
 ## 0. Change Log
 
+- **2026-07-08 (officer inspection report list)** — Rewired `/reports` from the
+  legacy `InspectionTask` query to officer field inspection reports via
+  `GET /api/officer/inspections`, added `/officer/inspections/[inspectionId]`
+  detail/export UI, redirected successful officer report submission to
+  `/reports`, and documented the new list contract. Verified `bunx tsc
+  --noEmit` and `bun run build`; broad lint still has unrelated existing debt.
+
 - **2026-06-17 (Build roadmap — sequenced plan to finish backend integration)** —
   Created `docs/FRONTEND_BUILD_ROADMAP.md`: the executable checklist for the remaining
   work. State: backend 100% complete; frontend foundation built; only `/licenses`

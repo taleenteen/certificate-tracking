@@ -14,8 +14,10 @@ import {
   LogOut,
   ScanSearch,
   Search,
+  ShieldCheck,
   SlidersHorizontal,
   User,
+  UserRound,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -82,7 +84,6 @@ const SEARCH_PAGE_CONFIG: Record<
 > = {
   "/e-map": { placeholder: "ค้นหาในแผนที่", action: "filter" },
   "/businesses": { placeholder: "ค้นหาสถานประกอบการ", action: "filter" },
-  "/reports": { placeholder: "ค้นหารายงาน", action: "filter" },
 };
 
 const DETAIL_PAGE_TITLES: Record<string, string> = {
@@ -121,22 +122,29 @@ export function AppNavbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
+  const activePortalMode = useAuthStore((s) => s.activePortalMode);
+  const setActivePortalMode = useAuthStore((s) => s.setActivePortalMode);
   const logout = useLogout();
+  const queryClient = useQueryClient();
   const { data: agencies = [] } = useAgencies();
   const userAgencyName = agencies.find((a) => a.id === user?.agencyId)?.nameTh;
   const isStaff = useIsStaff();
   const isHome = pathname === "/home";
-  const entry = searchParams.get("entry") || "public";
+  const entry = activePortalMode ?? searchParams.get("entry") ?? "public";
+  const usesServiceHome = entry === "public" || entry === "officer";
+  const canSwitchPortalMode = Boolean(user?.roles?.includes("officer"));
   const isPublicHome =
     pathname === "/officer-card" ||
     pathname.startsWith("/inspection-tasks/") ||
+    pathname.startsWith("/officer/inspections/") ||
+    pathname === "/reports" ||
     ((isHome ||
       pathname === "/licenses" ||
       pathname === "/license-search" ||
       pathname.startsWith("/licenses/") ||
       pathname.startsWith("/businesses/") ||
       pathname.startsWith("/complaints")) &&
-      entry === "public");
+      usesServiceHome);
 
   const searchPageConfig = SEARCH_PAGE_CONFIG[pathname];
   const searchPlaceholder = searchPageConfig?.placeholder;
@@ -225,14 +233,25 @@ export function AppNavbar() {
     : user?.roles?.includes("admin")
       ? "ผู้ดูแลระบบ"
       : user?.roles?.includes("officer")
-        ? "เจ้าหน้าที่ผู้มีอำนาจตรวจสอบ"
+        ? activePortalMode === "public"
+          ? "บุคคลธรรมดา (บัญชีเจ้าหน้าที่)"
+          : "เจ้าหน้าที่ผู้มีอำนาจตรวจสอบ"
         : "บุคคลธรรมดา";
 
   const buttonRoleLabel = user?.roles?.includes("officer")
-    ? "เจ้าหน้าที่"
+    ? activePortalMode === "public"
+      ? "บุคคลธรรมดา"
+      : "เจ้าหน้าที่"
     : user?.roles?.includes("super_admin") || user?.roles?.includes("admin")
       ? "ผู้ดูแลระบบ"
       : "บุคคลธรรมดา";
+
+  const switchPortalMode = () => {
+    const nextMode = activePortalMode === "officer" ? "public" : "officer";
+    setActivePortalMode(nextMode);
+    queryClient.clear();
+    router.push(`/home?entry=${nextMode}`);
+  };
 
   return (
     <header className="sticky top-0 z-30 border-white/10 bg-white text-black backdrop-blur">
@@ -378,9 +397,15 @@ export function AppNavbar() {
                     user={user}
                     agencyName={userAgencyName}
                     roleLabel={roleLabel}
+                    activePortalMode={activePortalMode}
+                    canSwitchPortalMode={canSwitchPortalMode}
                     onNavigate={(href) => {
                       setOpenPanel(null);
                       router.push(href);
+                    }}
+                    onSwitchPortalMode={() => {
+                      setOpenPanel(null);
+                      switchPortalMode();
                     }}
                     onLogout={() => {
                       setOpenPanel(null);
@@ -431,9 +456,15 @@ export function AppNavbar() {
                     user={user}
                     agencyName={userAgencyName}
                     roleLabel={roleLabel}
+                    activePortalMode={activePortalMode}
+                    canSwitchPortalMode={canSwitchPortalMode}
                     onNavigate={(href) => {
                       setOpenPanel(null);
                       router.push(href);
+                    }}
+                    onSwitchPortalMode={() => {
+                      setOpenPanel(null);
+                      switchPortalMode();
                     }}
                     onLogout={() => {
                       setOpenPanel(null);
@@ -571,13 +602,19 @@ function ProfilePanel({
   user,
   agencyName,
   roleLabel,
+  activePortalMode,
+  canSwitchPortalMode,
   onNavigate,
+  onSwitchPortalMode,
   onLogout,
 }: {
   user: { fullName: string; roles: string[] } | null;
   agencyName?: string | null;
   roleLabel: string;
+  activePortalMode: "public" | "officer" | null;
+  canSwitchPortalMode: boolean;
   onNavigate: (href: string) => void;
+  onSwitchPortalMode: () => void;
   onLogout: () => void;
 }) {
   const initials = user?.fullName
@@ -618,6 +655,23 @@ function ProfilePanel({
           label="โปรไฟล์ของฉัน"
           onClick={() => onNavigate("/profile")}
         />
+        {canSwitchPortalMode && (
+          <ProfileAction
+            icon={
+              activePortalMode === "officer" ? (
+                <UserRound className="h-4 w-4" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )
+            }
+            label={
+              activePortalMode === "officer"
+                ? "เปลี่ยนเป็นบุคคลธรรมดา"
+                : "เปลี่ยนเป็นเจ้าหน้าที่"
+            }
+            onClick={onSwitchPortalMode}
+          />
+        )}
       </div>
 
       <div className="mx-4 h-px bg-slate-100" />
@@ -687,12 +741,13 @@ function ProfileAction({
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getDetailPageTitle(pathname: string, entry?: string) {
-  if (entry === "public" && (pathname.startsWith("/licenses/") || pathname.startsWith("/businesses/"))) {
+  const usesServiceHome = entry === "public" || entry === "officer";
+  if (usesServiceHome && (pathname.startsWith("/licenses/") || pathname.startsWith("/businesses/"))) {
     return null;
   }
   if (
     (pathname === "/licenses" || pathname === "/license-search") &&
-    entry === "public"
+    usesServiceHome
   )
     return null;
   if (STANDALONE_PAGE_TITLES[pathname]) return STANDALONE_PAGE_TITLES[pathname];

@@ -184,34 +184,53 @@ function MapPinMarker({
   onClick: () => void;
 }) {
   const IconComponent = PIN_ICON_MAP[pin.iconKey];
+  const markerColor = "#0c604c";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex flex-col items-center outline-none"
+      className="group relative h-[68px] w-[58px] outline-none"
       aria-label={pin.title}
     >
       <span
         className={cn(
-          "absolute inset-x-1 top-1 h-12 rounded-full blur-xl transition-opacity",
+          "absolute inset-x-2 top-2 h-12 rounded-full blur-xl transition-opacity",
           isActive ? "opacity-60" : "opacity-25 group-hover:opacity-45",
         )}
-        style={{ backgroundColor: pin.color }}
+        style={{ backgroundColor: markerColor }}
       />
       <span
         className={cn(
-          "relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-4 border-white shadow-[0_14px_30px_rgba(15,23,42,0.18)] transition-transform",
+          "relative block h-full w-full drop-shadow-[0_14px_24px_rgba(15,23,42,0.20)] transition-transform",
           isActive ? "scale-105" : "group-hover:scale-105",
         )}
-        style={{ backgroundColor: pin.color }}
       >
-        <IconComponent size={22} color="white" />
+        <svg
+          viewBox="0 0 58 68"
+          className="absolute inset-0 h-full w-full overflow-visible"
+          aria-hidden="true"
+        >
+          <path
+            d="M29 65L16.8 42.5C20.2 44.6 24.4 45.8 29 45.8C33.6 45.8 37.8 44.6 41.2 42.5L29 65Z"
+            fill={markerColor}
+            stroke="white"
+            strokeWidth="4"
+            strokeLinejoin="round"
+          />
+          <circle
+            cx="29"
+            cy="26"
+            r="23"
+            fill={markerColor}
+            stroke="white"
+            strokeWidth="4"
+          />
+        </svg>
+        <span className="absolute left-1/2 top-[25px] flex -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+          <IconComponent size={22} color="white" />
+        </span>
       </span>
-      <span
-        className="relative -mt-2 h-4 w-4 rotate-45 rounded-[4px] border-r-4 border-b-4 border-white shadow-[4px_4px_10px_rgba(15,23,42,0.08)]"
-        style={{ backgroundColor: pin.color }}
-      />
     </button>
   );
 }

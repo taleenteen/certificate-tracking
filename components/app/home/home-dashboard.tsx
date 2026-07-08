@@ -24,7 +24,7 @@ import {
 import { useAuthStore } from "@/stores/auth";
 import {
   useDashboard,
-  primaryRole,
+  effectivePrimaryRole,
   type OfficerDashboardResponse,
   type AdminDashboardResponse,
 } from "@/hooks/useDashboard";
@@ -377,9 +377,13 @@ const extractOfficerToken = (scannedText: string): string => {
 
 export function HomeDashboard() {
   const user = useAuthStore((s) => s.user);
+  const activePortalMode = useAuthStore((s) => s.activePortalMode);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const entry = searchParams.get("entry") || "public";
+  const urlEntry = searchParams.get("entry");
+  const role = effectivePrimaryRole(user?.roles ?? [], activePortalMode);
+  const entry = activePortalMode ?? urlEntry ?? "public";
+  const usesServiceHome = entry === "public" || entry === "officer";
   const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
   const [isComplaintsSheetOpen, setIsComplaintsSheetOpen] = useState(false);
   const [selectedTrendRange, setSelectedTrendRange] =
@@ -388,7 +392,6 @@ export function HomeDashboard() {
   const { data: dashboardData } = useDashboard();
   const { data: licenses = [] } = useLicenses();
 
-  const role = primaryRole(user?.roles ?? []);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<"license" | "officer">("license");
 
@@ -507,7 +510,7 @@ export function HomeDashboard() {
     return "เดือน";
   }, [selectedTrendRange]);
 
-  if (entry === "public") {
+  if (usesServiceHome) {
     return (
       <>
         <HomepageService

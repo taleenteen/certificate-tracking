@@ -33,6 +33,24 @@ import {
 
 dayjs.extend(buddhistEra);
 
+/**
+ * Same-origin evidence URL for <img>/preview.
+ * HTTPS pages cannot load http:// MinIO hosts (browser mixed-content block).
+ * Prefer the authenticated API stream path which the BFF serves over HTTPS.
+ */
+function evidenceFileUrl(
+  inspectionId: string,
+  evidenceId: string,
+  apiUrl?: string | null,
+) {
+  const proxyPath = `/api/officer/inspections/${inspectionId}/evidence/${evidenceId}/file`;
+  if (!apiUrl) return proxyPath;
+  // Already a same-origin or https URL from the API — use as-is.
+  if (apiUrl.startsWith("/") || apiUrl.startsWith("https://")) return apiUrl;
+  // http:// MinIO (or any other plain-http host) → force proxy.
+  return proxyPath;
+}
+
 export default function OfficerInspectionDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -384,21 +402,28 @@ export default function OfficerInspectionDetailPage() {
 
                   {item.evidence.length > 0 ? (
                     <div className="flex flex-wrap gap-2.5">
-                      {item.evidence.map((evidence) =>
-                        evidence.mimeType.startsWith("image/") ? (
+                      {item.evidence.map((evidence) => {
+                        // Prefer same-origin HTTPS proxy path. Raw MinIO http://
+                        // URLs are blocked as mixed content on https:// pages.
+                        const displayUrl = evidenceFileUrl(
+                          inspectionId,
+                          evidence.id,
+                          evidence.url,
+                        );
+                        return evidence.mimeType.startsWith("image/") ? (
                           <button
                             key={evidence.id}
                             type="button"
                             onClick={() =>
                               setPreviewImage({
-                                url: evidence.url,
+                                url: displayUrl,
                                 fileName: evidence.fileName,
                               })
                             }
                             className="relative h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
                           >
                             <img
-                              src={evidence.url}
+                              src={displayUrl}
                               alt={evidence.fileName}
                               className="h-full w-full object-cover"
                             />
@@ -406,7 +431,7 @@ export default function OfficerInspectionDetailPage() {
                         ) : (
                           <a
                             key={evidence.id}
-                            href={evidence.url}
+                            href={displayUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="flex h-20 w-20 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2 text-center text-[10px] font-bold text-slate-500"
@@ -414,8 +439,8 @@ export default function OfficerInspectionDetailPage() {
                             <Camera className="mb-1 h-4 w-4" />
                             PDF
                           </a>
-                        ),
-                      )}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-300">

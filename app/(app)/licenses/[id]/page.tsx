@@ -77,8 +77,9 @@ function LicenseDetailContent({ id, hideVerify }: { id: string; hideVerify?: boo
     address: data.business.address,
     latitude: data.business.latitude,
     longitude: data.business.longitude,
+    ownershipType: data.ownership?.type || null,
     // MOCK: owner contact details mock data
-    ownerName: "นายประสิทธิ์ ตั้งมั่น",
+    ownerName: user?.fullName || "บุคคลธรรมดา",
     phoneNumber: "081-234-5678",
     email: "prasit.t@metalworks.co.th",
     // MOCK: inspection history / comment timeline updates mock data

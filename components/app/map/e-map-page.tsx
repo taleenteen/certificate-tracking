@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Map, { MapRef, Marker } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { ChevronRight, FileText, X } from "lucide-react";
+import { ChevronRight, FileText, X, Factory } from "lucide-react";
 
 import { PIN_ICON_MAP } from "@/components/map/pin-icon-map";
 import { Button } from "@/components/ui/button";
@@ -202,7 +202,6 @@ function MapPinMarker({
   isActive: boolean;
   onClick: () => void;
 }) {
-  const IconComponent = PIN_ICON_MAP[pin.iconKey];
   const markerColor = "#0c604c";
 
   return (
@@ -247,7 +246,7 @@ function MapPinMarker({
           />
         </svg>
         <span className="absolute left-1/2 top-[25px] flex -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-          <IconComponent size={22} color="white" />
+          <Factory size={20} color="white" />
         </span>
       </span>
     </button>

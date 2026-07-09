@@ -31,8 +31,16 @@ export interface LicenseDetailResponse {
     province: string;
     latitude: number | null;
     longitude: number | null;
+    ownerUserId?: string | null;
   };
   documents: LicenseDocument[];
+  ownership?: {
+    type: 'INDIVIDUAL' | 'JURISTIC';
+    labelTh: string;
+    contextId: string | null;
+    displayNameTh: string;
+    registrationId: string | null;
+  };
 }
 
 export function useLicense(id: string) {

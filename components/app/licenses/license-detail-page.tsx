@@ -125,7 +125,7 @@ export function LicenseDetailPageView({
             {/* Title & License Subtitle */}
             <div>
               <h2 className="text-[17px] font-bold text-slate-800 leading-snug">
-                {data.businessName}
+                {data.ownershipType === "INDIVIDUAL" ? data.ownerName : data.businessName}
               </h2>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-xs text-slate-400 font-semibold select-all">

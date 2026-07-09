@@ -27,6 +27,7 @@ export type LicenseDetailData = {
   address: string;
   latitude?: number | null;
   longitude?: number | null;
+  ownershipType?: "INDIVIDUAL" | "JURISTIC";
   ownerName: string;
   phoneNumber: string;
   email: string;

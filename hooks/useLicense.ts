@@ -11,7 +11,7 @@ export interface LicenseDocument {
 
 export interface LicenseDetailResponse {
   id: string;
-  licenseNumber: string;
+  licenseNo: string;
   status: 'ACTIVE' | 'EXPIRED' | 'SUSPENDED' | 'REVOKED' | 'PENDING';
   issuedAt: string;
   expiresAt: string | null;

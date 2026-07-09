@@ -63,7 +63,7 @@ function LicenseDetailContent({ id, hideVerify }: { id: string; hideVerify?: boo
   const detail: LicenseDetailData = {
     id: data.id,
     slug: data.id,
-    licenseNumber: data.licenseNumber,
+    licenseNumber: data.licenseNo,
     licenseName: data.licenseType.nameTh,
     purpose: data.licenseType.nameTh,
     status: toUiStatus(data.status, data.expiresAt),
@@ -72,8 +72,11 @@ function LicenseDetailContent({ id, hideVerify }: { id: string; hideVerify?: boo
     previewType: "document",
     previewImage: licenseImg,
     businessName: data.business.nameTh,
+    businessId: data.business.id,
     businessType: data.licenseType.nameTh,
     address: data.business.address,
+    latitude: data.business.latitude,
+    longitude: data.business.longitude,
     // MOCK: owner contact details mock data
     ownerName: "นายประสิทธิ์ ตั้งมั่น",
     phoneNumber: "081-234-5678",

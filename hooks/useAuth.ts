@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAfterLoginPath } from '@/lib/auth-routing';
 import { http } from '@/lib/http';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'next/navigation';
@@ -42,19 +43,16 @@ function routeAfterLogin(
   router: ReturnType<typeof useRouter>,
   setActivePortalMode: (mode: 'public' | 'officer' | null) => void,
 ) {
-  if (roles.includes('super_admin')) {
+  if (roles.includes('super_admin') || roles.includes('admin')) {
     setActivePortalMode(null);
-    router.push('/super-admin/dashboard');
-  } else if (roles.includes('admin')) {
-    setActivePortalMode(null);
-    router.push('/agency-admin/inspections');
   } else if (roles.includes('officer')) {
+    // Force a fresh mode choice on each login.
     setActivePortalMode(null);
-    router.push('/role-select');
   } else {
     setActivePortalMode('public');
-    router.push('/home?entry=public');
   }
+  // replace so back-button does not return to the login form after auth.
+  router.replace(getAfterLoginPath(roles));
 }
 
 export function dgaRedirectUri() {

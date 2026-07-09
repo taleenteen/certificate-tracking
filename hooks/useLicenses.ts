@@ -145,6 +145,34 @@ export function useDevSeedLicense() {
     mutationFn: () => http.post<LicenseResponse>('my/dev/seed-license'),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-licenses'] });
+      qc.invalidateQueries({ queryKey: ['businesses-map'] });
+    },
+  });
+}
+
+export interface DevSeedDemoDataResponse {
+  success: boolean;
+  personal: {
+    businessId: string;
+    licenseIds: string[];
+  };
+  juristic: {
+    juristicId: string;
+    businessIds: string[];
+    licenseIds: string[];
+  };
+  messageTh: string;
+}
+
+export function useDevSeedDemoData() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => http.post<DevSeedDemoDataResponse>('my/dev/seed-demo-data'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-licenses'] });
+      qc.invalidateQueries({ queryKey: ['my-juristic-license-groups'] });
+      qc.invalidateQueries({ queryKey: ['my-juristic-memberships'] });
+      qc.invalidateQueries({ queryKey: ['businesses-map'] });
     },
   });
 }
@@ -172,7 +200,23 @@ export interface JuristicLicenseGroupResponse {
   registrationId: string;
   myRole: string;
   businessCount: number;
+  corporateLicenseCount: number;
+  businessLicenseCount: number;
   licenseCount: number;
+  corporateLicenses: {
+    id: string;
+    licenseNumber: string;
+    issuedAt: string;
+    expiresAt: string | null;
+    status: LicenseStatus;
+    licenseType: {
+      id: string;
+      code: string;
+      nameTh: string;
+      nameEn: string;
+      agency: string;
+    };
+  }[];
   businesses: {
     id: string;
     nameTh: string;
@@ -209,7 +253,7 @@ export function useDevSeedJuristicLicense() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-juristic-license-groups'] });
       qc.invalidateQueries({ queryKey: ['my-juristic-memberships'] });
+      qc.invalidateQueries({ queryKey: ['businesses-map'] });
     },
   });
 }
-

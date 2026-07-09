@@ -7,9 +7,33 @@ export interface BusinessMapFeature {
   properties: {
     id: string;
     nameTh: string;
+    address: string;
+    province: string;
     lat: number;
     lng: number;
+    licenseCount: number;
     licenseStatus: 'ACTIVE' | 'SUSPENDED' | 'EXPIRED' | 'REVOKED' | 'PENDING' | null;
+    primaryLicense: {
+      id: string;
+      licenseNo: string;
+      status: 'ACTIVE' | 'SUSPENDED' | 'EXPIRED' | 'REVOKED' | 'PENDING';
+      typeCode: string;
+      typeNameTh: string;
+    } | null;
+    statusCounts: {
+      active: number;
+      suspended: number;
+      expired: number;
+      pending: number;
+      revoked: number;
+    };
+    ownership: {
+      type: 'INDIVIDUAL' | 'JURISTIC';
+      labelTh: string;
+      contextId: string | null;
+      displayNameTh: string;
+      registrationId: string | null;
+    };
   };
 }
 

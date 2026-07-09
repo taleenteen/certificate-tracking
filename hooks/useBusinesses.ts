@@ -32,6 +32,8 @@ export interface BusinessDetailResponse {
   province: string | null;
   latitude: number | null;
   longitude: number | null;
+  phone: string | null;
+  email: string | null;
   zone: { id: string; name: string } | null;
   licenses: BusinessLicense[];
 }
@@ -73,6 +75,7 @@ export interface JuristicBusinessDetailResponse {
   latitude: string | null;
   longitude: string | null;
   phone: string | null;
+  email: string | null;
   zone: {
     id: string;
     code: string;

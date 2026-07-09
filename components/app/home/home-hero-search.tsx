@@ -59,7 +59,13 @@ export function HomeHeroSearch({
                 type="text"
                 placeholder="ระบุชื่อสถานประกอบการ"
                 value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setBusinessName(val);
+                  if (val.trim() === "") {
+                    setLicenseNumber("");
+                  }
+                }}
                 className="w-full pl-4 pr-24 py-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] h-[46px]"
               />
               <button
@@ -86,7 +92,8 @@ export function HomeHeroSearch({
               placeholder="ระบุเลขใบอนุญาตให้ครบถ้วน"
               value={licenseNumber}
               onChange={(e) => setLicenseNumber(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border-0 bg-slate-100/90 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] h-[46px]"
+              disabled={!businessName.trim()}
+              className="w-full px-4 py-3 rounded-lg border-0 bg-slate-100/90 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] h-[46px] disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
         </form>

@@ -22,8 +22,11 @@ export type LicenseDetailData = {
   previewType: LicensePreviewType;
   previewImage?: StaticImageData;
   businessName: string;
+  businessId?: string;
   businessType: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
   ownerName: string;
   phoneNumber: string;
   email: string;

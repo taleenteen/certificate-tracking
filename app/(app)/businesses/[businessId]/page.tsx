@@ -43,6 +43,8 @@ function BusinessDetailContent({ id }: { id: string }) {
       companyName: mockItem.nameTh,
       businessName: mockItem.nameTh,
       address: mockItem.address,
+      latitude: mockItem.latitude,
+      longitude: mockItem.longitude,
       phoneNumber: "02-123-4567",
       email: `contact@${mockItem.id.split("-").pop() || "business"}.com`,
       documents: [
@@ -95,16 +97,19 @@ function BusinessDetailContent({ id }: { id: string }) {
     ? (activeData as JuristicBusinessDetailResponse).juristic.nameTh
     : activeData.nameTh;
   const businessName = activeData.nameTh;
-  const phoneNumber = isJuristic
-    ? ((activeData as JuristicBusinessDetailResponse).phone || "-")
-    : "-";
+  const phoneNumber = activeData.phone || "-";
+  const email = activeData.email || "-";
 
   const detail: BusinessDetailData = {
     companyName,
     businessName,
     address: activeData.address,
+    latitude:
+      activeData.latitude === null ? null : Number(activeData.latitude),
+    longitude:
+      activeData.longitude === null ? null : Number(activeData.longitude),
     phoneNumber,
-    email: "-",
+    email,
     documents: activeData.licenses.map((lic) => ({
       id: lic.id,
       title: lic.licenseType.nameTh,

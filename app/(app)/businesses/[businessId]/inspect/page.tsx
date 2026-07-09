@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   Trash2,
@@ -9,6 +9,9 @@ import {
   ArrowLeft,
   AlertCircle,
   Loader2,
+  Check,
+  Pencil,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -31,6 +34,7 @@ interface InspectionFormItem {
   licenseId: string;
   detailNote: string;
   localImages: { file: File; previewUrl: string }[];
+  isEditing: boolean;
 }
 
 export default function BusinessInspectPage() {
@@ -49,6 +53,11 @@ export default function BusinessInspectPage() {
   const [inspectionItems, setInspectionItems] = useState<InspectionFormItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [cameraTargetTempId, setCameraTargetTempId] = useState<string | null>(null);
+  const [isCameraStarting, setIsCameraStarting] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const isLoading = juristicQuery.isLoading || (!juristicQuery.data && publicQuery.isLoading);
   const isError = juristicQuery.isError && publicQuery.isError;
@@ -67,6 +76,7 @@ export default function BusinessInspectPage() {
           licenseId: activeData.licenses[0]?.id || "",
           detailNote: "",
           localImages: [],
+          isEditing: true,
         },
       ]);
     }
@@ -84,6 +94,7 @@ export default function BusinessInspectPage() {
         licenseId: nextUnusedLicense?.id || availableLicenses[0]?.id || "",
         detailNote: "",
         localImages: [],
+        isEditing: true,
       },
     ]);
   };
@@ -106,31 +117,119 @@ export default function BusinessInspectPage() {
     );
   };
 
-  const handleFileChange = (tempId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const currentItem = inspectionItems.find((item) => item.tempId === tempId);
-    const existingCount = currentItem?.localImages.length ?? 0;
-
-    if (existingCount + files.length > 8) {
-      toast.warning("อัปโหลดรูปภาพได้สูงสุด 8 รูปต่อใบอนุญาต");
-      return;
-    }
-
-    const newImages = Array.from(files).map((file) => ({
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
-
+  const handleToggleEdit = (tempId: string) => {
     setInspectionItems((prev) =>
       prev.map((item) =>
-        item.tempId === tempId
-          ? { ...item, localImages: [...item.localImages, ...newImages] }
-          : item
+        item.tempId === tempId ? { ...item, isEditing: !item.isEditing } : item
       )
     );
   };
+
+  const stopCamera = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const handleOpenCamera = async (tempId: string) => {
+    const currentItem = inspectionItems.find((item) => item.tempId === tempId);
+    if (!currentItem?.isEditing) return;
+
+    if ((currentItem.localImages.length ?? 0) >= 8) {
+      toast.warning("ถ่ายรูปภาพได้สูงสุด 8 รูปต่อใบอนุญาต");
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("อุปกรณ์นี้ไม่รองรับการเปิดกล้องผ่านเบราว์เซอร์");
+      return;
+    }
+
+    setCameraTargetTempId(tempId);
+    setCameraError("");
+    setIsCameraStarting(true);
+
+    try {
+      stopCamera();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err) {
+      console.error(err);
+      setCameraError("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้อง");
+      toast.error("ไม่สามารถเปิดกล้องได้");
+    } finally {
+      setIsCameraStarting(false);
+    }
+  };
+
+  const handleCloseCamera = () => {
+    stopCamera();
+    setCameraTargetTempId(null);
+    setCameraError("");
+  };
+
+  const handleCapturePhoto = () => {
+    if (!cameraTargetTempId || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      toast.error("ไม่สามารถบันทึกภาพจากกล้องได้");
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          toast.error("ไม่สามารถบันทึกภาพจากกล้องได้");
+          return;
+        }
+
+        const file = new File(
+          [blob],
+          `inspection-${cameraTargetTempId}-${Date.now()}.jpg`,
+          { type: "image/jpeg" }
+        );
+        const previewUrl = URL.createObjectURL(file);
+
+        setInspectionItems((prev) =>
+          prev.map((item) =>
+            item.tempId === cameraTargetTempId
+              ? {
+                  ...item,
+                  localImages: [...item.localImages, { file, previewUrl }],
+                }
+              : item
+          )
+        );
+
+        handleCloseCamera();
+      },
+      "image/jpeg",
+      0.9
+    );
+  };
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
 
   const handleRemoveImage = (tempId: string, imgIdx: number) => {
     setInspectionItems((prev) =>
@@ -299,13 +398,32 @@ export default function BusinessInspectPage() {
                   <h4 className="text-[14px] font-bold text-slate-800">
                     รายการใบอนุญาตที่ตรวจสอบ #{index + 1}
                   </h4>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteCard(item.tempId)}
-                    className="text-[11px] font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
-                  >
-                    ลบรายการ
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleEdit(item.tempId)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-[#145b57] hover:text-[#0f423f] bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                      {item.isEditing ? (
+                        <>
+                          <Check className="h-3 w-3" />
+                          เสร็จ
+                        </>
+                      ) : (
+                        <>
+                          <Pencil className="h-3 w-3" />
+                          แก้ไข
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCard(item.tempId)}
+                      className="text-[11px] font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                      ลบรายการ
+                    </button>
+                  </div>
                 </div>
 
                 {/* Dropdown 1: Select License */}
@@ -316,6 +434,7 @@ export default function BusinessInspectPage() {
                   <Select
                     value={item.licenseId}
                     onValueChange={(val) => handleUpdateField(item.tempId, "licenseId", val)}
+                    disabled={!item.isEditing}
                   >
                     <SelectTrigger className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] text-left [&_svg]:ml-auto h-11">
                       <SelectValue placeholder="เลือกใบอนุญาต..." />
@@ -338,8 +457,9 @@ export default function BusinessInspectPage() {
                   <textarea
                     placeholder="บันทึกรายละเอียดผลตรวจ"
                     value={item.detailNote}
+                    disabled={!item.isEditing}
                     onChange={(e) => handleUpdateField(item.tempId, "detailNote", e.target.value)}
-                    className="w-full min-h-[90px] px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] resize-none"
+                    className="w-full min-h-[90px] px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] resize-none disabled:bg-slate-50 disabled:text-slate-500"
                   />
                 </div>
 
@@ -350,24 +470,18 @@ export default function BusinessInspectPage() {
                   </label>
 
                   <div className="flex flex-wrap gap-2.5">
-                    {/* Add Image Dotted Box */}
-                    <input
-                      type="file"
-                      id={`file-${item.tempId}`}
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => handleFileChange(item.tempId, e)}
-                    />
-                    <label
-                      htmlFor={`file-${item.tempId}`}
-                      className="w-[75px] h-[75px] border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all select-none shrink-0"
+                    {/* Camera capture only: no album/file picker */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCamera(item.tempId)}
+                      disabled={!item.isEditing}
+                      className="w-[75px] h-[75px] border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all select-none shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Camera className="h-5 w-5 text-slate-400" />
                       <span className="text-[10px] font-bold text-slate-400 mt-1">
-                        เพิ่มรูปภาพ
+                        เปิดกล้อง
                       </span>
-                    </label>
+                    </button>
 
                     {/* Previews */}
                     {item.localImages.map((img, imgIdx) => (
@@ -385,8 +499,9 @@ export default function BusinessInspectPage() {
                         />
                         <button
                           type="button"
+                          disabled={!item.isEditing}
                           onClick={() => handleRemoveImage(item.tempId, imgIdx)}
-                          className="absolute -top-1 -right-1 size-5 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black transition-colors"
+                          className="absolute -top-1 -right-1 size-5 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black transition-colors disabled:hidden"
                         >
                           <Trash2 className="size-3" />
                         </button>
@@ -427,6 +542,59 @@ export default function BusinessInspectPage() {
           <p className="text-[13px] font-bold text-slate-100 px-4 text-center max-w-xs">
             {uploadStatus}
           </p>
+        </div>
+      )}
+
+      {cameraTargetTempId && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-sm font-bold">ถ่ายภาพหลักฐาน</p>
+              <p className="text-xs text-slate-300">ใช้กล้องถ่ายภาพหน้างานเท่านั้น</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCloseCamera}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
+              aria-label="ปิดกล้อง"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black">
+            {isCameraStarting && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80">
+                <Loader2 className="mb-3 h-8 w-8 animate-spin" />
+                <p className="text-sm font-semibold">กำลังเปิดกล้อง...</p>
+              </div>
+            )}
+            {cameraError ? (
+              <div className="mx-6 rounded-2xl bg-white p-5 text-center text-slate-900">
+                <AlertCircle className="mx-auto mb-2 h-8 w-8 text-destructive" />
+                <p className="text-sm font-bold">{cameraError}</p>
+              </div>
+            ) : null}
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              autoPlay
+              className="h-full max-h-full w-full object-cover"
+            />
+          </div>
+
+          <div className="px-4 pb-6 pt-4">
+            <button
+              type="button"
+              onClick={handleCapturePhoto}
+              disabled={isCameraStarting || !!cameraError}
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-white/20 disabled:opacity-50"
+              aria-label="ถ่ายภาพ"
+            >
+              <span className="block h-11 w-11 rounded-full bg-white" />
+            </button>
+          </div>
         </div>
       )}
     </div>

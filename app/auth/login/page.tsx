@@ -2,8 +2,11 @@
 
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
-import { useState } from "react";
+import { getResumeSessionPath } from "@/lib/auth-routing";
+import { useAuthStore } from "@/stores/auth";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import heroRight from "@/assets/hero/hero-right.png";
 
 const FEATURES = [
@@ -14,6 +17,42 @@ const FEATURES = [
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s.hydrated);
+  // Only resume an *existing* session once hydration settles. Do not re-run when
+  // `user` appears after a fresh login — that would steal /role-select for officers
+  // (getResumeSessionPath → /home) from useLogin's routeAfterLogin.
+  const didResumeRef = useRef(false);
+
+  useEffect(() => {
+    if (!hydrated || didResumeRef.current) return;
+    didResumeRef.current = true;
+
+    const { user: sessionUser, activePortalMode } = useAuthStore.getState();
+    if (!sessionUser) return;
+
+    router.replace(
+      getResumeSessionPath(sessionUser.roles ?? [], activePortalMode),
+    );
+  }, [hydrated, router]);
+
+  if (!hydrated) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-[#f7f8fb]">
+        <p className="animate-pulse text-sm text-slate-400">กำลังโหลด...</p>
+      </div>
+    );
+  }
+
+  // Existing session resume or post-login: brief loading while navigation runs.
+  if (user) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-[#f7f8fb]">
+        <p className="animate-pulse text-sm text-slate-400">กำลังเข้าสู่ระบบ...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-svh grid lg:grid-cols-[480px_1fr]">

@@ -295,6 +295,32 @@ export function useOfficerInspection(inspectionId: string) {
   });
 }
 
+export interface UpdateOfficerInspectionItemDto {
+  detailNote?: string;
+  findings?: unknown;
+}
+
+export function useUpdateOfficerInspectionItem(inspectionId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      itemId,
+      dto,
+    }: {
+      itemId: string;
+      dto: UpdateOfficerInspectionItemDto;
+    }) =>
+      http.patch<OfficerInspectionDetailResponse>(
+        `officer/inspections/${inspectionId}/items/${itemId}`,
+        dto
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["officer-inspection", inspectionId] });
+      qc.invalidateQueries({ queryKey: ["officer-inspections"] });
+    },
+  });
+}
+
 export function useCreateOfficerInspection() {
   const qc = useQueryClient();
   return useMutation({

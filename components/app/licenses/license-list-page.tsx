@@ -20,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { http } from "@/lib/http";
 import type { JuristicLicenseGroupResponse } from "@/hooks/useLicenses";
 import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
@@ -73,7 +72,9 @@ export function LicenseListPageView({
 
   // Helper to format raw grouped licenses into the card view model
   const formatLicenseItem = (
-    lib: JuristicLicenseGroupResponse["businesses"][number]["licenses"][number],
+    lib:
+      | JuristicLicenseGroupResponse["corporateLicenses"][number]
+      | JuristicLicenseGroupResponse["businesses"][number]["licenses"][number],
     companyName: string
   ): LicenseCardItem => {
     let uiStatus: StatusBadgeStatus = "active";
@@ -97,7 +98,7 @@ export function LicenseListPageView({
     };
   };
 
-  const handleScanMock = async (value: string) => {
+  const handleScanMock = async () => {
     setIsQrScannerOpen(false);
     // Mock QR scan handler fallback
     if (personalLicenses.length > 0) {
@@ -120,6 +121,19 @@ export function LicenseListPageView({
   // Filter and format juristic license groups
   const filteredJuristicGroups = useMemo(() => {
     return juristicGroups.map((group) => {
+      const corporateLicenses = group.corporateLicenses ?? [];
+      const filteredCorporateLicenses = corporateLicenses.filter((lib) => {
+        let uiStatus: StatusBadgeStatus = "active";
+        if (lib.status === "EXPIRED") uiStatus = "expired";
+        if (lib.status === "SUSPENDED" || lib.status === "REVOKED") uiStatus = "suspended";
+        const expiryDate = dayjs(lib.expiresAt);
+        if (lib.status === "ACTIVE" && lib.expiresAt && expiryDate.isBefore(dayjs().add(30, "day"))) {
+          uiStatus = "expiringSoon";
+        }
+
+        if (statusFilter !== "all" && uiStatus !== statusFilter) return false;
+        return true;
+      });
       const filteredBusinesses = group.businesses.map((business) => {
         const filteredLicenses = business.licenses.filter((lib) => {
           let uiStatus: StatusBadgeStatus = "active";
@@ -147,13 +161,9 @@ export function LicenseListPageView({
 
       return {
         ...group,
+        filteredCorporateLicenses,
         filteredBusinesses,
       };
-    }).filter((group) => {
-      if (statusFilter !== "all") {
-        return group.filteredBusinesses.length > 0;
-      }
-      return true;
     });
   }, [juristicGroups, statusFilter]);
 
@@ -163,8 +173,7 @@ export function LicenseListPageView({
       return filteredPersonalLicenses.length;
     }
     return filteredJuristicGroups.reduce((acc, group) => {
-      const groupLicensesCount = group.filteredBusinesses.reduce((bAcc, b) => bAcc + b.filteredLicenses.length, 0);
-      return acc + groupLicensesCount;
+      return acc + group.filteredCorporateLicenses.length;
     }, 0);
   }, [activeTab, filteredPersonalLicenses, filteredJuristicGroups]);
 
@@ -275,9 +284,35 @@ export function LicenseListPageView({
                         <p className="text-[12px] font-semibold text-slate-400 mt-1">
                           เลขนิติบุคคล : {group.registrationId}
                         </p>
-                        <p className="text-[12px] font-semibold text-slate-400 mt-0.5">
-                          บทบาท : {group.myRole}
-                        </p>
+                        <div className="mt-1 space-y-0.5">
+                          <p className="text-[12px] font-semibold text-slate-400">
+                            บทบาท : {group.myRole}
+                          </p>
+                          <p className="text-[12px] font-semibold text-slate-400">
+                            ใบอนุญาตระดับนิติบุคคล : {group.filteredCorporateLicenses.length} รายการ
+                          </p>
+                          <p className="text-[12px] font-semibold text-slate-400">
+                            สถานประกอบการ : {group.businessCount} แห่ง
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+                        <h4 className="text-[13px] font-bold text-[#145b57]">
+                          ใบอนุญาตระดับนิติบุคคล
+                        </h4>
+                        {group.filteredCorporateLicenses.length > 0 ? (
+                          <div className="space-y-4">
+                            {group.filteredCorporateLicenses.map((lib) => {
+                              const cardItem = formatLicenseItem(lib, group.nameTh);
+                              return <LicenseCertificateCard key={lib.id} item={cardItem} />;
+                            })}
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-center text-xs font-semibold text-slate-400">
+                            ยังไม่มีใบอนุญาตระดับนิติบุคคล
+                          </div>
+                        )}
                       </div>
 
                       <button
@@ -285,7 +320,7 @@ export function LicenseListPageView({
                         onClick={() => toggleCompany(group.juristicId)}
                         className="w-full flex items-center justify-center gap-1.5 py-2.5 text-[13px] font-bold text-slate-600 hover:text-slate-800 border border-slate-200/60 rounded-xl transition-all"
                       >
-                        <span>{expandedCompanies[group.juristicId] ? "ซ่อนสถานประกอบการ" : "แสดงสถานประกอบการ"}</span>
+                        <span>{expandedCompanies[group.juristicId] ? "ซ่อนรายละเอียด" : "รายละเอียด"}</span>
                         <ChevronDown
                           className="h-4 w-4 text-slate-400 transition-transform duration-200"
                           style={{ transform: expandedCompanies[group.juristicId] ? "rotate(180deg)" : "none" }}

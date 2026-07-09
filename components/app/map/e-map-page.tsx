@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import Map, { MapRef, Marker } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { ChevronRight, FileText, X } from "lucide-react";
 
 import { PIN_ICON_MAP } from "@/components/map/pin-icon-map";
-import { ListItemCard } from "@/components/shared/ListItemCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -19,50 +19,59 @@ import {
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const THAILAND_CENTER: [number, number] = [100.5018, 13.7563];
 
-type MapDocument = {
+type BusinessMapPin = {
   id: string;
   title: string;
-  status: "active" | "expiringSoon" | "expired";
-  expireDate: string;
-  detailsHref: string;
-};
-
-type MockMapPin = {
-  id: string;
-  title: string;
-  licenseNumber: string;
+  primaryLicenseLabel: string;
+  statusLabel: string;
   address: string;
   longitude: number;
   latitude: number;
   color: string;
   iconKey: keyof typeof PIN_ICON_MAP;
   detailsHref: string;
-  documents: MapDocument[];
+  licenseCount: number;
+  ownerLabel: string;
+  statusCounts: {
+    active: number;
+    suspended: number;
+    expired: number;
+    pending: number;
+    revoked: number;
+  };
 };
-
-// Mock removed — now sourced from GET /businesses/map via useBusinessesMap hook
 
 export function EMapPageView() {
   const { data: mapData, isLoading: mapLoading } = useBusinessesMap();
+  const searchParams = useSearchParams();
   const mapRef = useRef<MapRef>(null);
   const closeTimeoutRef = useRef<number | null>(null);
-  const [selectedPin, setSelectedPin] = useState<MockMapPin | null>(null);
+  const [selectedPin, setSelectedPin] = useState<BusinessMapPin | null>(null);
   const [isInfoCardOpen, setIsInfoCardOpen] = useState(false);
 
-  const pins = useMemo<MockMapPin[]>(() => {
+  const pins = useMemo<BusinessMapPin[]>(() => {
     if (!mapData?.features) return [];
-    return mapData.features.map((f) => ({
-      id: f.properties.id,
-      title: f.properties.nameTh,
-      licenseNumber: "-",
-      address: "-",
-      longitude: f.geometry.coordinates[0],
-      latitude: f.geometry.coordinates[1],
-      color: licenseStatusToColor(f.properties.licenseStatus),
-      iconKey: "hotel" as keyof typeof PIN_ICON_MAP,
-      detailsHref: `/businesses/${f.properties.id}`,
-      documents: [],
-    }));
+    return mapData.features.map((feature) => {
+      const primaryLicense = feature.properties.primaryLicense;
+
+      return {
+        id: feature.properties.id,
+        title: feature.properties.nameTh,
+        primaryLicenseLabel: primaryLicense
+          ? `${primaryLicense.licenseNo} · ${primaryLicense.typeNameTh}`
+          : "ยังไม่มีใบอนุญาต",
+        statusLabel: getStatusLabel(feature.properties.licenseStatus),
+        address: feature.properties.address,
+        longitude: feature.geometry.coordinates[0],
+        latitude: feature.geometry.coordinates[1],
+        color: licenseStatusToColor(feature.properties.licenseStatus),
+        iconKey: "hotel" as keyof typeof PIN_ICON_MAP,
+        detailsHref: `/businesses/${feature.properties.id}?from=e-map`,
+        licenseCount: feature.properties.licenseCount,
+        ownerLabel: `${feature.properties.ownership.labelTh}: ${feature.properties.ownership.displayNameTh}`,
+        statusCounts: feature.properties.statusCounts,
+      };
+    });
   }, [mapData]);
 
   useEffect(() => {
@@ -73,7 +82,7 @@ export function EMapPageView() {
     };
   }, []);
 
-  const handlePinSelect = (pin: MockMapPin) => {
+  const handlePinSelect = (pin: BusinessMapPin) => {
     if (closeTimeoutRef.current) {
       window.clearTimeout(closeTimeoutRef.current);
     }
@@ -87,6 +96,16 @@ export function EMapPageView() {
       offset: [0, 120],
     });
   };
+
+  useEffect(() => {
+    const selectedBusinessId = searchParams.get("selected");
+    if (!selectedBusinessId || pins.length === 0) return;
+
+    const selected = pins.find((pin) => pin.id === selectedBusinessId);
+    if (selected) {
+      handlePinSelect(selected);
+    }
+  }, [pins, searchParams]);
 
   const handleCloseInfoCard = () => {
     setIsInfoCardOpen(false);
@@ -179,7 +198,7 @@ function MapPinMarker({
   isActive,
   onClick,
 }: {
-  pin: MockMapPin;
+  pin: BusinessMapPin;
   isActive: boolean;
   onClick: () => void;
 }) {
@@ -239,7 +258,7 @@ function PinInfoSheet({
   pin,
   onClose,
 }: {
-  pin: MockMapPin;
+  pin: BusinessMapPin;
   onClose: () => void;
 }) {
   return (
@@ -265,7 +284,9 @@ function PinInfoSheet({
         <div className="mt-3 h-px bg-slate-200" />
 
         <div className="space-y-3">
-          <InfoRow label="เลขที่ใบอนุญาต" value={pin.licenseNumber} />
+          <InfoRow label="เจ้าของข้อมูล" value={pin.ownerLabel} />
+          <InfoRow label="ใบอนุญาตหลัก" value={pin.primaryLicenseLabel} />
+          <InfoRow label="สถานะภาพรวม" value={pin.statusLabel} />
           <InfoRow label="ที่ตั้ง" value={pin.address} />
         </div>
 
@@ -277,24 +298,14 @@ function PinInfoSheet({
             <span>ใบอนุญาตทั้งหมด</span>
           </div>
           <p className="text-sm font-semibold text-slate-900">
-            {pin.documents.length} รายการ
+            {pin.licenseCount} รายการ
           </p>
         </div>
 
-        <div className="space-y-3">
-          {pin.documents.map((document) => (
-            <Link
-              key={document.id}
-              href={document.detailsHref}
-              className="block"
-            >
-              <ListItemCard
-                title={document.title}
-                status={document.status}
-                expireDate={document.expireDate}
-              />
-            </Link>
-          ))}
+        <div className="grid grid-cols-3 gap-2">
+          <StatusPill label="ใช้งาน" count={pin.statusCounts.active} />
+          <StatusPill label="ระงับ" count={pin.statusCounts.suspended} />
+          <StatusPill label="หมดอายุ" count={pin.statusCounts.expired} />
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-1">
@@ -336,4 +347,22 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <p className="text-sm text-slate-900">{value}</p>
     </div>
   );
+}
+
+function StatusPill({ label, count }: { label: string; count: number }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="text-sm font-semibold text-slate-900">{count}</p>
+    </div>
+  );
+}
+
+function getStatusLabel(status: string | null) {
+  if (status === "ACTIVE") return "ใช้งาน";
+  if (status === "SUSPENDED") return "ระงับชั่วคราว";
+  if (status === "EXPIRED") return "หมดอายุ";
+  if (status === "REVOKED") return "เพิกถอน";
+  if (status === "PENDING") return "รอดำเนินการ";
+  return "ไม่มีสถานะ";
 }

@@ -6,7 +6,7 @@ import { NavigationFooter } from "@/components/shared/NavigationFooter";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Map, Navigation } from "lucide-react";
 import { useIsStaff } from "@/hooks/useIsStaff";
 import heroRightImage from "@/assets/hero/hero-right.png";
 import {
@@ -35,6 +35,8 @@ export type BusinessDetailData = {
   companyName: string;
   businessName: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
   phoneNumber: string;
   email: string;
   documents: BusinessDocument[];
@@ -53,8 +55,12 @@ export function BusinessesPageDetailView({
   const isStaff = useIsStaff();
 
   const fromParam = searchParams.get("from");
-  const fromLabel = fromParam === "search" ? "ค้นหาใบอนุญาต..." : "ใบอนุญาตของฉัน";
-  const fromHref = fromParam === "search" ? "/license-search" : "/licenses";
+  const fromContext = getSourceContext(fromParam);
+  const directionsUrl =
+    data.latitude !== null && data.longitude !== null
+      ? `https://www.google.com/maps/dir/?api=1&destination=${data.latitude},${data.longitude}`
+      : null;
+  const mapHref = businessId ? `/e-map?selected=${businessId}` : "/e-map";
 
   return (
     <>
@@ -64,7 +70,7 @@ export function BusinessesPageDetailView({
           <AppBreadcrumb
             items={[
               { label: "หน้าแรก", href: "/home" },
-              { label: fromLabel, href: fromHref },
+              { label: fromContext.label, href: fromContext.href },
               { label: data.businessName },
             ]}
             variant="dark"
@@ -148,7 +154,7 @@ export function BusinessesPageDetailView({
                   status: document.status,
                   issuedAt: document.issuedAt,
                   expiresAt: document.expiresAt,
-                  detailsHref: `/licenses/${document.id}?from=${fromParam || "my-licenses"}`,
+                  detailsHref: `/licenses/${document.id}?from=${fromContext.key}`,
                 };
                 return (
                   <LicenseCertificateCard
@@ -189,8 +195,37 @@ export function BusinessesPageDetailView({
         </div>
       </main>
       <footer>
-        <NavigationFooter onNavigate={() => console.log("go map")} />
+        <NavigationFooter
+          actions={[
+            {
+              label: "นำทาง",
+              onClick: () => {
+                if (directionsUrl) {
+                  window.open(directionsUrl, "_blank", "noopener,noreferrer");
+                }
+              },
+              icon: <Navigation className="h-5 w-5" />,
+              variant: "secondary",
+            },
+            {
+              label: "ดูแผนที่",
+              href: mapHref,
+              icon: <Map className="h-5 w-5" />,
+              variant: "primary",
+            },
+          ]}
+        />
       </footer>
     </>
   );
+}
+
+function getSourceContext(source: string | null) {
+  if (source === "search") {
+    return { key: "search", label: "ค้นหาใบอนุญาต...", href: "/license-search" };
+  }
+  if (source === "e-map") {
+    return { key: "e-map", label: "e-map", href: "/e-map" };
+  }
+  return { key: "my-licenses", label: "ใบอนุญาตของฉัน", href: "/licenses" };
 }

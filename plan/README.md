@@ -26,6 +26,7 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
+| 2026-07-09 | [Login-first entry flow](./2026-07-09-login-first-entry-flow.md) | Root requires login first; public skips mode select; existing session opens main page; officers still select mode after fresh login. | Verified | `bunx tsc --noEmit` passed; manual browser flow optional. | Verified |
 | 2026-07-08 | [Officer/Public Mode Switch](./2026-07-08-officer-public-mode-switch.md) | Add post-login role-mode selection for officer users and a profile-menu switch between normal user and officer feature modes. | Verified | TypeScript, targeted ESLint, and production build passed; manual seeded-user browser flow remains. | Verified |
 | 2026-07-08 | [Officer Inspection Report List](./2026-07-08-officer-inspection-report-list.md) | Wire `/reports` to officer field inspections created by `/api/officer/inspections`, add detail route, and document the list contract. | Verified | Backend build/unit/e2e and frontend typecheck/build passed; manual browser flow remains. | Verified |
 | 2026-07-02 | [DGA OIDC Login Flow](./2026-07-02-dga-oidc-login-flow.md) | Add `/auth/dga`, `/auth/login-callback`, and `/auth/logout-callback` for DGA Digital ID OIDC login/logout through the BFF. | Verified | Hooks, route pages, login/logout entry points, env, typecheck, build, and BFF authorize route verified. Full lint still has unrelated existing debt. | Verified |

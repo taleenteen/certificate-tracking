@@ -7,11 +7,8 @@ import buddhistEra from "dayjs/plugin/buddhistEra";
 import { useSearchParams } from "next/navigation";
 
 import { LicenseSearchPageView } from "@/components/app/licenses/license-search-page";
-import type { LicenseCardItem } from "@/components/app/licenses/license-certificate-card";
 import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
-import { useLicenses, useCitizenLicensesSearchGrouped } from "@/hooks/useLicenses";
-import { useMyProfile } from "@/hooks/useMyProfile";
-import { useOfficerLicenses } from "@/hooks/useOfficer";
+import { useCitizenLicensesSearchGrouped } from "@/hooks/useLicenses";
 
 dayjs.extend(buddhistEra);
 dayjs.locale("th");
@@ -40,118 +37,68 @@ export interface GroupedBusinessItem {
   }[];
 }
 
+function toUiStatus(
+  status: string,
+  expiresAt: string | null,
+): StatusBadgeStatus {
+  if (status === "EXPIRED") return "expired";
+  if (status === "SUSPENDED" || status === "REVOKED") return "suspended";
+  if (
+    status === "ACTIVE" &&
+    expiresAt &&
+    dayjs(expiresAt).isBefore(dayjs().add(30, "day"))
+  ) {
+    return "expiringSoon";
+  }
+  return "active";
+}
+
 function LicenseSearchContent() {
   const searchParams = useSearchParams();
-  const q = searchParams.get("q") || "";
-  const licenseNumber = searchParams.get("licenseNumber") || "";
+  const q = searchParams.get("q")?.trim() || "";
+  const licenseNumber = searchParams.get("licenseNumber")?.trim() || "";
+  const hasQuery = !!(q || licenseNumber);
 
-  const { data: profile, isLoading: isProfileLoading } = useMyProfile();
-  const isOfficer = profile?.roles?.includes("officer");
-
-  // VERSION NOTE: There are 2 versions of search:
-  // 1. Flat search list (useCitizenLicensesSearch)
-  // 2. Grouped-by-business search (useCitizenLicensesSearchGrouped)
-  // We use Version 2 (Grouped) per request.
-  const { data: citizenData, isLoading: isCitizenLoading, isError: isCitizenError } = useCitizenLicensesSearchGrouped(
-    { q, licenseNumber },
-    !isOfficer && !!(q || licenseNumber)
+  // Public home search always uses the citizen grouped endpoint (not officer
+  // inspection search). Officers in public mode need the same directory results.
+  const { data, isLoading, isError, isFetching } = useCitizenLicensesSearchGrouped(
+    { q, licenseNumber, page: 1, limit: 50 },
+    hasQuery,
   );
-  const { data: officerData, isLoading: isOfficerLoading, isError: isOfficerError } = useOfficerLicenses(
-    { q, licenseNumber },
-    !!isOfficer && !!(q || licenseNumber)
-  );
-
-  const isLoading = isProfileLoading || (isOfficer ? isOfficerLoading : isCitizenLoading);
-  const isError = isOfficer ? isOfficerError : isCitizenError;
 
   const items = useMemo<GroupedBusinessItem[]>(() => {
-    if (isOfficer) {
-      if (!officerData?.data) return [];
-      const groupsMap: Record<string, GroupedBusinessItem> = {};
-      officerData.data.forEach((lib) => {
-        const bus = lib.business;
-        if (!groupsMap[bus.id]) {
-          groupsMap[bus.id] = {
-            id: bus.id,
-            nameTh: bus.nameTh,
-            province: bus.province,
-            licenseCount: 0,
-            licenses: [],
-          };
-        }
-
-        let uiStatus: StatusBadgeStatus = "active";
-        if (lib.status === "EXPIRED") uiStatus = "expired";
-        if (lib.status === "SUSPENDED" || lib.status === "REVOKED") uiStatus = "suspended";
-        const expiryDate = dayjs(lib.expiresAt);
-        if (lib.status === "ACTIVE" && lib.expiresAt && expiryDate.isBefore(dayjs().add(30, "day"))) {
-          uiStatus = "expiringSoon";
-        }
-
-        groupsMap[bus.id].licenses.push({
-          id: lib.id,
-          licenseNumber: lib.licenseNumber,
-          status: uiStatus,
-          issuedAt: dayjs(lib.issuedAt).format("D ม.ค. BBBB"),
-          expiresAt: lib.expiresAt ? dayjs(lib.expiresAt).format("D ม.ค. BBBB") : "ไม่มีวันหมดอายุ",
-          licenseType: {
-            id: lib.licenseType.id,
-            code: lib.licenseType.code,
-            nameTh: lib.licenseType.nameTh,
-            agency: {
-              id: lib.licenseType.agency.id,
-              code: lib.licenseType.agency.code,
-              nameTh: lib.licenseType.agency.nameTh,
-            },
+    if (!data?.data) return [];
+    return data.data.map((bus) => ({
+      id: bus.id,
+      nameTh: bus.nameTh,
+      province: bus.province,
+      licenseCount: bus.licenseCount,
+      licenses: bus.licenses.map((lib) => ({
+        id: lib.id,
+        licenseNumber: lib.licenseNumber,
+        status: toUiStatus(lib.status, lib.expiresAt),
+        issuedAt: dayjs(lib.issuedAt).format("D MMM BBBB"),
+        expiresAt: lib.expiresAt
+          ? dayjs(lib.expiresAt).format("D MMM BBBB")
+          : "ไม่มีวันหมดอายุ",
+        licenseType: {
+          id: lib.licenseType.id,
+          code: lib.licenseType.code,
+          nameTh: lib.licenseType.nameTh,
+          agency: {
+            id: lib.licenseType.agency.id,
+            code: lib.licenseType.agency.code,
+            nameTh: lib.licenseType.agency.nameTh,
           },
-        });
-        groupsMap[bus.id].licenseCount = groupsMap[bus.id].licenses.length;
-      });
-      return Object.values(groupsMap);
-    } else {
-      if (!citizenData?.data) return [];
-      return citizenData.data.map((bus) => {
-        return {
-          id: bus.id,
-          nameTh: bus.nameTh,
-          province: bus.province,
-          licenseCount: bus.licenseCount,
-          licenses: bus.licenses.map((lib) => {
-            let uiStatus: StatusBadgeStatus = "active";
-            if (lib.status === "EXPIRED") uiStatus = "expired";
-            if (lib.status === "SUSPENDED" || lib.status === "REVOKED") uiStatus = "suspended";
-            const expiryDate = dayjs(lib.expiresAt);
-            if (lib.status === "ACTIVE" && lib.expiresAt && expiryDate.isBefore(dayjs().add(30, "day"))) {
-              uiStatus = "expiringSoon";
-            }
+        },
+      })),
+    }));
+  }, [data]);
 
-            return {
-              id: lib.id,
-              licenseNumber: lib.licenseNumber,
-              status: uiStatus,
-              issuedAt: dayjs(lib.issuedAt).format("D ม.ค. BBBB"),
-              expiresAt: lib.expiresAt ? dayjs(lib.expiresAt).format("D ม.ค. BBBB") : "ไม่มีวันหมดอายุ",
-              licenseType: {
-                id: lib.licenseType.id,
-                code: lib.licenseType.code,
-                nameTh: lib.licenseType.nameTh,
-                agency: {
-                  id: lib.licenseType.agency.id,
-                  code: lib.licenseType.agency.code,
-                  nameTh: lib.licenseType.agency.nameTh,
-                },
-              },
-            };
-          }),
-        };
-      });
-    }
-  }, [isOfficer, officerData, citizenData]);
-
-  if (isLoading) {
+  if (hasQuery && (isLoading || isFetching) && items.length === 0) {
     return (
       <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
-        <p className="text-slate-500 animate-pulse">กำลังโหลดข้อมูล...</p>
+        <p className="text-slate-500 animate-pulse">กำลังค้นหา...</p>
       </div>
     );
   }
@@ -161,7 +108,9 @@ function LicenseSearchContent() {
       <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-[#F9FAFB]">
         <div className="text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 max-w-sm mx-4">
           <p className="text-destructive font-semibold mb-2">เกิดข้อผิดพลาด</p>
-          <p className="text-sm text-slate-500">ไม่สามารถดึงข้อมูลได้ กรุณาลองใหม่อีกครั้ง</p>
+          <p className="text-sm text-slate-500">
+            ไม่สามารถดึงข้อมูลได้ กรุณาลองใหม่อีกครั้ง
+          </p>
         </div>
       </div>
     );

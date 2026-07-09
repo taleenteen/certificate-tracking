@@ -57,15 +57,9 @@ export function HomeHeroSearch({
               <input
                 id="business-name-input"
                 type="text"
-                placeholder="ระบุชื่อสถานประกอบการ"
+                placeholder="เช่น สถานประกอบการตัวอย่าง"
                 value={businessName}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setBusinessName(val);
-                  if (val.trim() === "") {
-                    setLicenseNumber("");
-                  }
-                }}
+                onChange={(e) => setBusinessName(e.target.value)}
                 className="w-full pl-4 pr-24 py-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] h-[46px]"
               />
               <button
@@ -89,11 +83,10 @@ export function HomeHeroSearch({
             <input
               id="license-number-input"
               type="text"
-              placeholder="ระบุเลขใบอนุญาตให้ครบถ้วน"
+              placeholder="เช่น RNG4-00001"
               value={licenseNumber}
               onChange={(e) => setLicenseNumber(e.target.value)}
-              disabled={!businessName.trim()}
-              className="w-full px-4 py-3 rounded-lg border-0 bg-slate-100/90 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] h-[46px] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 rounded-lg border-0 bg-slate-100/90 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] h-[46px]"
             />
           </div>
         </form>

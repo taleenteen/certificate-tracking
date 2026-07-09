@@ -132,7 +132,7 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
                   <input
                     id="business-name-input"
                     type="text"
-                    placeholder="ระบุชื่อสถานประกอบการ"
+                    placeholder="เช่น สถานประกอบการตัวอย่าง"
                     value={searchQueryQ}
                     onChange={(e) => setSearchQueryQ(e.target.value)}
                     className="w-full pl-4 pr-24 py-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] h-[46px]"
@@ -158,7 +158,7 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
                 <input
                   id="license-number-input"
                   type="text"
-                  placeholder="ระบุเลขใบอนุญาตให้ครบถ้วน"
+                  placeholder="เช่น RNG4-00001"
                   value={searchQueryNumber}
                   onChange={(e) => setSearchQueryNumber(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border-0 bg-slate-100/90 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] h-[46px]"
@@ -193,8 +193,9 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
               />
               <p className="mt-4 text-[16px] font-bold text-slate-800">ค้นหาใบอนุญาตและร้านค้า</p>
               <p className="text-xs text-slate-400 font-semibold leading-relaxed">
-                พิมพ์หมายเลขใบอนุญาต หรือชื่อผู้ประกอบการด้านบน <br />
-                เพื่อตรวจสอบข้อมูลสถานะในระบบ
+                ลองพิมพ์ เช่น <span className="text-slate-600">สถานประกอบการตัวอย่าง</span>
+                <br />
+                หรือเลขใบอนุญาต เช่น <span className="text-slate-600">RNG4-00001</span>
               </p>
             </div>
           ) : items.length > 0 ? (
@@ -303,8 +304,9 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
               />
               <p className="mt-4 text-[16px] font-bold text-slate-800">ไม่พบข้อมูลใบอนุญาต</p>
               <p className="text-xs text-slate-400 font-semibold leading-relaxed">
-                ลองตรวจสอบตัวสะกด ชื่อร้านค้า หรือระบุเลขที่ <br />
-                ใบอนุญาตใหม่อีกครั้งเพื่อค้นหา
+                ลองคำค้นที่สั้นกว่า เช่น <span className="text-slate-600">สถานประกอบการตัวอย่าง</span>
+                <br />
+                หรือ <span className="text-slate-600">RNG4</span> / <span className="text-slate-600">ตัวอย่าง</span>
               </p>
             </div>
           )}

@@ -23,6 +23,8 @@ export function HomepageService({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (licenseNumber) params.set("licenseNumber", licenseNumber);
+    // Require at least one field so we don't land on an empty "ready" state.
+    if (!params.toString()) return;
     router.push(`/license-search?${params.toString()}`);
   };
 

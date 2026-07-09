@@ -5,16 +5,22 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Map, { MapRef, Marker } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { ChevronRight, FileText, X, Factory } from "lucide-react";
+import { ChevronRight, FileText, X, Factory, Loader2 } from "lucide-react";
+import dayjs from "dayjs";
+import buddhistEra from "dayjs/plugin/buddhistEra";
+import "dayjs/locale/th";
 
 import { PIN_ICON_MAP } from "@/components/map/pin-icon-map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useBusiness } from "@/hooks/useBusinesses";
 import {
   useBusinessesMap,
   licenseStatusToColor,
 } from "@/hooks/useBusinessesMap";
+
+dayjs.extend(buddhistEra);
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const THAILAND_CENTER: [number, number] = [100.5018, 13.7563];
@@ -260,59 +266,99 @@ function PinInfoSheet({
   pin: BusinessMapPin;
   onClose: () => void;
 }) {
-  return (
-    <Card className="pointer-events-auto mx-auto max-w-md rounded-none border-0 py-0 shadow-[0_-10px_30px_rgba(15,23,42,0.18)] rounded-t-3xl">
-      <CardContent className="space-y-4 p-4">
-        <div className="flex items-start justify-between gap-3 mb-0">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-slate-900">
-              {pin.title}
-            </h2>
-          </div>
+  const { data: business } = useBusiness(pin.id);
 
+  // Fallback to primary license label if business data is not yet loaded
+  const primaryLicenseNo = business?.licenses?.[0]?.licenseNumber || pin.primaryLicenseLabel.split(" · ")[0] || "ไม่มีเลขใบอนุญาต";
+
+  return (
+    <Card className="pointer-events-auto mx-auto w-full max-w-[430px] rounded-none border-0 py-0 shadow-[0_-10px_35px_rgba(15,23,42,0.15)] rounded-t-[32px] overflow-hidden">
+      <CardContent className="space-y-4 p-6 bg-white text-slate-800">
+        {/* Header Title & Close Button */}
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-xl font-bold text-slate-900 leading-snug">
+            {pin.title}
+          </h2>
           <Button
             type="button"
             size="icon"
             variant="ghost"
             onClick={onClose}
-            className="h-8 w-8 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            className="h-8 w-8 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 shrink-0"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </Button>
         </div>
-        <div className="mt-3 h-px bg-slate-200" />
 
-        <div className="space-y-3">
-          <InfoRow label="เจ้าของข้อมูล" value={pin.ownerLabel} />
-          <InfoRow label="ใบอนุญาตหลัก" value={pin.primaryLicenseLabel} />
-          <InfoRow label="สถานะภาพรวม" value={pin.statusLabel} />
-          <InfoRow label="ที่ตั้ง" value={pin.address} />
-        </div>
+        {/* Separator line */}
+        <div className="h-[1px] bg-slate-100" />
 
-        <div className="flex items-center justify-between border-slate-200 pt-1">
-          <div className="flex items-center gap-2 text-sm text-slate-700">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0c6d66]/10 text-[#0c6d66]">
-              <FileText className="h-4 w-4" />
-            </div>
-            <span>ใบอนุญาตทั้งหมด</span>
+        {/* Info Fields */}
+        <div className="space-y-3.5">
+          <div>
+            <p className="text-[12px] font-bold text-slate-400">เลขที่ใบอนุญาต</p>
+            <p className="text-[14px] font-semibold text-slate-700 mt-1 select-all">{primaryLicenseNo}</p>
           </div>
-          <p className="text-sm font-semibold text-slate-900">
-            {pin.licenseCount} รายการ
-          </p>
+          <div>
+            <p className="text-[12px] font-bold text-slate-400">ที่ตั้ง</p>
+            <p className="text-[14px] font-semibold text-slate-700 mt-1 leading-relaxed">{pin.address}</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <StatusPill label="ใช้งาน" count={pin.statusCounts.active} />
-          <StatusPill label="ระงับ" count={pin.statusCounts.suspended} />
-          <StatusPill label="หมดอายุ" count={pin.statusCounts.expired} />
+        {/* Licenses List Section Header */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-2 text-slate-700">
+            <FileText className="h-5 w-5 text-emerald-800" />
+            <span className="text-[14px] font-bold">ใบอนุญาตทั้งหมด</span>
+          </div>
+          <span className="text-[14px] font-bold text-slate-500">
+            {business?.licenses?.length ?? pin.licenseCount} รายการ
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-1">
+        {/* Licenses Scroll Container */}
+        {!business ? (
+          <div className="py-10 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-[#114e4b]" />
+          </div>
+        ) : (
+          <div className="space-y-2.5 max-h-[170px] overflow-y-auto pr-1">
+            {business.licenses.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">ไม่มีข้อมูลใบอนุญาต</p>
+            ) : (
+              business.licenses.map((lic) => {
+                const expDate = lic.expiresAt
+                  ? `วันหมดอายุ : ${dayjs(lic.expiresAt).locale("th").format("D MMM BBBB")}`
+                  : "ไม่มีวันหมดอายุ";
+                return (
+                  <Link
+                    key={lic.id}
+                    href={`/licenses/${lic.id}?from=e-map`}
+                    className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:border-slate-200 transition-all group cursor-pointer"
+                  >
+                    <div className="space-y-1 text-left">
+                      <h3 className="text-[14px] font-bold text-slate-800 group-hover:text-[#114e4b] transition-colors">
+                        {lic.licenseType.nameTh}
+                      </h3>
+                      <p className="text-[12px] font-semibold text-slate-400">
+                        {expDate}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4.5 w-4.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                  </Link>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-3 pt-2">
           <Button
             asChild
             type="button"
             variant="outline"
-            className="h-12 rounded-2xl border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className="h-12 rounded-2xl border-slate-200 bg-slate-50 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <a
               href={`https://www.google.com/maps/dir/?api=1&destination=${pin.latitude},${pin.longitude}`}
@@ -326,34 +372,15 @@ function PinInfoSheet({
           <Button
             asChild
             type="button"
-            className="h-12 rounded-2xl bg-[#04302F] text-sm font-medium text-white hover:bg-[#0d403d]"
+            className="h-12 rounded-2xl bg-[#114e4b] hover:bg-[#0c403e] text-sm font-bold text-white border-0 transition-colors cursor-pointer"
           >
             <Link href={pin.detailsHref}>
               ดูรายละเอียด
-              <ChevronRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="text-sm text-slate-900">{value}</p>
-    </div>
-  );
-}
-
-function StatusPill({ label, count }: { label: string; count: number }) {
-  return (
-    <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="text-sm font-semibold text-slate-900">{count}</p>
-    </div>
   );
 }
 

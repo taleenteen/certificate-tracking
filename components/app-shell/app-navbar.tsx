@@ -135,6 +135,7 @@ export function AppNavbar() {
   const canSwitchPortalMode = Boolean(user?.roles?.includes("officer"));
   const isPublicHome =
     pathname === "/role-select" ||
+    pathname === "/profile" ||
     pathname === "/officer-card" ||
     pathname.startsWith("/inspection-tasks/") ||
     pathname.startsWith("/officer/inspections/") ||

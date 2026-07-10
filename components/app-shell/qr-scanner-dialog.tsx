@@ -11,6 +11,8 @@ type QrScannerDialogProps = {
   onOpenChange: (open: boolean) => void;
   onScanMock: (value: string) => void;
   id?: string;
+  title?: string;
+  description?: string;
 };
 
 export function QrScannerDialog({
@@ -18,6 +20,8 @@ export function QrScannerDialog({
   onOpenChange,
   onScanMock,
   id = "qr-camera-stream",
+  title = "สแกนคิวอาร์โค้ดใบอนุญาต",
+  description = "วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ",
 }: QrScannerDialogProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const startPromiseRef = useRef<Promise<unknown> | null>(null);
@@ -196,10 +200,10 @@ export function QrScannerDialog({
         {/* Top Text content */}
         <div className="relative z-30 w-full text-center pt-24 px-6 pointer-events-none">
           <DialogTitle className="text-[18px] font-bold text-white tracking-wide">
-            สแกนคิวอาร์โค้ดใบอนุญาต
+            {title}
           </DialogTitle>
           <DialogDescription className="text-[11px] text-white/60 mt-1.5 font-medium">
-            วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ
+            {description}
           </DialogDescription>
         </div>
 

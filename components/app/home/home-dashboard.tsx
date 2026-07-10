@@ -531,6 +531,8 @@ export function HomeDashboard() {
           onOpenChange={setIsQrScannerOpen}
           onScanMock={handleScanMock}
           id="home-qr-scanner"
+          title={scannerMode === "officer" ? "สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่" : "สแกนคิวอาร์โค้ดใบอนุญาต"}
+          description={scannerMode === "officer" ? "วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ" : "วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ"}
         />
 
         <SearchSheetOverlay
@@ -957,6 +959,8 @@ export function HomeDashboard() {
         onOpenChange={setIsQrScannerOpen}
         onScanMock={handleScanMock}
         id="home-qr-scanner"
+        title={scannerMode === "officer" ? "สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่" : "สแกนคิวอาร์โค้ดใบอนุญาต"}
+        description={scannerMode === "officer" ? "วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ" : "วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ"}
       />
     </main>
   );

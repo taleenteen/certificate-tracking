@@ -352,6 +352,8 @@ export default function VerifyOfficerContent() {
         onOpenChange={setIsScannerOpen}
         onScanMock={handleScanMock}
         id="verify-officer-scanner"
+        title="สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่"
+        description="วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ"
       />
     </main>
   );

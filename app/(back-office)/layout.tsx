@@ -7,7 +7,7 @@ export default function BackOfficeLayout({
   children: ReactNode;
 }) {
   return (
-    <BackOfficeAuthGuard>
+    <BackOfficeAuthGuard requireAdmin>
       <div className="min-h-screen bg-slate-100">{children}</div>
     </BackOfficeAuthGuard>
   );

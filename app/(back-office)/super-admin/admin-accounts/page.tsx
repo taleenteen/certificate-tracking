@@ -1,7 +1,7 @@
 import { AdminAccountsTable } from '@/components/super-admin/admin-accounts-table';
 
 export const metadata = {
-  title: "จัดการบัญชี Admin | Super Admin",
+  title: "จัดการผู้ใช้และสิทธิ์ | Super Admin",
 };
 
 export default function AdminAccountsPage() {

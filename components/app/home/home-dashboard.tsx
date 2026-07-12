@@ -6,7 +6,6 @@ import type { ChartConfig } from "@/components/ui/chart";
 import { Search, ScanSearch } from "lucide-react";
 import heroRightImage from "@/assets/hero/hero-right.png";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ChartContainer,
@@ -339,10 +338,15 @@ const inspectionTrendConfig = {
 
 const extractIdFromScannedValue = (scannedText: string): string => {
   try {
-    if (scannedText.startsWith("http://") || scannedText.startsWith("https://")) {
+    if (
+      scannedText.startsWith("http://") ||
+      scannedText.startsWith("https://")
+    ) {
       const url = new URL(scannedText);
       const parts = url.pathname.split("/").filter(Boolean);
-      const idx = parts.findIndex((p) => p === "my-licenses" || p === "licenses");
+      const idx = parts.findIndex(
+        (p) => p === "my-licenses" || p === "licenses",
+      );
       if (idx !== -1 && parts[idx + 1]) {
         return parts.slice(idx + 1).join("/");
       }
@@ -358,7 +362,10 @@ const extractIdFromScannedValue = (scannedText: string): string => {
 
 const extractOfficerToken = (scannedText: string): string => {
   try {
-    if (scannedText.startsWith("http://") || scannedText.startsWith("https://")) {
+    if (
+      scannedText.startsWith("http://") ||
+      scannedText.startsWith("https://")
+    ) {
       const url = new URL(scannedText);
       const parts = url.pathname.split("/").filter(Boolean);
       const idx = parts.findIndex((p) => p === "verify");
@@ -393,7 +400,9 @@ export function HomeDashboard() {
   const { data: licenses = [] } = useLicenses();
 
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
-  const [scannerMode, setScannerMode] = useState<"license" | "officer">("license");
+  const [scannerMode, setScannerMode] = useState<"license" | "officer">(
+    "license",
+  );
 
   const handleScanMock = async (value: string) => {
     setIsQrScannerOpen(false);
@@ -531,8 +540,16 @@ export function HomeDashboard() {
           onOpenChange={setIsQrScannerOpen}
           onScanMock={handleScanMock}
           id="home-qr-scanner"
-          title={scannerMode === "officer" ? "สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่" : "สแกนคิวอาร์โค้ดใบอนุญาต"}
-          description={scannerMode === "officer" ? "วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ" : "วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ"}
+          title={
+            scannerMode === "officer"
+              ? "สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่"
+              : "สแกนคิวอาร์โค้ดใบอนุญาต"
+          }
+          description={
+            scannerMode === "officer"
+              ? "วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ"
+              : "วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ"
+          }
         />
 
         <SearchSheetOverlay
@@ -581,10 +598,11 @@ export function HomeDashboard() {
 
         {/* Search row */}
         <div className="space-y-3">
-          <div
-            className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm border border-gray-200/50"
-          >
-            <Link href="/license-search" className="flex flex-1 items-center gap-2">
+          <div className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm border border-gray-200/50">
+            <Link
+              href="/license-search"
+              className="flex flex-1 items-center gap-2"
+            >
               <Search className="h-4 w-4 text-slate-400" />
               <span className="text-sm text-slate-400">ค้นหาใบอนุญาต</span>
             </Link>
@@ -690,15 +708,6 @@ export function HomeDashboard() {
           <h2 className="text-lg font-bold text-slate-950 border-l-[3px] border-[#145b57] pl-2.5">
             {role === "officer" ? "ภาพรวมการตรวจสอบ" : "สัดส่วนสถานะใบอนุญาต"}
           </h2>
-          {role === "officer" && (
-            <Button
-              asChild
-              variant="link"
-              className="h-auto p-0 text-sm font-semibold text-[#145b57]"
-            >
-              <Link href="/reports">รายงานทั้งหมด</Link>
-            </Button>
-          )}
         </div>
 
         {/* Dynamic content wrapper grid */}
@@ -959,8 +968,16 @@ export function HomeDashboard() {
         onOpenChange={setIsQrScannerOpen}
         onScanMock={handleScanMock}
         id="home-qr-scanner"
-        title={scannerMode === "officer" ? "สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่" : "สแกนคิวอาร์โค้ดใบอนุญาต"}
-        description={scannerMode === "officer" ? "วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ" : "วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ"}
+        title={
+          scannerMode === "officer"
+            ? "สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่"
+            : "สแกนคิวอาร์โค้ดใบอนุญาต"
+        }
+        description={
+          scannerMode === "officer"
+            ? "วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ"
+            : "วางคิวอาร์โค้ดให้อยู่ภายในกรอบเพื่อดำเนินการ"
+        }
       />
     </main>
   );

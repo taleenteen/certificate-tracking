@@ -1,0 +1,197 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { FileDown, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  useLicenseDocumentExport,
+  type LicenseDocumentExportFormat,
+} from "@/hooks/useLicenseDocumentExports";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type ExportableLicense = {
+  id: string;
+  title: string;
+  licenseNumber: string;
+  agencyId: string | null;
+};
+
+type LicenseDocumentExportDialogProps = {
+  businessId: string;
+  licenses: ExportableLicense[];
+  triggerButton?: React.ReactNode;
+};
+
+const formatOptions: Array<{
+  value: LicenseDocumentExportFormat;
+  label: string;
+}> = [
+  { value: "pdf", label: "PDF สำหรับพิมพ์" },
+  { value: "xlsx", label: "Excel (.xlsx)" },
+  { value: "csv", label: "CSV" },
+];
+
+export function LicenseDocumentExportDialog({
+  businessId,
+  licenses,
+  triggerButton,
+}: LicenseDocumentExportDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [format, setFormat] = useState<LicenseDocumentExportFormat>("pdf");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const exportDocuments = useLicenseDocumentExport(businessId);
+  const selectedAgencyId = useMemo(
+    () =>
+      licenses.find((license) => selectedIds.includes(license.id))?.agencyId ??
+      null,
+    [licenses, selectedIds],
+  );
+
+  const toggleLicense = (license: ExportableLicense) => {
+    setSelectedIds((current) => {
+      if (current.includes(license.id)) {
+        return current.filter((id) => id !== license.id);
+      }
+      if (selectedAgencyId && license.agencyId !== selectedAgencyId)
+        return current;
+      return [...current, license.id];
+    });
+  };
+
+  const submit = async () => {
+    await exportDocuments.mutateAsync({ format, licenseIds: selectedIds });
+    setOpen(false);
+    setSelectedIds([]);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) {
+          setSelectedIds([]);
+          exportDocuments.reset();
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        {triggerButton ?? (
+          <Button className="gap-2" disabled={licenses.length === 0}>
+            <FileDown className="h-4 w-4" />
+            Export เอกสาร
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Export เอกสารใบอนุญาต</DialogTitle>
+          <DialogDescription>
+            เลือกใบอนุญาตจากหน่วยงานเดียวกันเพื่อสร้างเอกสารอ้างอิงจากแพลตฟอร์ม
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <label
+            className="block text-sm font-medium text-slate-700"
+            htmlFor="export-format"
+          >
+            รูปแบบไฟล์
+          </label>
+          <Select
+            value={format}
+            onValueChange={(val) => setFormat(val as LicenseDocumentExportFormat)}
+          >
+            <SelectTrigger id="export-format" className="w-full bg-white text-slate-800 border-slate-200">
+              <SelectValue placeholder="เลือกรูปแบบไฟล์" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border-slate-200 text-slate-800">
+              {formatOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="cursor-pointer hover:bg-slate-50 text-slate-800">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-slate-700">ใบอนุญาต</p>
+          <div className="max-h-64 divide-y overflow-y-auto rounded-md border">
+            {licenses.map((license) => {
+              const isSelected = selectedIds.includes(license.id);
+              const isDifferentAgency = Boolean(
+                selectedAgencyId && license.agencyId !== selectedAgencyId,
+              );
+              return (
+                <label
+                  key={license.id}
+                  className={`flex cursor-pointer items-center gap-3 px-3 py-3 ${
+                    isDifferentAgency
+                      ? "cursor-not-allowed bg-slate-50 text-slate-400"
+                      : ""
+                  }`}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    disabled={isDifferentAgency || exportDocuments.isPending}
+                    onCheckedChange={() => toggleLicense(license)}
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">
+                      {license.title}
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      {license.licenseNumber}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          {selectedAgencyId && (
+            <p className="text-xs text-slate-500">
+              สามารถเลือกได้เฉพาะใบอนุญาตภายใต้หน่วยงานเดียวกันต่อการ export
+              หนึ่งครั้ง
+            </p>
+          )}
+          {exportDocuments.error && (
+            <p className="text-sm text-destructive">
+              {exportDocuments.error.message}
+            </p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button
+            onClick={submit}
+            disabled={selectedIds.length === 0 || exportDocuments.isPending}
+          >
+            {exportDocuments.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <FileDown />
+            )}
+            สร้างไฟล์
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

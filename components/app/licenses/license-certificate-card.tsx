@@ -2,13 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 
-import {
-  StatusBadge,
-  type StatusBadgeStatus,
-} from "@/components/shared/StatusBadge";
+import { type StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import licenseImg from "@/assets/license.png";
 
@@ -26,6 +23,7 @@ export type LicenseCardItem = {
   issuedAt: string;
   expiresAt: string;
   previewLabel?: string;
+  previewUrl?: string | null;
   detailsHref?: string;
 };
 
@@ -46,6 +44,74 @@ const STATUS_STAMP_MAP = {
   expired: expiredIcon,
   suspended: suspendedIcon,
 };
+
+function CertificatePreview({ previewUrl }: { previewUrl?: string | null }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (!previewUrl || !canvasRef.current) return;
+
+    let cancelled = false;
+    let destroy: (() => void) | undefined;
+
+    const renderFirstPage = async () => {
+      try {
+        const pdfjs = await import("pdfjs-dist");
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/build/pdf.worker.min.mjs",
+          import.meta.url,
+        ).toString();
+
+        const loadingTask = pdfjs.getDocument({ url: previewUrl });
+        const documentProxy = await loadingTask.promise;
+        destroy = () => {
+          loadingTask.destroy();
+          void documentProxy.cleanup();
+        };
+        const page = await documentProxy.getPage(1);
+        if (cancelled || !canvasRef.current) return;
+
+        const viewport = page.getViewport({ scale: 1.4 });
+        const canvas = canvasRef.current;
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Canvas context unavailable");
+
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        await page.render({ canvas, canvasContext: context, viewport }).promise;
+      } catch {
+        if (!cancelled) setHasError(true);
+      }
+    };
+
+    void renderFirstPage();
+    return () => {
+      cancelled = true;
+      destroy?.();
+    };
+  }, [previewUrl]);
+
+  if (!previewUrl || hasError) {
+    return (
+      <Image
+        src={licenseImg}
+        alt="ใบอนุญาต"
+        fill
+        className="object-cover object-center"
+        sizes="(max-width: 430px) 150px, 200px"
+      />
+    );
+  }
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-label="หน้าแรกของเอกสารใบอนุญาต"
+      className="h-full w-full bg-white object-contain"
+    />
+  );
+}
 
 export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
   const [isCopied, setIsCopied] = useState(false);
@@ -91,14 +157,7 @@ export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
         {/* Certificate Large Preview Area */}
         <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 flex items-center justify-center relative shadow-inner p-4 border border-slate-200/50">
           <div className="relative aspect-[3/4] h-full shadow-md rounded-md overflow-hidden">
-            <Image
-              src={licenseImg}
-              alt="ใบอนุญาต"
-              fill
-              className="object-cover object-center"
-              sizes="(max-width: 430px) 150px, 200px"
-              priority
-            />
+            <CertificatePreview previewUrl={item.previewUrl} />
           </div>
 
           {/* Status Stamp Overlay using imported SVGs */}

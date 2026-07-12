@@ -4,11 +4,10 @@ import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { SectionCard } from "@/components/shared/SectionCard";
 import { NavigationFooter } from "@/components/shared/NavigationFooter";
 import { useParams, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { ClipboardCheck, Map, Navigation } from "lucide-react";
+import { Map, Navigation, Download } from "lucide-react";
 import { useIsStaff } from "@/hooks/useIsStaff";
-import heroRightImage from "@/assets/hero/hero-right.png";
+import { ExportBanner } from "@/components/app/licenses/export-banner";
+import { Button } from "@/components/ui/button";
 import {
   MdOutlineDescription,
   MdOutlineEmail,
@@ -21,6 +20,7 @@ import {
   LicenseCertificateCard,
   type LicenseCardItem,
 } from "@/components/app/licenses/license-certificate-card";
+import { LicenseDocumentExportDialog } from "./license-document-export-dialog";
 
 export type BusinessDocument = {
   id: string;
@@ -29,6 +29,8 @@ export type BusinessDocument = {
   status: StatusBadgeStatus;
   issuedAt: string;
   expiresAt: string;
+  agencyId: string | null;
+  previewUrl?: string | null;
 };
 
 export type BusinessDetailData = {
@@ -76,39 +78,29 @@ export function BusinessesPageDetailView({
             variant="dark"
           />
 
-          {/* Officer Inspection Banner */}
+          {/* Officer-only verifiable license-document export. */}
           {isStaff && businessId && (
-            <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#17524e] to-[#256e69] p-5 text-white flex items-center justify-between shadow-[0_10px_25px_rgba(20,91,87,0.12)] gap-4 select-none">
-              {/* Left illustration */}
-              <div className="flex items-center gap-3">
-                <div className="relative w-[75px] h-[75px] shrink-0">
-                  <Image
-                    src={heroRightImage}
-                    alt="Officer illustration"
-                    fill
-                    className="object-contain object-bottom scale-[1.3] origin-bottom -translate-y-1"
-                    priority
-                  />
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-[15px] font-bold text-white leading-tight">
-                    เจ้าหน้าที่ตรวจสอบ
-                  </p>
-                  <p className="text-xs text-teal-100 mt-1">
-                    สามารถบันทึกรายงานผลการตรวจหน้างานแบบรวมกลุ่มได้ทันที
-                  </p>
-                </div>
-              </div>
-
-              {/* Right inspection button */}
-              <Link
-                href={`/businesses/${businessId}/inspect`}
-                className="flex items-center gap-2 px-4 py-3 bg-[#0d423e] hover:bg-[#082e2c] border border-[#1a5550] rounded-xl text-[13px] font-bold text-white transition-all shadow-[0_4px_12px_rgba(0,0,0,0.1)] shrink-0 cursor-pointer"
-              >
-                <ClipboardCheck className="h-4.5 w-4.5 text-white" />
-                <span>บันทึกผลการตรวจสอบ</span>
-              </Link>
-            </div>
+            <ExportBanner>
+              <LicenseDocumentExportDialog
+                businessId={businessId}
+                licenses={data.documents.map((document) => ({
+                  id: document.id,
+                  title: document.title,
+                  licenseNumber: document.licenseNumber,
+                  agencyId: document.agencyId,
+                }))}
+                triggerButton={
+                  <Button
+                    type="button"
+                    disabled={data.documents.length === 0}
+                    className="z-10 flex items-center gap-2 rounded-2xl bg-[#063428] hover:bg-[#04241C] text-white px-5 h-12 text-sm font-bold border border-emerald-950/20 shadow-md cursor-pointer transition-colors shrink-0"
+                  >
+                    <Download className="h-4 w-4 text-white" />
+                    ส่งออกใบอนุญาต
+                  </Button>
+                }
+              />
+            </ExportBanner>
           )}
 
           {/* Centered Page Title */}
@@ -154,13 +146,11 @@ export function BusinessesPageDetailView({
                   status: document.status,
                   issuedAt: document.issuedAt,
                   expiresAt: document.expiresAt,
+                  previewUrl: document.previewUrl,
                   detailsHref: `/licenses/${document.id}?from=${fromContext.key}`,
                 };
                 return (
-                  <LicenseCertificateCard
-                    key={document.id}
-                    item={cardItem}
-                  />
+                  <LicenseCertificateCard key={document.id} item={cardItem} />
                 );
               })}
             </div>
@@ -172,7 +162,9 @@ export function BusinessesPageDetailView({
           >
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 font-medium">เบอร์โทรศัพท์</p>
+                <p className="text-sm text-gray-600 font-medium">
+                  เบอร์โทรศัพท์
+                </p>
                 <div className="mt-1.5 flex items-center gap-2">
                   <MdOutlinePhone className="h-4 w-4 text-slate-700" />
                   <span className="text-base text-slate-800 font-semibold">
@@ -222,7 +214,11 @@ export function BusinessesPageDetailView({
 
 function getSourceContext(source: string | null) {
   if (source === "search") {
-    return { key: "search", label: "ค้นหาใบอนุญาต...", href: "/license-search" };
+    return {
+      key: "search",
+      label: "ค้นหาใบอนุญาต...",
+      href: "/license-search",
+    };
   }
   if (source === "e-map") {
     return { key: "e-map", label: "e-map", href: "/e-map" };

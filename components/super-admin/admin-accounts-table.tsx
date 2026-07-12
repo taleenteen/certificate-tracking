@@ -12,10 +12,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search, Plus, RefreshCw } from 'lucide-react';
-import { useUsers, useCreateUser, useSuspendUser, type SystemUserSummary } from '@/hooks/useUsers';
+import { useUsers, useCreateUser, useUpdateUserAccess, type SystemUserSummary } from '@/hooks/useUsers';
 import { useAgencies } from '@/hooks/useAgencies';
 import { toast } from 'sonner';
 import { AdminFormModal, type AdminFormData } from './admin-form-modal';
+import { UserAccessModal } from './user-access-modal';
 
 export function AdminAccountsTable() {
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -24,11 +25,13 @@ export function AdminAccountsTable() {
 
   const { data: users = [], isLoading, isError, refetch } = useUsers({
     q: searchQuery || undefined,
-    role: 'admin',
   });
   const { data: agencies = [] } = useAgencies();
 
   const createUser = useCreateUser();
+  const [accessUser, setAccessUser] = React.useState<SystemUserSummary | null>(null);
+  const [officerShortcut, setOfficerShortcut] = React.useState(false);
+  const updateAccess = useUpdateUserAccess(accessUser?.id ?? '');
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<SystemUserSummary | null>(null);
@@ -38,17 +41,13 @@ export function AdminAccountsTable() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (user: SystemUserSummary) => {
-    setEditingUser(user);
-    setIsModalOpen(true);
+  const handleEdit = (user: SystemUserSummary, makeOfficer = false) => {
+    setAccessUser(user);
+    setOfficerShortcut(makeOfficer);
   };
 
   const handleSave = async (data: AdminFormData) => {
-    if (editingUser) {
-      // Edit is not implemented in v1 (would need PATCH /users/:id)
-      toast.info('การแก้ไขบัญชีทำผ่าน PATCH /users/:id/roles และ /agency แยกกัน');
-      return;
-    }
+    if (editingUser) return;
     createUser.mutate(
       {
         fullName: data.fullName,
@@ -65,8 +64,8 @@ export function AdminAccountsTable() {
           toast.success('สร้างบัญชี Admin สำเร็จ');
           setIsModalOpen(false);
         },
-        onError: (err: any) => {
-          toast.error(err?.message ?? 'ไม่สามารถสร้างบัญชีได้');
+        onError: (error: unknown) => {
+          toast.error(error instanceof Error ? error.message : 'ไม่สามารถสร้างบัญชีได้');
         },
       },
     );
@@ -108,7 +107,7 @@ export function AdminAccountsTable() {
           <div className="relative w-full sm:w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-placeholder" />
             <Input
-              placeholder="ค้นหาบัญชี Admin"
+              placeholder="ค้นหาชื่อผู้ใช้หรืออีเมล"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 w-full border-gray-200 text-[13px] h-9"
@@ -156,7 +155,7 @@ export function AdminAccountsTable() {
               <tr className="bg-fuji-light/30 border-b border-gray-200">
                 <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[220px]">ชื่อ-นามสกุล</th>
                 <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[240px]">อีเมล / ชื่อผู้ใช้</th>
-                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[130px]">เลขบัตร (ท้าย 4 หลัก)</th>
+                <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[130px]">ช่องทางยืนยันตัวตน</th>
                 <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">หน่วยงาน</th>
                 <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[120px]">สถานะ</th>
                 <th className="px-[16px] py-[10px] text-[12px] font-bold text-placeholder w-[130px]">เข้าสู่ระบบล่าสุด</th>
@@ -184,8 +183,8 @@ export function AdminAccountsTable() {
                     <td className="px-[16px] py-[12px] text-[13px] text-placeholder font-medium font-mono">
                       {row.email ?? row.username ?? '—'}
                     </td>
-                    <td className="px-[16px] py-[12px] text-[13px] text-main font-bold font-mono">
-                      {row.citizenIdLast4 ? `…${row.citizenIdLast4}` : '—'}
+                    <td className="px-[16px] py-[12px] text-[12px] text-main font-medium">
+                      {row.hasTangRatIdentity ? 'ทางรัฐ (ยืนยันแล้ว)' : 'บัญชีภายในระบบ'}
                     </td>
                     <td className="px-[16px] py-[12px]">
                       {row.agencyId ? (() => {
@@ -208,12 +207,27 @@ export function AdminAccountsTable() {
                       {formatDate(row.lastLoginAt)}
                     </td>
                     <td className="px-[16px] py-[12px] text-center">
-                      <button
-                        onClick={() => handleEdit(row)}
-                        className="text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-all"
-                      >
-                        แก้ไข
-                      </button>
+                      {row.roles.includes('super_admin') ? (
+                        <span className="text-[12px] font-medium text-placeholder">Protected</span>
+                      ) : (
+                        row.hasTangRatIdentity &&
+                        !row.roles.includes('officer') &&
+                        !row.roles.includes('admin') ? (
+                          <button
+                            onClick={() => handleEdit(row, true)}
+                            className="text-[13px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer transition-all"
+                          >
+                            แต่งตั้งเจ้าหน้าที่
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleEdit(row)}
+                            className="text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-all"
+                          >
+                            กำหนดสิทธิ์
+                          </button>
+                        )
+                      )}
                     </td>
                   </tr>
                 ))
@@ -225,12 +239,11 @@ export function AdminAccountsTable() {
 
       <div className="bg-[#e6f4ff]/40 border border-[#91caff]/40 rounded-[12px] p-[16px] text-left">
         <h4 className="text-[13px] font-bold text-[#0958d9] mb-1.5">
-          ข้อมูลบัญชี Admin (ข้อมูลจริงจากระบบ)
+          การกำหนดสิทธิ์ผู้ใช้ (ข้อมูลจริงจากระบบ)
         </h4>
         <ul className="list-disc pl-5 text-[12px] text-[#4a5565] space-y-1">
-          <li><strong>สิทธิ์ Super Admin:</strong> สามารถสร้าง/แก้ไขบัญชี Admin ของทุกหน่วยงานได้</li>
-          <li><strong>หน่วยงาน:</strong> หน่วยงานที่รองรับบริหารจัดการได้ที่ Master Data → Agencies (1 บัญชีต่อ 1 หน่วยงาน)</li>
-          <li><strong>สถานะ:</strong> สามารถระงับบัญชีผ่าน PATCH /users/:id/suspend</li>
+          <li><strong>ผู้ใช้ทางรัฐ:</strong> เลือก “แต่งตั้งเจ้าหน้าที่” แล้วกำหนดหน่วยงานในครั้งเดียว</li>
+          <li><strong>ขอบเขต:</strong> สิทธิ์เจ้าหน้าที่ต้องมีหน่วยงานเสมอ และบัญชี Super Admin ถูกป้องกันจากการแก้ไขในหน้านี้</li>
         </ul>
       </div>
 
@@ -240,6 +253,28 @@ export function AdminAccountsTable() {
         user={editingUser}
         onSave={handleSave}
         isSaving={createUser.isPending}
+      />
+      <UserAccessModal
+        open={!!accessUser}
+        user={accessUser}
+        officerShortcut={officerShortcut}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAccessUser(null);
+            setOfficerShortcut(false);
+          }
+        }}
+        isSaving={updateAccess.isPending}
+        onSave={(data) => {
+          updateAccess.mutate(data, {
+            onSuccess: () => {
+              toast.success('บันทึกสิทธิ์ผู้ใช้แล้ว');
+              setAccessUser(null);
+              setOfficerShortcut(false);
+            },
+            onError: (error: Error) => toast.error(error.message),
+          });
+        }}
       />
     </div>
   );

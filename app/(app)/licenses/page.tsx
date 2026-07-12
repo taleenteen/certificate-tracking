@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
@@ -22,6 +23,7 @@ dayjs.extend(buddhistEra);
 dayjs.locale("th");
 
 export default function MyLicensesPage() {
+  const router = useRouter();
   const activeJuristicId = useAuthStore((s) => s.activeJuristicId);
   const [activeTab, setActiveTab] = useState<"personal" | "juristic">(
     activeJuristicId ? "juristic" : "personal",
@@ -40,6 +42,14 @@ export default function MyLicensesPage() {
   const switchContext = useSwitchContext();
   const { mutate: seedDemoData, isPending: isSeedingDemoData } =
     useDevSeedDemoData();
+
+  const handleSeedDemoData = useCallback(() => {
+    seedDemoData(undefined, {
+      onSuccess: (data) => {
+        router.push(`/e-map?selected=${data.personal.businessId}`);
+      },
+    });
+  }, [router, seedDemoData]);
 
   const formattedPersonalLicenses = useMemo<LicenseCardItem[]>(() => {
     return personalLicenses.map((lib: LicenseResponse) => {
@@ -67,6 +77,7 @@ export default function MyLicensesPage() {
         expiresAt: lib.expiresAt
           ? dayjs(lib.expiresAt).format("D ม.ค. BBBB")
           : "ไม่มีวันหมดอายุ",
+        previewUrl: lib.previewUrl,
         detailsHref: `/licenses/${lib.id}`,
       };
     });
@@ -88,14 +99,14 @@ export default function MyLicensesPage() {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => seedDemoData()}
+        onClick={handleSeedDemoData}
         disabled={isSeedingDemoData}
         className="text-xs border-dashed border-slate-300 text-slate-500 hover:text-slate-700 bg-white"
       >
-        {isSeedingDemoData ? "กำลังสร้าง..." : "สร้างข้อมูลตัวอย่างครบชุด"}
+        {isSeedingDemoData ? "กำลังสร้าง..." : "สร้างข้อมูลตัวอย่างของฉัน"}
       </Button>
     );
-  }, [seedDemoData, isSeedingDemoData]);
+  }, [handleSeedDemoData, isSeedingDemoData]);
 
   if (isLoading && !switchContext.isPending) {
     return (

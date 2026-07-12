@@ -6,7 +6,7 @@ import {
   BusinessesPageDetailView,
   type BusinessDetailData,
 } from "@/components/app/businesses/business-detail-page";
-import { useBusiness, useJuristicBusiness, type JuristicBusinessDetailResponse } from "@/hooks/useBusinesses";
+import { useBusiness } from "@/hooks/useBusinesses";
 import { MOCK_BUSINESSES } from "@/constants/mock-businesses";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
@@ -35,8 +35,7 @@ function BusinessDetailContent({ id }: { id: string }) {
   const isMock = id.startsWith("mock-est-");
   const mockItem = isMock ? MOCK_BUSINESSES.find((m) => m.id === id) : null;
 
-  const juristicQuery = useJuristicBusiness(isMock ? "" : id);
-  const publicQuery = useBusiness(isMock || juristicQuery.data ? "" : id);
+  const publicQuery = useBusiness(isMock ? "" : id);
 
   if (isMock && mockItem) {
     const detail: BusinessDetailData = {
@@ -55,19 +54,16 @@ function BusinessDetailContent({ id }: { id: string }) {
           status: "active",
           issuedAt: "1 ม.ค. 2568",
           expiresAt: "31 ธ.ค. 2570",
+          agencyId: null,
         },
       ],
     };
     return <BusinessesPageDetailView data={detail} />;
   }
 
-  const isLoading = !isMock && (
-    juristicQuery.isLoading ||
-    (juristicQuery.isError && publicQuery.isLoading)
-  );
-
-  const isError = !isMock && juristicQuery.isError && publicQuery.isError;
-  const activeData = juristicQuery.data || publicQuery.data;
+  const isLoading = !isMock && publicQuery.isLoading;
+  const isError = !isMock && publicQuery.isError;
+  const activeData = publicQuery.data;
 
   if (isLoading) {
     return (
@@ -92,10 +88,7 @@ function BusinessDetailContent({ id }: { id: string }) {
     );
   }
 
-  const isJuristic = "juristic" in activeData;
-  const companyName = isJuristic
-    ? (activeData as JuristicBusinessDetailResponse).juristic.nameTh
-    : activeData.nameTh;
+  const companyName = activeData.nameTh;
   const businessName = activeData.nameTh;
   const phoneNumber = activeData.phone || "-";
   const email = activeData.email || "-";
@@ -104,8 +97,7 @@ function BusinessDetailContent({ id }: { id: string }) {
     companyName,
     businessName,
     address: activeData.address,
-    latitude:
-      activeData.latitude === null ? null : Number(activeData.latitude),
+    latitude: activeData.latitude === null ? null : Number(activeData.latitude),
     longitude:
       activeData.longitude === null ? null : Number(activeData.longitude),
     phoneNumber,
@@ -119,6 +111,8 @@ function BusinessDetailContent({ id }: { id: string }) {
       expiresAt: lic.expiresAt
         ? dayjs(lic.expiresAt).format("D ม.ค. BBBB")
         : "ไม่มีวันหมดอายุ",
+      agencyId: lic.licenseType.agencyId,
+      previewUrl: lic.previewUrl,
     })),
   };
 

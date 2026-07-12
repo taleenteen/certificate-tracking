@@ -1,10 +1,9 @@
 'use client';
 
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { getResumeSessionPath } from "@/lib/auth-routing";
 import { useAuthStore } from "@/stores/auth";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import heroRight from "@/assets/hero/hero-right.png";
@@ -16,7 +15,6 @@ const FEATURES = [
 ];
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const hydrated = useAuthStore((s) => s.hydrated);
@@ -102,53 +100,18 @@ export default function LoginPage() {
       {/* ── Right: Form Panel ── */}
       <main className="flex flex-col items-center justify-center bg-[#f7f8fb] px-5 py-10 sm:px-8">
         <div className="w-full max-w-[400px] space-y-7">
-          {/* Mode tabs (only for non-admin flows) */}
           <div className="space-y-6">
             <div className="text-center space-y-1">
-              <h1 className="text-2xl font-bold text-slate-900">
-                {mode === 'login' ? 'เข้าสู่ระบบ' : 'สร้างบัญชีใหม่'}
-              </h1>
+              <h1 className="text-2xl font-bold text-slate-900">เข้าสู่ระบบ</h1>
               <p className="text-sm text-slate-500">
-                {mode === 'login'
-                  ? 'ยินดีต้อนรับกลับสู่ระบบ'
-                  : 'กรอกข้อมูลเพื่อเริ่มใช้งานระบบ'}
+                ยืนยันตัวตนเพื่อเข้าใช้งานระบบ
               </p>
-            </div>
-
-            {/* Tab switcher */}
-            <div className="flex rounded-xl bg-slate-200/70 p-1 gap-1">
-              <button
-                type="button"
-                onClick={() => setMode('login')}
-                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
-                  mode === 'login'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                เข้าสู่ระบบ
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('register')}
-                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
-                  mode === 'register'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                สมัครสมาชิก
-              </button>
             </div>
           </div>
 
           {/* Form card */}
           <div className="rounded-2xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-slate-200/80 overflow-hidden">
-            {mode === 'login' ? (
-              <LoginForm onToggle={() => setMode('register')} />
-            ) : (
-              <RegisterForm onToggle={() => setMode('login')} />
-            )}
+            <LoginForm />
           </div>
 
           <p className="text-center text-[11px] text-slate-400">

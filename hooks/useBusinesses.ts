@@ -7,6 +7,7 @@ export interface BusinessLicense {
   status: string;
   issuedAt: string;
   expiresAt: string | null;
+  previewUrl?: string | null;
   licenseType: { id: string; code: string; nameTh: string; nameEn: string; agencyId: string };
 }
 

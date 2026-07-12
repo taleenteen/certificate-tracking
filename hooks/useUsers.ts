@@ -12,6 +12,9 @@ export interface SystemUserSummary {
   isActive: boolean;
   mustChangePassword: boolean;
   lastLoginAt: string | null;
+  primaryChannel: 'domain' | 'tang_rat';
+  hasTangRatIdentity: boolean;
+  citizenIdVerified: boolean;
   citizenIdLast4: string | null;
   userZones: Array<{ zone: { id: string; nameTh: string; code: string } }>;
 }
@@ -62,6 +65,15 @@ export function useUpdateUserAgency(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (agencyId: string) => http.patch<SystemUserSummary>(`users/${id}/agency`, { agencyId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [QUERY_KEY] }),
+  });
+}
+
+export function useUpdateUserAccess(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: { roles: string[]; agencyId?: string }) =>
+      http.patch<SystemUserSummary>(`users/${id}/access`, dto),
     onSuccess: () => qc.invalidateQueries({ queryKey: [QUERY_KEY] }),
   });
 }

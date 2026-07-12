@@ -17,6 +17,8 @@ export interface GroupedBusinessItem {
   id: string;
   nameTh: string;
   province: string;
+  registrationId?: string;
+  businessType?: string;
   licenseCount: number;
   licenses: {
     id: string;
@@ -24,6 +26,7 @@ export interface GroupedBusinessItem {
     status: StatusBadgeStatus;
     issuedAt: string;
     expiresAt: string | null;
+    previewUrl?: string | null;
     licenseType: {
       id: string;
       code: string;
@@ -72,6 +75,8 @@ function LicenseSearchContent() {
       id: bus.id,
       nameTh: bus.nameTh,
       province: bus.province,
+      registrationId: bus.juristic?.registrationId,
+      businessType: bus.licenses[0]?.licenseType.nameTh || "โรงงาน",
       licenseCount: bus.licenseCount,
       licenses: bus.licenses.map((lib) => ({
         id: lib.id,
@@ -81,6 +86,7 @@ function LicenseSearchContent() {
         expiresAt: lib.expiresAt
           ? dayjs(lib.expiresAt).format("D MMM BBBB")
           : "ไม่มีวันหมดอายุ",
+        previewUrl: lib.previewUrl,
         licenseType: {
           id: lib.licenseType.id,
           code: lib.licenseType.code,

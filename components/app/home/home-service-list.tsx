@@ -8,7 +8,6 @@ import eMapIcon from "@/assets/hero/e-map-icon.svg";
 import myLicenseIcon from "@/assets/hero/my-license-icon.svg";
 import verifyOfficerIcon from "@/assets/hero/verify-officer-icon.svg";
 import officerCardIcon from "@/assets/hero/officer-card-icon.svg";
-import officerReportIcon from "@/assets/hero/officer-report-icon.svg";
 
 interface HomeServiceListProps {
   role?: string;
@@ -81,31 +80,6 @@ export function HomeServiceList({
                   </h3>
                   <p className="text-[12px] text-slate-500 font-semibold mt-0.5">
                     ยืนยันตัวตนการเป็นเจ้าหน้าที่
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-
-            {/* รายการตรวจสอบ */}
-            <Link
-              href="/reports"
-              className="flex items-center justify-between p-4 bg-white border border-slate-100/60 rounded-lg shadow-[0_8px_30px_rgba(15,23,42,0.03)] hover:bg-slate-50 transition-colors group cursor-pointer text-left"
-            >
-              <div className="flex items-center gap-4">
-                <Image
-                  src={officerReportIcon}
-                  alt="รายการตรวจสอบ"
-                  width={44}
-                  height={44}
-                  className="shrink-0 object-contain"
-                />
-                <div>
-                  <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-[#145b57] transition-colors leading-snug">
-                    รายการตรวจสอบ
-                  </h3>
-                  <p className="text-[12px] text-slate-500 font-semibold mt-0.5">
-                    ดูและส่งออก ผลการตรวจสอบ
                   </p>
                 </div>
               </div>

@@ -4,16 +4,20 @@ import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 
-export function BackOfficeAuthGuard({ children }: { children: ReactNode }) {
+export function BackOfficeAuthGuard({ children, requireAdmin = false }: { children: ReactNode; requireAdmin?: boolean }) {
   const user = useAuthStore((s) => s.user);
   const hydrated = useAuthStore((s) => s.hydrated);
   const router = useRouter();
 
   useEffect(() => {
     if (hydrated && !user) {
-      router.replace('/auth/login');
+      router.replace(requireAdmin ? '/portal/access' : '/auth/login');
+      return;
     }
-  }, [hydrated, user, router]);
+    if (hydrated && user && requireAdmin && !user.roles.some((role) => role === 'admin' || role === 'super_admin')) {
+      router.replace('/home');
+    }
+  }, [hydrated, user, requireAdmin, router]);
 
   if (!hydrated) {
     return (
@@ -23,7 +27,7 @@ export function BackOfficeAuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user) return null; // redirect in flight
+  if (!user || (requireAdmin && !user.roles.some((role) => role === 'admin' || role === 'super_admin'))) return null;
 
   return <>{children}</>;
 }

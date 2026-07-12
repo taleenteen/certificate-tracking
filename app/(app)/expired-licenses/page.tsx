@@ -29,6 +29,7 @@ export default function ExpiredLicensesPage() {
         status: lib.status === "EXPIRED" ? "expired" : "suspended",
         issuedAt: dayjs(lib.issuedAt).format("D MMM BBBB"),
         expiresAt: lib.expiresAt ? dayjs(lib.expiresAt).format("D MMM BBBB") : "ไม่มีวันหมดอายุ",
+        previewUrl: lib.previewUrl,
         previewType: "document" as const,
         detailsHref: `/licenses/${lib.id}`,
       }));

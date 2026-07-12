@@ -163,57 +163,58 @@ export function BusinessesPageView() {
           <span className="text-sm text-slate-500">รายการ</span>
         </div>
 
-        {isLoading || isDebouncing
-          ? Array.from({ length: 3 }).map((_, index) => (
-              <Card
-                key={`loading-${index}`}
-                className="rounded-3xl border-0 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
-              >
-                <CardContent className="space-y-4 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <Skeleton className="h-12 w-12 rounded-2xl" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24" />
-                      </div>
+        {isLoading || isDebouncing ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <Card
+              key={`loading-${index}`}
+              className="rounded-3xl border-0 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+            >
+              <CardContent className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="h-12 w-12 rounded-2xl" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
                     </div>
-                    <Skeleton className="h-6 w-20 rounded-full" />
                   </div>
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-2/3" />
-                  <Skeleton className="h-3 w-28" />
-                </CardContent>
-              </Card>
-            ))
-          : filteredResults.length === 0
-            ? (
-              <div className="text-center py-12">
-                <p className="text-slate-500 text-sm">ไม่พบสถานประกอบการที่ค้นหา</p>
-              </div>
-            )
-            : filteredResults.map((item) => (
-                <InspectionTaskCard
-                  key={item.id}
-                  companyName={item.nameTh}
-                  businessType={item.businessType}
-                  certificateNumber={item.licenseCount}
-                  detailsHref={`/businesses/${item.id}?from=search`}
-                  onSubmitClick={() => {}}
-                  secondaryAction={{
-                    label: "นำทาง",
-                    href: item.latitude && item.longitude
-                      ? `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`
-                      : "/e-map",
-                    variant: "secondary",
-                  }}
-                  primaryAction={{
-                    label: "ดูรายละเอียด",
-                    href: `/businesses/${item.id}?from=search`,
-                    variant: "primary",
-                  }}
-                />
-              ))}
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-3 w-28" />
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredResults.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-slate-500 text-sm">ไม่พบสถานประกอบการที่ค้นหา</p>
+          </div>
+        ) : (
+          filteredResults.map((item) => (
+            <InspectionTaskCard
+              key={item.id}
+              companyName={item.nameTh}
+              businessType={item.businessType}
+              certificateNumber={item.licenseCount}
+              detailsHref={`/businesses/${item.id}?from=search`}
+              onSubmitClick={() => {}}
+              secondaryAction={{
+                label: "นำทาง",
+                href:
+                  item.latitude && item.longitude
+                    ? `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`
+                    : "/e-map",
+                variant: "secondary",
+              }}
+              primaryAction={{
+                label: "ดูสถานประกอบการ",
+                href: `/businesses/${item.id}?from=search`,
+                variant: "primary",
+              }}
+            />
+          ))
+        )}
       </div>
     </main>
   );

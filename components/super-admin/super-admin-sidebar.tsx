@@ -92,7 +92,7 @@ export function SuperAdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClo
               />
               <SidebarItem
                 icon={UserCog}
-                label="จัดการบัญชี Admin"
+                label="จัดการผู้ใช้และสิทธิ์"
                 href="/super-admin/admin-accounts"
                 active={pathname === '/super-admin/admin-accounts'}
               />

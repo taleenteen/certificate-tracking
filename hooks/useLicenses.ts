@@ -11,6 +11,7 @@ export interface LicenseResponse {
   issuedAt: string;
   expiresAt: string | null;
   status: LicenseStatus;
+  previewUrl?: string | null;
   licenseType: {
     id: string;
     code: string;
@@ -99,6 +100,7 @@ export interface CitizenLicensesSearchGroupedResponse {
           nameTh: string;
         };
       };
+      previewUrl?: string | null;
     }[];
   }[];
   meta: {
@@ -160,6 +162,7 @@ export interface DevSeedDemoDataResponse {
     juristicId: string;
     businessIds: string[];
     licenseIds: string[];
+    corporateLicenseIds: string[];
   };
   messageTh: string;
 }
@@ -209,6 +212,7 @@ export interface JuristicLicenseGroupResponse {
     issuedAt: string;
     expiresAt: string | null;
     status: LicenseStatus;
+    previewUrl?: string | null;
     licenseType: {
       id: string;
       code: string;
@@ -228,6 +232,7 @@ export interface JuristicLicenseGroupResponse {
       issuedAt: string;
       expiresAt: string | null;
       status: LicenseStatus;
+      previewUrl?: string | null;
       licenseType: {
         id: string;
         code: string;

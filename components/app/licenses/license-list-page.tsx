@@ -23,6 +23,7 @@ import {
 import type { JuristicLicenseGroupResponse } from "@/hooks/useLicenses";
 import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
+import { motion, AnimatePresence } from "framer-motion";
 
 dayjs.extend(buddhistEra);
 dayjs.locale("th");
@@ -94,6 +95,7 @@ export function LicenseListPageView({
       status: uiStatus,
       issuedAt: dayjs(lib.issuedAt).format("D ม.ค. BBBB"),
       expiresAt: lib.expiresAt ? dayjs(lib.expiresAt).format("D ม.ค. BBBB") : "ไม่มีวันหมดอายุ",
+      previewUrl: lib.previewUrl,
       detailsHref: `/licenses/${lib.id}?from=my-licenses`,
     };
   };
@@ -342,47 +344,67 @@ export function LicenseListPageView({
                                   </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-3">
                                   <Link
                                     href={`/businesses/${business.id}?from=my-licenses`}
-                                    className="flex h-10 items-center justify-center rounded-xl bg-[#145b57] text-[12px] font-bold text-white hover:bg-[#0c403d] transition-colors"
+                                    className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#0A4D35] hover:bg-[#083E2A] text-[14px] font-bold text-white transition-colors shadow-sm"
                                   >
                                     ดูรายละเอียด
                                   </Link>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleBusiness(business.id)}
-                                    className="flex h-10 items-center justify-center gap-1 text-[12px] font-bold text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl transition-all"
-                                  >
-                                    <span>{expandedBusinesses[business.id] ? "ซ่อนใบอนุญาต" : `${business.filteredLicenses.length} ใบอนุญาต`}</span>
-                                    <ChevronDown
-                                      className="h-4 w-4 text-slate-400 transition-transform duration-200"
-                                      style={{ transform: expandedBusinesses[business.id] ? "rotate(180deg)" : "none" }}
-                                    />
-                                  </button>
+                                  <div className="flex justify-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleBusiness(business.id)}
+                                      className="flex items-center justify-center gap-1.5 py-1 text-[13px] font-bold text-slate-800 hover:text-slate-900 cursor-pointer bg-transparent border-0"
+                                    >
+                                      <span>
+                                        {expandedBusinesses[business.id]
+                                          ? "ซ่อนรายการ"
+                                          : "แสดงรายการ"}
+                                      </span>
+                                      <ChevronDown
+                                        className="h-4 w-4 text-slate-600 transition-transform duration-200"
+                                        style={{
+                                          transform: expandedBusinesses[business.id]
+                                            ? "rotate(180deg)"
+                                            : "none",
+                                        }}
+                                      />
+                                    </button>
+                                  </div>
                                 </div>
 
                                 {/* Nested licenses list under the business */}
-                                {expandedBusinesses[business.id] && (
-                                  <div className="space-y-4 pt-4 border-t border-slate-200/50 animate-in fade-in duration-150">
-                                    <h5 className="text-[13px] font-bold text-[#145b57]">
-                                      ใบอนุญาต ({business.filteredLicenses.length})
-                                    </h5>
-                                    <div className="space-y-4">
-                                      {business.filteredLicenses.length > 0 ? (
-                                        business.filteredLicenses.map((lib) => {
-                                          const cardItem = formatLicenseItem(lib, business.nameTh);
-                                          return <LicenseCertificateCard key={lib.id} item={cardItem} />;
-                                        })
-                                      ) : (
-                                        <div className="p-3.5 text-center text-xs text-slate-400 font-semibold bg-white rounded-xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.01)]">
-                                          ไม่มีข้อมูลใบอนุญาตภายใต้สถานประกอบการนี้
+                                <AnimatePresence initial={false}>
+                                  {expandedBusinesses[business.id] && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: "auto", opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="space-y-4 pt-4 border-t border-slate-200/50 mt-3">
+                                        <h5 className="text-[13px] font-bold text-[#145b57]">
+                                          ใบอนุญาต ({business.filteredLicenses.length})
+                                        </h5>
+                                        <div className="space-y-4">
+                                          {business.filteredLicenses.length > 0 ? (
+                                            business.filteredLicenses.map((lib) => {
+                                              const cardItem = formatLicenseItem(lib, business.nameTh);
+                                              return <LicenseCertificateCard key={lib.id} item={cardItem} />;
+                                            })
+                                          ) : (
+                                            <div className="p-3.5 text-center text-xs text-slate-400 font-semibold bg-white rounded-xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.01)]">
+                                              ไม่มีข้อมูลใบอนุญาตภายใต้สถานประกอบการนี้
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
                             ))
                           ) : (

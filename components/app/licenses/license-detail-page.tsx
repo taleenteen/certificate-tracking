@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 
 import type { LicenseDetailData } from "./license-data";
-import { LicensePreview } from "./license-preview";
+import { LicensePreview, STATUS_STAMP_MAP, STATUS_LABELS } from "./license-preview";
+import { CertificatePreview } from "./certificate-preview";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -249,22 +250,44 @@ export function LicenseDetailPageView({
             <div className="h-px bg-slate-100 my-4" />
 
             {/* Scanned certificate container */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-1.5">
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-1.5 relative">
               <button
                 type="button"
-                onClick={() => data.previewImage && setIsPreviewOpen(true)}
-                disabled={!data.previewImage}
+                onClick={() => (data.previewImage || data.previewUrl) && setIsPreviewOpen(true)}
+                disabled={!data.previewImage && !data.previewUrl}
                 className="block w-full cursor-zoom-in rounded-[inherit] text-left disabled:cursor-default"
                 aria-label="เปิดดูรูปใบอนุญาตขนาดเต็ม"
               >
-                <LicensePreview
-                  type={data.previewType}
-                  size="detail"
-                  previewImage={data.previewImage}
-                  status={data.status}
-                  className="border-0 shadow-none p-1 min-h-[300px]"
-                />
+                {data.previewUrl ? (
+                  <div className="relative aspect-[3/4] max-h-[400px] w-full max-w-[280px] mx-auto shadow-md rounded-md overflow-hidden bg-white p-1 my-2">
+                    <CertificatePreview
+                      previewUrl={data.previewUrl}
+                      size="detail"
+                    />
+                  </div>
+                ) : (
+                  <LicensePreview
+                    type={data.previewType}
+                    size="detail"
+                    previewImage={data.previewImage}
+                    status={data.status}
+                    className="border-0 shadow-none p-1 min-h-[300px]"
+                  />
+                )}
               </button>
+
+              {/* Status Stamp Overlay for PDF preview */}
+              {data.previewUrl && data.status && (
+                <div className="absolute right-4 bottom-4 pointer-events-none z-10 w-[95px] h-[95px]">
+                  <Image
+                    src={STATUS_STAMP_MAP[data.status]}
+                    alt={STATUS_LABELS[data.status] || "สถานะ"}
+                    width={95}
+                    height={95}
+                    className="object-contain rotate-[-12deg]"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -275,7 +298,27 @@ export function LicenseDetailPageView({
             <DialogDescription className="sr-only">
               แสดงรูปใบอนุญาตขนาดเต็ม
             </DialogDescription>
-            {data.previewImage ? (
+            {data.previewUrl ? (
+              <div className="max-h-[86vh] overflow-auto rounded-2xl bg-white p-2 flex items-center justify-center relative">
+                <div className="relative w-full max-w-[500px] aspect-[3/4]">
+                  <CertificatePreview
+                    previewUrl={data.previewUrl}
+                    size="detail"
+                  />
+                  {data.status && (
+                    <div className="absolute right-4 bottom-4 pointer-events-none z-10 w-[120px] h-[120px]">
+                      <Image
+                        src={STATUS_STAMP_MAP[data.status]}
+                        alt={STATUS_LABELS[data.status] || "สถานะ"}
+                        width={120}
+                        height={120}
+                        className="object-contain rotate-[-12deg]"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : data.previewImage ? (
               <div className="max-h-[86vh] overflow-hidden rounded-2xl bg-white p-2">
                 <Image
                   src={data.previewImage}

@@ -18,6 +18,7 @@ import { useBusiness } from "@/hooks/useBusinesses";
 import {
   useBusinessesMap,
   licenseStatusToColor,
+  type BusinessMapFeature,
 } from "@/hooks/useBusinessesMap";
 
 dayjs.extend(buddhistEra);
@@ -31,6 +32,7 @@ type BusinessMapPin = {
   primaryLicenseLabel: string;
   statusLabel: string;
   address: string;
+  province: string;
   longitude: number;
   latitude: number;
   color: string;
@@ -38,6 +40,7 @@ type BusinessMapPin = {
   detailsHref: string;
   licenseCount: number;
   ownerLabel: string;
+  category: string;
   statusCounts: {
     active: number;
     suspended: number;
@@ -47,38 +50,125 @@ type BusinessMapPin = {
   };
 };
 
+/** Map soft categories (navbar filter) onto license type code/name. */
+function getCategoryFromPrimaryLicense(
+  primary: BusinessMapFeature["properties"]["primaryLicense"],
+): string {
+  if (!primary) return "";
+  const code = primary.typeCode.toLowerCase();
+  const name = primary.typeNameTh.toLowerCase();
+  if (name.includes("โรงแรม") || code.includes("hotel")) return "hotel";
+  if (
+    name.includes("โรงพยาบาล") ||
+    name.includes("แพทย์") ||
+    name.includes("รักษาพยาบาล") ||
+    code.includes("hospital") ||
+    code.includes("medical")
+  )
+    return "hospital";
+  if (
+    name.includes("โรงงาน") ||
+    name.includes("การผลิต") ||
+    code.includes("factory") ||
+    code.includes("diw") ||
+    code.includes("ร.ง.")
+  )
+    return "factory";
+  if (
+    name.includes("โรงเรียน") ||
+    name.includes("สถานศึกษา") ||
+    name.includes("ศึกษา") ||
+    code.includes("school") ||
+    code.includes("education") ||
+    code.includes("university")
+  )
+    return "education";
+  return "";
+}
+
+function featureToPin(feature: BusinessMapFeature): BusinessMapPin {
+  const primaryLicense = feature.properties.primaryLicense;
+  return {
+    id: feature.properties.id,
+    title: feature.properties.nameTh,
+    primaryLicenseLabel: primaryLicense
+      ? `${primaryLicense.licenseNo} · ${primaryLicense.typeNameTh}`
+      : "ยังไม่มีใบอนุญาต",
+    statusLabel: getStatusLabel(feature.properties.licenseStatus),
+    address: feature.properties.address,
+    province: feature.properties.province,
+    longitude: feature.geometry.coordinates[0],
+    latitude: feature.geometry.coordinates[1],
+    color: licenseStatusToColor(feature.properties.licenseStatus),
+    iconKey: "hotel" as keyof typeof PIN_ICON_MAP,
+    detailsHref: `/businesses/${feature.properties.id}?from=e-map`,
+    licenseCount: feature.properties.licenseCount,
+    ownerLabel: `${feature.properties.ownership.labelTh}: ${feature.properties.ownership.displayNameTh}`,
+    category: getCategoryFromPrimaryLicense(primaryLicense),
+    statusCounts: feature.properties.statusCounts,
+  };
+}
+
 export function EMapPageView() {
-  const { data: mapData, isLoading: mapLoading } = useBusinessesMap();
   const searchParams = useSearchParams();
+  const rawQuery = searchParams.get("q")?.trim() ?? "";
+  const regionFilter = searchParams.get("region")?.trim() ?? "";
+  const categoriesParam = searchParams.get("categories") ?? "";
+  const selectedBusinessId = searchParams.get("selected");
+
+  const categoriesList = useMemo(
+    () => categoriesParam.split(",").map((c) => c.trim()).filter(Boolean),
+    [categoriesParam],
+  );
+
+  const [debouncedQuery, setDebouncedQuery] = useState(rawQuery);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(rawQuery), 400);
+    return () => window.clearTimeout(timer);
+  }, [rawQuery]);
+
+  // Server-side: text search + province. Category stays client-side
+  // (UI categories are soft labels, not exact typeCode).
+  const {
+    data: mapData,
+    isLoading: mapLoading,
+    isFetching: mapFetching,
+  } = useBusinessesMap({
+    q: debouncedQuery || undefined,
+    province: regionFilter || undefined,
+  });
+
   const mapRef = useRef<MapRef>(null);
   const closeTimeoutRef = useRef<number | null>(null);
+  const lastAutoSelectKey = useRef<string>("");
   const [selectedPin, setSelectedPin] = useState<BusinessMapPin | null>(null);
   const [isInfoCardOpen, setIsInfoCardOpen] = useState(false);
 
   const pins = useMemo<BusinessMapPin[]>(() => {
     if (!mapData?.features) return [];
-    return mapData.features.map((feature) => {
-      const primaryLicense = feature.properties.primaryLicense;
+    const mapped = mapData.features.map(featureToPin);
 
-      return {
-        id: feature.properties.id,
-        title: feature.properties.nameTh,
-        primaryLicenseLabel: primaryLicense
-          ? `${primaryLicense.licenseNo} · ${primaryLicense.typeNameTh}`
-          : "ยังไม่มีใบอนุญาต",
-        statusLabel: getStatusLabel(feature.properties.licenseStatus),
-        address: feature.properties.address,
-        longitude: feature.geometry.coordinates[0],
-        latitude: feature.geometry.coordinates[1],
-        color: licenseStatusToColor(feature.properties.licenseStatus),
-        iconKey: "hotel" as keyof typeof PIN_ICON_MAP,
-        detailsHref: `/businesses/${feature.properties.id}?from=e-map`,
-        licenseCount: feature.properties.licenseCount,
-        ownerLabel: `${feature.properties.ownership.labelTh}: ${feature.properties.ownership.displayNameTh}`,
-        statusCounts: feature.properties.statusCounts,
-      };
-    });
-  }, [mapData]);
+    if (categoriesList.length === 0) return mapped;
+
+    return mapped.filter(
+      (pin) => pin.category && categoriesList.includes(pin.category),
+    );
+  }, [mapData, categoriesList]);
+
+  // Drop selection if the pin no longer matches filters
+  useEffect(() => {
+    if (!selectedPin) return;
+    if (!pins.some((pin) => pin.id === selectedPin.id)) {
+      setIsInfoCardOpen(false);
+      setSelectedPin(null);
+    }
+  }, [pins, selectedPin]);
+
+  const isDebouncing = Boolean(rawQuery) && rawQuery !== debouncedQuery;
+  const isBusy = mapLoading || mapFetching || isDebouncing;
+  const hasActiveSearch =
+    Boolean(rawQuery) || Boolean(regionFilter) || categoriesList.length > 0;
 
   useEffect(() => {
     return () => {
@@ -97,21 +187,82 @@ export function EMapPageView() {
     setIsInfoCardOpen(true);
     mapRef.current?.flyTo({
       center: [pin.longitude, pin.latitude],
-      zoom: 11,
+      zoom: 14,
       duration: 900,
       offset: [0, 120],
     });
   };
 
+  // Deep-link: /e-map?selected=<businessId>
   useEffect(() => {
-    const selectedBusinessId = searchParams.get("selected");
     if (!selectedBusinessId || pins.length === 0) return;
-
     const selected = pins.find((pin) => pin.id === selectedBusinessId);
     if (selected) {
       handlePinSelect(selected);
     }
-  }, [pins, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when pins/selected id change
+  }, [pins, selectedBusinessId]);
+
+  // After search/filter settles: fly to first match (or selected)
+  useEffect(() => {
+    if (isBusy || pins.length === 0) return;
+
+    const key = [
+      debouncedQuery,
+      regionFilter,
+      categoriesList.join(","),
+      selectedBusinessId ?? "",
+      pins.map((p) => p.id).join(","),
+    ].join("|");
+
+    if (key === lastAutoSelectKey.current) return;
+    lastAutoSelectKey.current = key;
+
+    if (selectedBusinessId) {
+      const selected = pins.find((pin) => pin.id === selectedBusinessId);
+      if (selected) {
+        handlePinSelect(selected);
+        return;
+      }
+    }
+
+    if (!hasActiveSearch) return;
+
+    if (pins.length === 1) {
+      handlePinSelect(pins[0]);
+      return;
+    }
+
+    // Fit bounds around all matching pins
+    const lngs = pins.map((p) => p.longitude);
+    const lats = pins.map((p) => p.latitude);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+
+    if (minLng === maxLng && minLat === maxLat) {
+      handlePinSelect(pins[0]);
+      return;
+    }
+
+    mapRef.current?.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      { padding: 80, duration: 900, maxZoom: 14 },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isBusy,
+    pins,
+    debouncedQuery,
+    regionFilter,
+    categoriesList,
+    selectedBusinessId,
+    hasActiveSearch,
+  ]);
 
   const handleCloseInfoCard = () => {
     setIsInfoCardOpen(false);
@@ -141,11 +292,36 @@ export function EMapPageView() {
 
   return (
     <main className="relative h-full overflow-hidden bg-[#eef2f5]">
-      {mapLoading && (
+      {isBusy && (
         <div className="absolute inset-x-0 top-0 z-30 flex h-1 items-center justify-center">
           <div className="h-1 w-full animate-pulse bg-[#3D9A80]/40" />
         </div>
       )}
+
+      {hasActiveSearch && !isBusy && (
+        <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center px-4">
+          <div className="rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
+            พบ {pins.length} สถานที่
+            {debouncedQuery ? ` สำหรับ “${debouncedQuery}”` : ""}
+          </div>
+        </div>
+      )}
+
+      {hasActiveSearch && !isBusy && pins.length === 0 && (
+        <div className="pointer-events-none absolute inset-x-0 top-14 z-20 flex justify-center px-4">
+          <Card className="max-w-sm rounded-2xl border-slate-200 py-0 shadow-md">
+            <CardContent className="space-y-1 p-4 text-center">
+              <p className="text-sm font-semibold text-slate-900">
+                ไม่พบสถานประกอบการ
+              </p>
+              <p className="text-xs text-slate-500">
+                ลองเปลี่ยนคำค้นหาหรือตัวกรอง
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="absolute inset-0">
         <Map
           ref={mapRef}
@@ -269,12 +445,14 @@ function PinInfoSheet({
   const { data: business } = useBusiness(pin.id);
 
   // Fallback to primary license label if business data is not yet loaded
-  const primaryLicenseNo = business?.licenses?.[0]?.licenseNumber || pin.primaryLicenseLabel.split(" · ")[0] || "ไม่มีเลขใบอนุญาต";
+  const primaryLicenseNo =
+    business?.licenses?.[0]?.licenseNumber ||
+    pin.primaryLicenseLabel.split(" · ")[0] ||
+    "ไม่มีเลขใบอนุญาต";
 
   return (
     <Card className="pointer-events-auto mx-auto w-full max-w-[430px] rounded-none border-0 py-0 shadow-[0_-10px_35px_rgba(15,23,42,0.15)] rounded-t-[32px] overflow-hidden">
       <CardContent className="space-y-4 p-6 bg-white text-slate-800">
-        {/* Header Title & Close Button */}
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-xl font-bold text-slate-900 leading-snug">
             {pin.title}
@@ -290,22 +468,25 @@ function PinInfoSheet({
           </Button>
         </div>
 
-        {/* Separator line */}
         <div className="h-[1px] bg-slate-100" />
 
-        {/* Info Fields */}
         <div className="space-y-3.5">
           <div>
-            <p className="text-[12px] font-bold text-slate-400">เลขที่ใบอนุญาต</p>
-            <p className="text-[14px] font-semibold text-slate-700 mt-1 select-all">{primaryLicenseNo}</p>
+            <p className="text-[12px] font-bold text-slate-400">
+              เลขที่ใบอนุญาต
+            </p>
+            <p className="text-[14px] font-semibold text-slate-700 mt-1 select-all">
+              {primaryLicenseNo}
+            </p>
           </div>
           <div>
             <p className="text-[12px] font-bold text-slate-400">ที่ตั้ง</p>
-            <p className="text-[14px] font-semibold text-slate-700 mt-1 leading-relaxed">{pin.address}</p>
+            <p className="text-[14px] font-semibold text-slate-700 mt-1 leading-relaxed">
+              {pin.address}
+            </p>
           </div>
         </div>
 
-        {/* Licenses List Section Header */}
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2 text-slate-700">
             <FileText className="h-5 w-5 text-emerald-800" />
@@ -316,7 +497,6 @@ function PinInfoSheet({
           </span>
         </div>
 
-        {/* Licenses Scroll Container */}
         {!business ? (
           <div className="py-10 flex items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-[#114e4b]" />
@@ -324,7 +504,9 @@ function PinInfoSheet({
         ) : (
           <div className="space-y-2.5 max-h-[170px] overflow-y-auto pr-1">
             {business.licenses.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4 text-center">ไม่มีข้อมูลใบอนุญาต</p>
+              <p className="text-sm text-slate-400 py-4 text-center">
+                ไม่มีข้อมูลใบอนุญาต
+              </p>
             ) : (
               business.licenses.map((lic) => {
                 const expDate = lic.expiresAt
@@ -352,7 +534,6 @@ function PinInfoSheet({
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-2">
           <Button
             asChild
@@ -374,9 +555,7 @@ function PinInfoSheet({
             type="button"
             className="h-12 rounded-2xl bg-[#114e4b] hover:bg-[#0c403e] text-sm font-bold text-white border-0 transition-colors cursor-pointer"
           >
-            <Link href={pin.detailsHref}>
-              ดูรายละเอียด
-            </Link>
+            <Link href={pin.detailsHref}>ดูรายละเอียด</Link>
           </Button>
         </div>
       </CardContent>

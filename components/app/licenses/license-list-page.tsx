@@ -320,12 +320,26 @@ export function LicenseListPageView({
                       <button
                         type="button"
                         onClick={() => toggleCompany(group.juristicId)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2.5 text-[13px] font-bold text-slate-600 hover:text-slate-800 border border-slate-200/60 rounded-xl transition-all"
+                        className={`w-full flex items-center justify-center gap-1.5 py-2.5 text-[13px] font-bold rounded-xl transition-all border cursor-pointer ${
+                          expandedCompanies[group.juristicId]
+                            ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                            : "bg-[#e7f2f1] border-[#145b57]/20 text-[#145b57] hover:bg-[#145b57]/10"
+                        }`}
                       >
-                        <span>{expandedCompanies[group.juristicId] ? "ซ่อนรายละเอียด" : "รายละเอียด"}</span>
+                        <span>
+                          {expandedCompanies[group.juristicId]
+                            ? "ซ่อนรายชื่อสถานประกอบการ"
+                            : `ดูรายชื่อสถานประกอบการ (${group.filteredBusinesses.length} แห่ง)`}
+                        </span>
                         <ChevronDown
-                          className="h-4 w-4 text-slate-400 transition-transform duration-200"
-                          style={{ transform: expandedCompanies[group.juristicId] ? "rotate(180deg)" : "none" }}
+                          className={`h-4 w-4 transition-transform duration-200 ${
+                            expandedCompanies[group.juristicId] ? "text-slate-600" : "text-[#145b57]"
+                          }`}
+                          style={{
+                            transform: expandedCompanies[group.juristicId]
+                              ? "rotate(180deg)"
+                              : "none",
+                          }}
                         />
                       </button>
 

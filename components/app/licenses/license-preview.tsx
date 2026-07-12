@@ -10,14 +10,14 @@ import almostExpireIcon from "@/assets/icon/almost-expire.svg";
 import expiredIcon from "@/assets/icon/expired.svg";
 import suspendedIcon from "@/assets/icon/suspended.svg";
 
-const STATUS_STAMP_MAP = {
+export const STATUS_STAMP_MAP = {
   active: approvedIcon,
   expiringSoon: almostExpireIcon,
   expired: expiredIcon,
   suspended: suspendedIcon,
 };
 
-const STATUS_LABELS: Record<string, string> = {
+export const STATUS_LABELS: Record<string, string> = {
   active: "มีผลบังคับใช้",
   expiringSoon: "ใกล้หมดอายุ",
   expired: "หมดอายุ",

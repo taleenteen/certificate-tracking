@@ -29,12 +29,14 @@ import {
   type BusinessCategory,
 } from "@/components/app/businesses/business-filter-panel";
 import { QrScannerDialog } from "./qr-scanner-dialog";
+import { SearchSuggestions } from "./search-suggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/stores/auth";
 import { useLogout } from "@/hooks/useAuth";
 import { useAgencies } from "@/hooks/useAgencies";
 import { useIsStaff } from "@/hooks/useIsStaff";
+import type { BusinessSummary } from "@/hooks/useBusinesses";
 import { http } from "@/lib/http";
 import { cn } from "@/lib/utils";
 import mainLogo from "@/assets/icon/main-logo.svg";
@@ -157,6 +159,7 @@ export function AppNavbar() {
 
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [openPanel, setOpenPanel] = useState<
     "profile" | "notifications" | null
@@ -188,6 +191,8 @@ export function AppNavbar() {
   // Close dropdowns on route change
   useEffect(() => {
     setOpenPanel(null);
+    setIsSuggestionsOpen(false);
+    setIsFilterOpen(false);
   }, [pathname]);
 
   const value = useMemo(
@@ -200,7 +205,35 @@ export function AppNavbar() {
   const updateSearch = (nextValue: string) => {
     setDraftValues((current) => ({ ...current, [pathname]: nextValue }));
     if (!searchPlaceholder) return;
-    updateUrlParams({ q: nextValue.trim() || null });
+    // Clear pin selection when the user types a new query
+    updateUrlParams({ q: nextValue.trim() || null, selected: null });
+    if (nextValue.trim()) {
+      setIsSuggestionsOpen(true);
+      setIsFilterOpen(false);
+    } else {
+      setIsSuggestionsOpen(false);
+    }
+  };
+
+  const handleSuggestionSelect = (business: BusinessSummary) => {
+    setDraftValues((current) => ({
+      ...current,
+      [pathname]: business.nameTh,
+    }));
+
+    if (pathname === "/e-map") {
+      updateUrlParams({
+        q: business.nameTh,
+        selected: business.id,
+      });
+    } else if (pathname === "/businesses") {
+      updateUrlParams({ q: business.nameTh, selected: null });
+    } else {
+      updateUrlParams({ q: business.nameTh, selected: null });
+    }
+
+    setIsSuggestionsOpen(false);
+    setIsFilterOpen(false);
   };
 
   const handleMockScan = async (value: string) => {
@@ -272,43 +305,64 @@ export function AppNavbar() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
 
-              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm">
-                <Search className="h-4 w-4 text-slate-400" />
-                <Input
-                  className="h-auto border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
-                  placeholder={searchPlaceholder}
-                  value={value}
-                  onChange={(event) => updateSearch(event.target.value)}
-                />
-                {searchPageConfig?.action === "filter" ? (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    aria-label="Open filters"
-                    onClick={() => setIsFilterOpen((current) => !current)}
-                    className="relative h-9 w-9 rounded-xl text-[#114e4b] hover:bg-slate-100 hover:text-[#114e4b]"
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    {activeFilterCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#114e4b] px-1 text-[10px] font-semibold text-black">
-                        {activeFilterCount}
-                      </span>
-                    )}
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    aria-label="Scan QR code"
-                    onClick={() => setIsQrScannerOpen(true)}
-                    className="h-9 w-9 rounded-xl text-[#114e4b] hover:bg-slate-100 hover:text-[#114e4b]"
-                  >
-                    <ScanSearch className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+              <SearchSuggestions
+                className="min-w-0 flex-1"
+                value={value}
+                open={isSuggestionsOpen}
+                onOpenChange={setIsSuggestionsOpen}
+                onSelect={handleSuggestionSelect}
+              >
+                <div className="flex w-full min-w-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm">
+                  <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                  <Input
+                    className="h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] leading-5 shadow-none focus-visible:ring-0"
+                    placeholder={searchPlaceholder}
+                    value={value}
+                    autoComplete="off"
+                    role="combobox"
+                    aria-expanded={isSuggestionsOpen && value.trim().length > 0}
+                    aria-autocomplete="list"
+                    onChange={(event) => updateSearch(event.target.value)}
+                    onFocus={() => {
+                      if (value.trim()) {
+                        setIsSuggestionsOpen(true);
+                        setIsFilterOpen(false);
+                      }
+                    }}
+                  />
+                  {searchPageConfig?.action === "filter" ? (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Open filters"
+                      onClick={() => {
+                        setIsFilterOpen((current) => !current);
+                        setIsSuggestionsOpen(false);
+                      }}
+                      className="relative h-9 w-9 shrink-0 rounded-xl text-[#114e4b] hover:bg-slate-100 hover:text-[#114e4b]"
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                      {activeFilterCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#114e4b] px-1 text-[10px] font-semibold text-black">
+                          {activeFilterCount}
+                        </span>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Scan QR code"
+                      onClick={() => setIsQrScannerOpen(true)}
+                      className="h-9 w-9 shrink-0 rounded-xl text-[#114e4b] hover:bg-slate-100 hover:text-[#114e4b]"
+                    >
+                      <ScanSearch className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </SearchSuggestions>
             </div>
 
             {searchPageConfig?.action === "filter" && isFilterOpen && (
@@ -328,6 +382,7 @@ export function AppNavbar() {
                         region: filters.region ?? null,
                       });
                       setIsFilterOpen(false);
+                      setIsSuggestionsOpen(false);
                     }}
                     onReset={() => {
                       updateUrlParams({ categories: null, region: null });

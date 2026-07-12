@@ -57,11 +57,8 @@ export default function ProfilePage() {
   };
 
   const handleLogout = () => {
-    logout.mutate(undefined, {
-      onSuccess: () => {
-        router.push("/auth/login");
-      },
-    });
+    // useLogout always redirects to /auth/login (no DGA end-session redirect)
+    logout.mutate();
   };
 
   if (profileError) {

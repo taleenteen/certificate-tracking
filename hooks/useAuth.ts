@@ -200,12 +200,28 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: () => http.post<LogoutResponse>('auth/logout'),
-    onSuccess: (data) => {
+    onSuccess: () => {
+      // Always land on local login. Backend may still return DGA endSessionUrl
+      // for OIDC sessions, but we intentionally skip that external redirect.
       clear();
       queryClient.clear();
-      if (data.endSessionUrl) {
-        window.location.href = data.endSessionUrl;
-        return;
+      try {
+        sessionStorage.removeItem(DGA_STATE_KEY);
+        sessionStorage.removeItem(DGA_REDIRECT_URI_KEY);
+      } catch {
+        // ignore storage errors (SSR / private mode)
+      }
+      router.push('/auth/login');
+    },
+    onError: () => {
+      // Even if the revoke call fails, drop local session so the user is signed out here.
+      clear();
+      queryClient.clear();
+      try {
+        sessionStorage.removeItem(DGA_STATE_KEY);
+        sessionStorage.removeItem(DGA_REDIRECT_URI_KEY);
+      } catch {
+        // ignore
       }
       router.push('/auth/login');
     },

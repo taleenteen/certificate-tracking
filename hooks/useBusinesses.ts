@@ -50,6 +50,30 @@ export function useBusinesses(query: string, hasFilters?: boolean) {
   });
 }
 
+/**
+ * Lightweight suggestions for navbar search dropdowns (e-map / businesses).
+ * Debounce the query in the caller before enabling.
+ */
+export function useBusinessSearchSuggestions(
+  query: string,
+  options?: { enabled?: boolean; limit?: number },
+) {
+  const q = query.trim();
+  const limit = options?.limit ?? 8;
+  const enabled = (options?.enabled ?? true) && q.length >= 1;
+
+  return useQuery({
+    queryKey: ['business-search-suggestions', q, limit],
+    queryFn: () =>
+      http.get<BusinessListResponse>(
+        `businesses?q=${encodeURIComponent(q)}&limit=${limit}`,
+      ),
+    enabled,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  });
+}
+
 export function useAdminBusinesses(query?: string) {
   return useQuery({
     queryKey: ['admin-businesses', query ?? ''],

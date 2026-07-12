@@ -75,6 +75,7 @@ function LicenseDetailContent({ id }: { id: string }) {
     expiresAt: formatDate(data.expiresAt),
     previewType: "document",
     previewImage: licenseImg,
+    previewUrl: data.documents?.[0]?.url ?? null,
     businessName: data.business.nameTh,
     businessId: data.business.id,
     businessType: data.licenseType.nameTh,

@@ -29,6 +29,7 @@ import {
   type BusinessCategory,
 } from "@/components/app/businesses/business-filter-panel";
 import { QrScannerDialog } from "./qr-scanner-dialog";
+import { openExternalQrUrl } from "@/lib/external-qr-url";
 import { SearchSuggestions } from "./search-suggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,25 +97,6 @@ const DETAIL_PAGE_TITLES: Record<string, string> = {
 const STANDALONE_PAGE_TITLES: Record<string, string> = {
   "/licenses": "ใบอนุญาตของฉัน",
   "/expired-licenses": "ใบอนุญาตหมดอายุ",
-};
-
-const extractIdFromScannedValue = (scannedText: string): string => {
-  try {
-    if (scannedText.startsWith("http://") || scannedText.startsWith("https://")) {
-      const url = new URL(scannedText);
-      const parts = url.pathname.split("/").filter(Boolean);
-      const idx = parts.findIndex((p) => p === "my-licenses" || p === "licenses");
-      if (idx !== -1 && parts[idx + 1]) {
-        return parts.slice(idx + 1).join("/");
-      }
-      if (parts.length > 0) {
-        return parts[parts.length - 1];
-      }
-    }
-  } catch (e) {
-    console.error("Failed to parse URL:", e);
-  }
-  return scannedText;
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -236,26 +218,10 @@ export function AppNavbar() {
     setIsFilterOpen(false);
   };
 
-  const handleMockScan = async (value: string) => {
+  const handleMockScan = (value: string) => {
     setIsQrScannerOpen(false);
-    const cleanValue = extractIdFromScannedValue(value);
-    try {
-      await http.get(`licenses/${cleanValue}/qr-verify`);
-      router.push(`/licenses/${cleanValue}?hideVerify=true`);
-    } catch {
-      try {
-        // Fallback: fetch licenses and use the first one
-        const list = await http.get<LicenseListItem[]>("my/licenses");
-        if (list && list.length > 0) {
-          const fallbackId = list[0].id;
-          toast.info("ไม่พบรหัสใบอนุญาตนี้ในระบบ จึงแสดงใบอนุญาตตัวอย่างแทน");
-          router.push(`/licenses/${fallbackId}?hideVerify=true`);
-        } else {
-          toast.error("ไม่พบใบอนุญาตนี้ และไม่มีข้อมูลตัวอย่างในระบบ");
-        }
-      } catch {
-        toast.error("ไม่พบใบอนุญาตนี้ กรุณาตรวจสอบ QR Code อีกครั้ง");
-      }
+    if (!openExternalQrUrl(value)) {
+      toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
     }
   };
 

@@ -4,6 +4,7 @@ import { http } from '@/lib/http';
 export interface BusinessLicense {
   id: string;
   licenseNumber: string;
+  licenseNo?: string;
   status: string;
   issuedAt: string;
   expiresAt: string | null;
@@ -37,6 +38,13 @@ export interface BusinessDetailResponse {
   email: string | null;
   zone: { id: string; name: string } | null;
   licenses: BusinessLicense[];
+  ownership?: {
+    type: 'INDIVIDUAL' | 'JURISTIC';
+    labelTh: string;
+    contextId: string | null;
+    displayNameTh: string;
+    registrationId: string | null;
+  };
 }
 
 export function useBusinesses(query: string, hasFilters?: boolean) {

@@ -26,6 +26,7 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
+| 2026-07-12 | [Business License Export Redesign](./2026-07-12-business-export-redesign.md) | Redesign the business license export page to match mockup layout and display PDF page previews. | Verified | Verified build and mapped licenseNo correctly. | Verified |
 | 2026-07-11 | [Export License Banner Redesign](./2026-07-11-export-banner-redesign.md) | Redesign the export license banner on the details pages with custom gradient and download button. | Verified | Created component, wired triggers, and verified build. | Verified |
 | 2026-07-09 | [Login-first entry flow](./2026-07-09-login-first-entry-flow.md) | Root requires login first; public skips mode select; existing session opens main page; officers still select mode after fresh login. | Verified | `bunx tsc --noEmit` passed; manual browser flow optional. | Verified |
 | 2026-07-08 | [Officer/Public Mode Switch](./2026-07-08-officer-public-mode-switch.md) | Add post-login role-mode selection for officer users and a profile-menu switch between normal user and officer feature modes. | Verified | TypeScript, targeted ESLint, and production build passed; manual seeded-user browser flow remains. | Verified |

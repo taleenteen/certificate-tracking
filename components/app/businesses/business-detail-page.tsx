@@ -4,6 +4,7 @@ import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { SectionCard } from "@/components/shared/SectionCard";
 import { NavigationFooter } from "@/components/shared/NavigationFooter";
 import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Map, Navigation, Download } from "lucide-react";
 import { useIsStaff } from "@/hooks/useIsStaff";
 import { ExportBanner } from "@/components/app/licenses/export-banner";
@@ -20,7 +21,6 @@ import {
   LicenseCertificateCard,
   type LicenseCardItem,
 } from "@/components/app/licenses/license-certificate-card";
-import { LicenseDocumentExportDialog } from "./license-document-export-dialog";
 
 export type BusinessDocument = {
   id: string;
@@ -42,6 +42,8 @@ export type BusinessDetailData = {
   phoneNumber: string;
   email: string;
   documents: BusinessDocument[];
+  businessType?: string;
+  registrationId?: string | null;
 };
 
 type BusinessesPageDetailViewProps = {
@@ -81,25 +83,16 @@ export function BusinessesPageDetailView({
           {/* Officer-only verifiable license-document export. */}
           {isStaff && businessId && (
             <ExportBanner>
-              <LicenseDocumentExportDialog
-                businessId={businessId}
-                licenses={data.documents.map((document) => ({
-                  id: document.id,
-                  title: document.title,
-                  licenseNumber: document.licenseNumber,
-                  agencyId: document.agencyId,
-                }))}
-                triggerButton={
-                  <Button
-                    type="button"
-                    disabled={data.documents.length === 0}
-                    className="z-10 flex items-center gap-2 rounded-2xl bg-[#063428] hover:bg-[#04241C] text-white px-5 h-12 text-sm font-bold border border-emerald-950/20 shadow-md cursor-pointer transition-colors shrink-0"
-                  >
-                    <Download className="h-4 w-4 text-white" />
-                    ส่งออกใบอนุญาต
-                  </Button>
-                }
-              />
+              <Button
+                asChild
+                disabled={data.documents.length === 0}
+                className="z-10 flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-emerald-950/20 bg-[#063428] px-5 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#04241C]"
+              >
+                <Link href={`/businesses/${businessId}/exports?from=${fromContext.key}`}>
+                  <Download className="h-4 w-4 text-white" />
+                  ส่งออกใบอนุญาต
+                </Link>
+              </Button>
             </ExportBanner>
           )}
 

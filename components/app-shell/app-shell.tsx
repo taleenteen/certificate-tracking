@@ -7,7 +7,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#d8dde0]">
+    <div data-app-shell className="flex min-h-[100dvh] flex-col bg-[#d8dde0]">
       <Suspense fallback={<NavbarFallback />}>
         <AppNavbar />
       </Suspense>

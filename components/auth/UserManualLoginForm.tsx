@@ -14,7 +14,11 @@ export function UserManualLoginForm() {
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    login.mutate({ type: 'password', ...form });
+    login.mutate({
+      type: 'password',
+      ...form,
+      username: form.username.trim().toLowerCase(),
+    });
   };
 
   return (
@@ -28,7 +32,7 @@ export function UserManualLoginForm() {
         <Label htmlFor="manual-username">ชื่อผู้ใช้หรืออีเมล</Label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input id="manual-username" autoComplete="username" required value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} className="h-11 border-slate-200 bg-slate-50 pl-9 focus:bg-white" />
+          <Input id="manual-username" autoComplete="username" required value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value.toLowerCase() })} className="h-11 border-slate-200 bg-slate-50 pl-9 focus:bg-white" />
         </div>
       </div>
 

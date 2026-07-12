@@ -101,8 +101,8 @@ export function QrScannerDialog({
       hasHandledScanRef.current = true;
       isScannerActiveRef.current = false;
       onOpenChange(false);
-      await cleanupScanner();
       onScanMock(decodedText);
+      await cleanupScanner();
     },
     [cleanupScanner, onOpenChange, onScanMock]
   );

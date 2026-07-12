@@ -20,13 +20,24 @@ export function RegisterForm({ onToggle }: { onToggle: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    register.mutate(formData);
+    register.mutate({
+      ...formData,
+      username: formData.username.trim().toLowerCase(),
+      email: formData.email.trim().toLowerCase(),
+      fullName: formData.fullName.trim(),
+      phone: formData.phone.trim(),
+    });
   };
 
   const field = <K extends keyof typeof formData>(key: K) => ({
     value: formData[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-      setFormData({ ...formData, [key]: e.target.value }),
+      setFormData({
+        ...formData,
+        [key]: key === 'username' || key === 'email'
+          ? e.target.value.toLowerCase()
+          : e.target.value,
+      }),
   });
 
   return (

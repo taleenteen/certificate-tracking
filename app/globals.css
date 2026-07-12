@@ -62,6 +62,22 @@
   }
 }
 
+/* App pages render below the 57px mobile navbar. Avoid reserving a second
+   viewport of blank space when their content is shorter than the screen. */
+[data-app-shell] .min-h-screen {
+  min-height: calc(100dvh - 57px);
+}
+
+/* iOS Safari zooms focused form controls below 16px. Keep the user's browser
+   zoom available and ensure editable controls meet that threshold on phones. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Mapbox GL Popup – force app font.
    mapbox-gl.css uses `font:` shorthand on .mapboxgl-popup-content
    which resets font-family. We must unset it first. */

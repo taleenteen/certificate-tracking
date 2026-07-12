@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { useLicenses, type LicenseResponse } from "@/hooks/useLicenses";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
+import { openExternalQrUrl } from "@/lib/external-qr-url";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
 import { http } from "@/lib/http";
 
@@ -90,42 +91,13 @@ export function SearchSheetOverlay({
       .slice(0, 5);
   }, [licenses, searchQuery]);
 
-  const extractIdFromScannedValue = (scannedText: string): string => {
-    try {
-      if (scannedText.startsWith("http://") || scannedText.startsWith("https://")) {
-        const url = new URL(scannedText);
-        const parts = url.pathname.split("/").filter(Boolean);
-        const idx = parts.findIndex((p) => p === "my-licenses" || p === "licenses");
-        if (idx !== -1 && parts[idx + 1]) {
-          return parts.slice(idx + 1).join("/");
-        }
-        if (parts.length > 0) {
-          return parts[parts.length - 1];
-        }
-      }
-    } catch (e) {
-      console.error("Failed to parse URL:", e);
-    }
-    return scannedText;
-  };
-
-  const handleScanMock = async (value: string) => {
+  const handleScanMock = (value: string) => {
     setIsQrScannerOpen(false);
-    const cleanValue = extractIdFromScannedValue(value);
-    try {
-      await http.get(`licenses/${cleanValue}/qr-verify`);
+    if (openExternalQrUrl(value)) {
       onClose();
-      router.push(`/licenses/${cleanValue}?hideVerify=true`);
-    } catch {
-      if (licenses.length > 0) {
-        const fallbackId = licenses[0].id;
-        toast.info("ไม่พบรหัสใบอนุญาตนี้ในระบบ จึงแสดงใบอนุญาตตัวอย่างแทน");
-        onClose();
-        router.push(`/licenses/${fallbackId}?hideVerify=true`);
-      } else {
-        toast.error("ไม่พบใบอนุญาตนี้ และไม่มีข้อมูลตัวอย่างในระบบ");
-      }
+      return;
     }
+    toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
   };
 
   return (

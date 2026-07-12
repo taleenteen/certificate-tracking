@@ -24,6 +24,7 @@ import type { JuristicLicenseGroupResponse } from "@/hooks/useLicenses";
 import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
 import { motion, AnimatePresence } from "framer-motion";
+import { openExternalQrUrl } from "@/lib/external-qr-url";
 
 dayjs.extend(buddhistEra);
 dayjs.locale("th");
@@ -100,15 +101,10 @@ export function LicenseListPageView({
     };
   };
 
-  const handleScanMock = async () => {
+  const handleScanMock = (value: string) => {
     setIsQrScannerOpen(false);
-    // Mock QR scan handler fallback
-    if (personalLicenses.length > 0) {
-      const fallbackId = personalLicenses[0].id;
-      toast.info("จำลองสแกนใบอนุญาตสำเร็จ");
-      router.push(`/licenses/${fallbackId}?hideVerify=true&from=my-licenses`);
-    } else {
-      toast.error("ไม่มีข้อมูลจำลองในระบบ");
+    if (!openExternalQrUrl(value)) {
+      toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
     }
   };
 

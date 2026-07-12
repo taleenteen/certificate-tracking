@@ -85,10 +85,10 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
     e.preventDefault();
     if (!validate()) return;
     onSave({
-      fullName,
-      email,
-      phone,
-      username: username || undefined,
+      fullName: fullName.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone.trim(),
+      username: username.trim().toLowerCase() || undefined,
       agencyId,
       password: username.trim() && password.trim() ? password : undefined,
     });
@@ -128,7 +128,7 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
                 type="email"
                 placeholder="เช่น somchai@diw.go.th"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.toLowerCase())}
                 className={errors.email ? 'border-critical' : 'border-gray-200'}
               />
               {errors.email && <p className="text-[11px] text-semantic-critical font-medium">{errors.email}</p>}
@@ -155,7 +155,7 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
                 id="username"
                 placeholder="เช่น admin_diw_01"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => setUsername(e.target.value.toLowerCase())}
                 className="border-gray-200"
               />
               <p className="text-[11px] text-placeholder">หากไม่กรอก จะใช้ mToken (Tang Rat)</p>

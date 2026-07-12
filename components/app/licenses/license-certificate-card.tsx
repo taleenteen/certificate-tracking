@@ -88,7 +88,11 @@ export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
         {/* Certificate Large Preview Area */}
         <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 flex items-center justify-center relative shadow-inner p-4 border border-slate-200/50">
           <div className="relative aspect-[3/4] h-full shadow-md rounded-md overflow-hidden">
-            <CertificatePreview previewUrl={item.previewUrl} />
+            <CertificatePreview
+              // Same-origin stream only when API already advertised a certificate.
+              licenseId={item.previewUrl ? item.id : undefined}
+              previewUrl={item.previewUrl}
+            />
           </div>
 
           {/* Status Stamp Overlay using imported SVGs */}

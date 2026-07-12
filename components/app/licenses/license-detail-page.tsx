@@ -253,7 +253,9 @@ export function LicenseDetailPageView({
             <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-1.5 relative">
               <button
                 type="button"
-                onClick={() => (data.previewImage || data.previewUrl) && setIsPreviewOpen(true)}
+                onClick={() =>
+                  (data.previewImage || data.previewUrl) && setIsPreviewOpen(true)
+                }
                 disabled={!data.previewImage && !data.previewUrl}
                 className="block w-full cursor-zoom-in rounded-[inherit] text-left disabled:cursor-default"
                 aria-label="เปิดดูรูปใบอนุญาตขนาดเต็ม"
@@ -261,6 +263,7 @@ export function LicenseDetailPageView({
                 {data.previewUrl ? (
                   <div className="relative aspect-[3/4] max-h-[400px] w-full max-w-[280px] mx-auto shadow-md rounded-md overflow-hidden bg-white p-1 my-2">
                     <CertificatePreview
+                      licenseId={data.id}
                       previewUrl={data.previewUrl}
                       size="detail"
                     />
@@ -302,6 +305,7 @@ export function LicenseDetailPageView({
               <div className="max-h-[86vh] overflow-auto rounded-2xl bg-white p-2 flex items-center justify-center relative">
                 <div className="relative w-full max-w-[500px] aspect-[3/4]">
                   <CertificatePreview
+                    licenseId={data.id}
                     previewUrl={data.previewUrl}
                     size="detail"
                   />

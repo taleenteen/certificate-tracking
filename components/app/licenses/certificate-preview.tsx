@@ -13,6 +13,12 @@ type CertificatePreviewProps = {
   size?: "card" | "detail";
 };
 
+function isRenderingCancelledError(error: unknown) {
+  return (
+    error instanceof Error && error.name === "RenderingCancelledException"
+  );
+}
+
 /**
  * Renders page 1 of a certificate PDF into a canvas.
  * Prefer `licenseId` so the browser fetches `/api/licenses/:id/certificate`
@@ -73,8 +79,14 @@ export function CertificatePreview({
           disableStream: true,
         });
         const documentProxy = await loadingTask.promise;
+        if (cancelled) {
+          await loadingTask.destroy();
+          await documentProxy.cleanup();
+          return;
+        }
+
         destroy = () => {
-          loadingTask.destroy();
+          void loadingTask.destroy();
           void documentProxy.cleanup();
         };
         const page = await documentProxy.getPage(1);
@@ -92,8 +104,9 @@ export function CertificatePreview({
         await page.render({ canvas, canvasContext: context, viewport }).promise;
         if (!cancelled) setHasError(false);
       } catch (err) {
+        if (cancelled || isRenderingCancelledError(err)) return;
         console.error("Failed to render PDF preview:", err);
-        if (!cancelled) setHasError(true);
+        setHasError(true);
       } finally {
         if (!cancelled) setIsRendering(false);
       }

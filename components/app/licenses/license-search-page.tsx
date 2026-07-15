@@ -82,23 +82,23 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
 
   return (
     <main className="min-h-screen bg-[#f4f5f7] pb-12 text-slate-900">
-      <div className="mx-auto max-w-[430px] bg-[#f4f5f7] min-h-screen text-left shadow-sm">
+      <div className="mx-auto min-h-screen max-w-[430px] bg-[#f4f5f7] text-left shadow-sm lg:max-w-none">
         {/* Banner with 2-field search card design */}
         <div
-          className="text-white pt-10 pb-16 px-6 shadow-[0_10px_30px_rgba(20,91,87,0.1)] relative z-20"
+          className="relative z-20 px-6 pb-16 pt-10 text-white shadow-[0_10px_30px_rgba(20,91,87,0.1)] lg:grid lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,0.9fr)] lg:items-center lg:gap-10 lg:px-10 lg:py-12"
           style={{
             background:
               "radial-gradient(464.78% 477.35% at 53.98% -46.94%, #004D34 0%, #D8F3E1 100%)",
           }}
         >
-          <div className="text-center mb-6">
+          <div className="mb-6 text-center lg:mb-0 lg:text-left">
             <h1 className="text-2xl sm:text-2xl font-bold tracking-tight text-white leading-8">
               ค้นหาใบอนุญาตและสถานประกอบการ
             </h1>
           </div>
 
           {/* Search Card Container */}
-          <div className="mx-auto w-full bg-white rounded-lg border border-slate-100 shadow-[0_15px_45px_rgba(0,0,0,0.1)] p-5 sm:p-6 text-slate-800">
+          <div className="mx-auto w-full rounded-lg border border-slate-100 bg-white p-5 text-slate-800 shadow-[0_15px_45px_rgba(0,0,0,0.1)] sm:p-6 lg:max-w-xl">
             <form onSubmit={handleSearchSubmit} className="space-y-4">
               {/* Name Search Input */}
               <div className="space-y-1.5">
@@ -159,7 +159,7 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
         </div>
 
         {/* Search Results Display Area */}
-        <div className="px-4 py-6">
+        <div className="px-4 py-6 lg:px-10 lg:py-10">
           {!hasSearched ? (
             /* Prepare/Ready to search page state */
             <div className="flex flex-col items-center gap-3 p-6 text-center select-none bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] mt-4">
@@ -195,33 +195,33 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
                 </span>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-5 lg:space-y-0 xl:grid-cols-3">
                 {items.map((business) => (
                   <div
                     key={business.id}
-                    className="bg-white border border-slate-100/60 rounded-3xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.02)] space-y-4 text-left"
+                    className="space-y-4 rounded-3xl border border-slate-100/60 bg-white p-5 text-left shadow-[0_10px_30px_rgba(0,0,0,0.02)] lg:flex lg:min-h-[236px] lg:flex-col lg:space-y-0"
                   >
-                    <div className="space-y-1">
-                      <h3 className="text-[15px] font-bold text-slate-800 leading-snug">
+                    <div className="space-y-1 lg:min-h-[78px]">
+                      <h3 className="text-[15px] font-bold leading-snug text-slate-800 lg:min-h-[40px] lg:line-clamp-2">
                         {business.nameTh}
                       </h3>
                       {business.registrationId ? (
-                        <p className="text-[12px] font-semibold text-slate-500">
+                        <p className="text-[12px] font-semibold text-slate-500 lg:line-clamp-1">
                           เลขนิติบุคคล : {business.registrationId}
                         </p>
                       ) : (
-                        <p className="text-[12px] font-semibold text-slate-500">
+                        <p className="text-[12px] font-semibold text-slate-500 lg:line-clamp-1">
                           จังหวัด: {business.province}
                         </p>
                       )}
                       {business.businessType && (
-                        <p className="text-[12px] font-semibold text-slate-500">
+                        <p className="text-[12px] font-semibold text-slate-500 lg:line-clamp-1">
                           ประเภทธุรกิจ : {business.businessType}
                         </p>
                       )}
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3 lg:mt-auto lg:pt-4">
                       <Link
                         href={`/businesses/${business.id}?from=search`}
                         className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#0A4D35] hover:bg-[#083E2A] text-[14px] font-bold text-white transition-colors shadow-sm"
@@ -266,7 +266,7 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
                             <h4 className="text-[13px] font-bold text-[#145b57]">
                               ใบอนุญาต ({business.licenseCount})
                             </h4>
-                            <div className="space-y-4">
+                            <div className="space-y-4 xl:grid xl:grid-cols-2 xl:gap-4 xl:space-y-0">
                               {business.licenses.length > 0 ? (
                                 business.licenses.map((lib) => {
                                   const cardItem = {

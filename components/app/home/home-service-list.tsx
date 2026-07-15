@@ -23,14 +23,14 @@ export function HomeServiceList({
   const isOfficer = role === "officer";
 
   return (
-    <section className="px-6 pb-12 pt-8 text-center bg-[#f4f5f7]">
-      <div className="max-w-md mx-auto">
+    <section className="bg-[#f4f5f7] px-6 pb-12 pt-8 text-center lg:px-10 lg:py-10">
+      <div className="mx-auto max-w-md lg:max-w-none">
         {/* ใบอนุญาตของฉัน (Citizen banner at the top) */}
         {!isOfficer && (
           <Link
             href="/licenses"
             style={{ background: "linear-gradient(180deg, #539375 -90.12%, #004224 123.26%)" }}
-            className="flex items-center justify-between p-5 rounded-2xl shadow-[0_8px_30px_rgba(20,91,87,0.08)] hover:opacity-95 transition-all group cursor-pointer text-left mb-6 border border-[#004224]/10"
+            className="mb-6 flex items-center justify-between rounded-2xl border border-[#004224]/10 p-5 text-left shadow-[0_8px_30px_rgba(20,91,87,0.08)] transition-all group cursor-pointer hover:opacity-95 lg:max-w-3xl"
           >
             <div className="flex items-center gap-4">
               <Image
@@ -62,7 +62,7 @@ export function HomeServiceList({
         </div>
 
         {/* Services List stacked vertically */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
           {isOfficer ? (
             <>
               {/* e-Map */}

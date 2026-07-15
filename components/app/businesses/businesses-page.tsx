@@ -140,7 +140,7 @@ export function BusinessesPageView() {
   // Show placeholder page only if no search term and no filters are selected
   if (!query && categoriesList.length === 0 && !regionFilter) {
     return (
-      <main className="flex min-h-[calc(100vh-57px)] justify-center bg-[#F9FAFB] px-4">
+      <main className="flex min-h-[calc(100vh-57px)] justify-center bg-[#F9FAFB] px-4 lg:items-center">
         <div className="flex max-w-sm flex-col items-center gap-3 p-6 text-center">
           <Image src={holderPin} alt="Holder Pin" className="mx-auto mt-4" />
           <p className="mt-6 text-xl text-black/80">ค้นหาสถานประกอบการ</p>
@@ -153,8 +153,8 @@ export function BusinessesPageView() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-57px)] bg-[#F9FAFB] px-4 py-4">
-      <div className="mx-auto max-w-md space-y-3">
+    <main className="min-h-[calc(100vh-57px)] bg-[#F9FAFB] px-4 py-4 lg:px-10 lg:py-8">
+      <div className="mx-auto max-w-md space-y-3 lg:max-w-none">
         <div className="px-1 space-x-1">
           <span className="text-sm text-slate-500">พบ</span>
           <span className="text-sm font-semibold text-slate-900">
@@ -164,7 +164,8 @@ export function BusinessesPageView() {
         </div>
 
         {isLoading || isDebouncing ? (
-          Array.from({ length: 3 }).map((_, index) => (
+          <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
             <Card
               key={`loading-${index}`}
               className="rounded-3xl border-0 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
@@ -185,13 +186,15 @@ export function BusinessesPageView() {
                 <Skeleton className="h-3 w-28" />
               </CardContent>
             </Card>
-          ))
+          ))}
+          </div>
         ) : filteredResults.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-500 text-sm">ไม่พบสถานประกอบการที่ค้นหา</p>
           </div>
         ) : (
-          filteredResults.map((item) => (
+          <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-3">
+          {filteredResults.map((item) => (
             <InspectionTaskCard
               key={item.id}
               companyName={item.nameTh}
@@ -213,7 +216,8 @@ export function BusinessesPageView() {
                 variant: "primary",
               }}
             />
-          ))
+          ))}
+          </div>
         )}
       </div>
     </main>

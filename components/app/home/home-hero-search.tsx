@@ -27,13 +27,13 @@ export function HomeHeroSearch({
 
   return (
     <div
-      className="relative mx-auto flex h-auto min-h-0 w-full max-w-[440px] min-w-0 flex-col gap-6 overflow-visible px-4 py-8 text-white shadow-[0_10px_30px_rgba(20,91,87,0.1)] sm:px-6 sm:py-10"
+      className="relative mx-auto flex h-auto min-h-0 w-full max-w-[440px] min-w-0 flex-col gap-6 overflow-visible px-4 py-8 text-white shadow-[0_10px_30px_rgba(20,91,87,0.1)] sm:px-6 sm:py-10 lg:max-w-none lg:grid lg:grid-cols-[minmax(0,0.8fr)_minmax(360px,0.9fr)] lg:items-center lg:gap-10 lg:px-10 lg:py-12"
       style={{
         background:
           "radial-gradient(464.78% 477.35% at 53.98% -46.94%, #004D34 0%, #D8F3E1 100%)",
       }}
     >
-      <div className="text-center">
+      <div className="text-center lg:text-left">
         <h1 className="text-2xl font-semibold leading-8 tracking-tight text-white sm:text-3xl">
           ตรวจสอบสถานะใบอนุญาต
         </h1>
@@ -43,7 +43,7 @@ export function HomeHeroSearch({
       </div>
 
       {/* Search Card Container */}
-      <div className="mx-auto w-full min-w-0 rounded-lg border border-slate-100 bg-white p-4 text-slate-800 shadow-[0_15px_45px_rgba(0,0,0,0.1)] sm:p-6">
+      <div className="mx-auto w-full min-w-0 rounded-lg border border-slate-100 bg-white p-4 text-slate-800 shadow-[0_15px_45px_rgba(0,0,0,0.1)] sm:p-6 lg:max-w-xl">
         <form onSubmit={handleSearch} className="space-y-4">
           {/* Name Search Input */}
           <div className="space-y-1.5">

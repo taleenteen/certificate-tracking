@@ -177,9 +177,9 @@ export function LicenseListPageView({
 
   return (
     <main className="min-h-screen bg-[#f4f5f7] pb-12 text-slate-900">
-      <div className="mx-auto max-w-[430px] bg-[#f4f5f7] min-h-screen text-left shadow-sm">
+      <div className="mx-auto min-h-screen max-w-[430px] bg-[#f4f5f7] text-left shadow-sm lg:max-w-none">
         {/* Title banner - full width, no rounded corners, no outer padding */}
-        <div className="relative overflow-hidden min-h-[150px] bg-gradient-to-b from-[#06422F] to-[#0A4D35] flex flex-col justify-between p-5 mb-6 shadow-sm">
+        <div className="relative mb-6 flex min-h-[150px] flex-col justify-between overflow-hidden bg-gradient-to-b from-[#06422F] to-[#0A4D35] p-5 shadow-sm lg:min-h-[190px] lg:px-10 lg:py-7">
           <AppBreadcrumb
             items={[
               { label: "หน้าแรก", href: "/home" },
@@ -192,7 +192,7 @@ export function LicenseListPageView({
         </div>
 
         {/* Content area with horizontal padding */}
-        <div className="px-4">
+        <div className="px-4 lg:px-10 lg:pb-10">
           {/* Customized Tabs Segment with page background color, no shadow, clean bottom border */}
           <div className="flex border-b border-slate-200 mb-6 select-none bg-transparent">
             {/* Personal Tab */}
@@ -258,7 +258,7 @@ export function LicenseListPageView({
           {/* Main Content Area */}
           {activeTab === "personal" ? (
             filteredPersonalLicenses.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 xl:grid-cols-3">
                 {filteredPersonalLicenses.map((item) => (
                   <LicenseCertificateCard key={item.id} item={item} />
                 ))}
@@ -270,7 +270,7 @@ export function LicenseListPageView({
             )
           ) : (
             filteredJuristicGroups.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
                 {filteredJuristicGroups.map((group) => (
                   <div key={group.juristicId} className="space-y-4">
                     {/* Collapsible company card (styled like the mockup card) */}
@@ -300,7 +300,7 @@ export function LicenseListPageView({
                           ใบอนุญาตระดับนิติบุคคล
                         </h4>
                         {group.filteredCorporateLicenses.length > 0 ? (
-                          <div className="space-y-4">
+                          <div className="space-y-4 xl:grid xl:grid-cols-2 xl:gap-4 xl:space-y-0">
                             {group.filteredCorporateLicenses.map((lib) => {
                               const cardItem = formatLicenseItem(lib, group.nameTh);
                               return <LicenseCertificateCard key={lib.id} item={cardItem} />;
@@ -341,7 +341,7 @@ export function LicenseListPageView({
 
                       {/* Collapsible nested businesses list inside company card */}
                       {expandedCompanies[group.juristicId] && (
-                        <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-150">
+                        <div className="space-y-4 border-t border-slate-100 pt-4 animate-in fade-in duration-150">
                           {group.filteredBusinesses.length > 0 ? (
                             group.filteredBusinesses.map((business) => (
                               <div key={business.id} className="bg-slate-50 border border-slate-200/60 rounded-[20px] p-4 space-y-3.5">
@@ -395,11 +395,11 @@ export function LicenseListPageView({
                                       transition={{ duration: 0.2, ease: "easeInOut" }}
                                       className="overflow-hidden"
                                     >
-                                      <div className="space-y-4 pt-4 border-t border-slate-200/50 mt-3">
+                                      <div className="mt-3 space-y-4 border-t border-slate-200/50 pt-4">
                                         <h5 className="text-[13px] font-bold text-[#145b57]">
                                           ใบอนุญาต ({business.filteredLicenses.length})
                                         </h5>
-                                        <div className="space-y-4">
+                                        <div className="space-y-4 xl:grid xl:grid-cols-2 xl:gap-4 xl:space-y-0">
                                           {business.filteredLicenses.length > 0 ? (
                                             business.filteredLicenses.map((lib) => {
                                               const cardItem = formatLicenseItem(lib, business.nameTh);

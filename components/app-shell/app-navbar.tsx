@@ -256,7 +256,7 @@ export function AppNavbar() {
 
   return (
     <header className="sticky top-0 z-30 border-white/10 bg-white text-black backdrop-blur">
-      <div className="relative mx-auto w-full max-w-6xl px-4 py-3 sm:px-6">
+      <div className="relative mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:max-w-[1536px]">
         {searchPlaceholder ? (
           <>
             <div className="flex items-center gap-2">

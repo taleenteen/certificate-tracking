@@ -112,7 +112,7 @@ export default function OfficerCardPage() {
           variant="dark"
           items={[
             { label: "หน้าแรก", href: "/home" },
-            { label: "แสดงบัตรเจ้าหน้าที่" },
+            { label: "QR Code เพื่อยืนยันตัวตนเจ้าหน้าที่" },
           ]}
         />
       </div>

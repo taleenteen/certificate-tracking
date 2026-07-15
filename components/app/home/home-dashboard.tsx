@@ -533,7 +533,7 @@ export function HomeDashboard() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[430px] overflow-x-hidden bg-[#f4f5f7] text-slate-900 md:max-w-none">
+    <main className="mx-auto w-full max-w-[440px] min-w-0 overflow-x-hidden bg-[#f4f5f7] text-slate-900 md:max-w-none">
       {/* Top Banner and Menu Cards Section */}
       <section className="bg-white px-4 pb-6 pt-5 text-black sm:px-6 text-left">
         {/* Welcome Header */}

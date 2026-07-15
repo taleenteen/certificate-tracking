@@ -88,7 +88,7 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
           className="text-white pt-10 pb-16 px-6 shadow-[0_10px_30px_rgba(20,91,87,0.1)] relative z-20"
           style={{
             background:
-              "radial-gradient(660.85% 601.5% at 53.98% -46.94%, #004D34 0%, #D8F3E1 100%)",
+              "radial-gradient(464.78% 477.35% at 53.98% -46.94%, #004D34 0%, #D8F3E1 100%)",
           }}
         >
           <div className="text-center mb-6">

@@ -29,7 +29,7 @@ export function HomepageService({
   };
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-[#f4f5f7] text-left text-slate-900 md:max-w-none">
+    <main className="mx-auto min-h-screen w-full max-w-[440px] min-w-0 overflow-x-hidden bg-[#f4f5f7] text-left text-slate-900 md:max-w-none">
       {/* Top Hero Banner & Search Form */}
       <HomeHeroSearch
         onSearchSubmit={handleSearchSubmit}

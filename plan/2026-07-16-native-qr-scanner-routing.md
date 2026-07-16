@@ -48,6 +48,8 @@ Use Tang Rat SDK v5 `scanQrCode()` for every QR action inside the Tang Rat app w
 - 2026-07-16: Started after native app QR actions opened the lower-quality HTML5 camera dialog.
 - 2026-07-16: Added bounded SDK bridge wait/platform normalization and migrated navbar, search sheet, and home actions to native-first scanning. Removed the unused license-list scanner stub.
 - 2026-07-16: TypeScript, focused ESLint, and whitespace validation passed. Physical Tang Rat and browser fallback checks remain pending.
+- 2026-07-16: Added WebView visibility/focus recovery for Tang Rat scanner cancellation and stale-result protection for reopened scans.
+- 2026-07-16: Re-ran TypeScript, focused hook lint, and whitespace validation successfully after the cancellation recovery.
 
 ## Changed files
 

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   useLicenseDocumentExport,
+  NativeExportError,
   type LicenseDocumentExportFormat,
 } from "@/hooks/useLicenseDocumentExports";
 import {
@@ -47,6 +48,8 @@ const formatOptions: Array<{
   { value: "csv", label: "CSV" },
 ];
 
+const nativeDebugEnabled = process.env.NEXT_PUBLIC_DGA_NATIVE_DEBUG === "true";
+
 export function LicenseDocumentExportDialog({
   businessId,
   licenses,
@@ -75,10 +78,18 @@ export function LicenseDocumentExportDialog({
   };
 
   const submit = async () => {
-    await exportDocuments.mutateAsync({ format, licenseIds: selectedIds });
+    const result = await exportDocuments.mutateAsync({
+      format,
+      licenseIds: selectedIds,
+    });
+    if (nativeDebugEnabled && result.delivery === "native") return;
     setOpen(false);
     setSelectedIds([]);
   };
+  const nativeError =
+    exportDocuments.error instanceof NativeExportError
+      ? exportDocuments.error
+      : null;
 
   return (
     <Dialog
@@ -175,6 +186,15 @@ export function LicenseDocumentExportDialog({
             <p className="text-sm text-destructive">
               {exportDocuments.error.message}
             </p>
+          )}
+          {nativeDebugEnabled && (exportDocuments.data?.delivery === "native" || nativeError) && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
+              <p className="font-semibold">UAT native export diagnostics</p>
+              <p className="mt-1">SDK request: {exportDocuments.data?.nativeSaveRequested ? "sent" : "not confirmed"}</p>
+              <p>Download origin: {exportDocuments.data?.downloadOrigin ?? nativeError?.diagnostics.downloadOrigin ?? "unknown"}</p>
+              <p>URL lifetime: {exportDocuments.data?.downloadUrlExpiresInSeconds ?? nativeError?.diagnostics.downloadUrlExpiresInSeconds ?? "unknown"} seconds</p>
+              <p className="mt-1 text-amber-800">The presigned URL and mToken are never displayed.</p>
+            </div>
           )}
         </div>
 

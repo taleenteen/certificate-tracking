@@ -3,6 +3,26 @@ import { getDgaNativeContext, saveFileWithDgaNative } from "@/lib/dga-native";
 
 export type LicenseDocumentExportFormat = "pdf" | "xlsx" | "csv";
 
+export type LicenseDocumentExportResult = {
+  delivery: "browser" | "native";
+  nativeSaveRequested?: boolean;
+  downloadOrigin?: string;
+  downloadUrlExpiresInSeconds?: number;
+};
+
+export class NativeExportError extends Error {
+  constructor(
+    message: string,
+    public readonly diagnostics: Pick<
+      LicenseDocumentExportResult,
+      "downloadOrigin" | "downloadUrlExpiresInSeconds"
+    >,
+  ) {
+    super(message);
+    this.name = "NativeExportError";
+  }
+}
+
 function fileNameFromDisposition(value: string | null, fallback: string) {
   const match = value?.match(
     /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i,
@@ -41,17 +61,42 @@ async function exportLicenseDocuments(
     const nativeFile = (await response.json()) as {
       fileName: string;
       downloadUrl: string;
+      downloadOrigin: string;
+      downloadUrlExpiresInSeconds: number;
     };
-    const saved = await saveFileWithDgaNative(
-      nativeFile.downloadUrl,
-      nativeFile.fileName,
-    );
-    if (saved) return;
+    try {
+      const saved = await saveFileWithDgaNative(
+        nativeFile.downloadUrl,
+        nativeFile.fileName,
+      );
+      if (saved) {
+        return {
+          delivery: "native",
+          nativeSaveRequested: true,
+          downloadOrigin: nativeFile.downloadOrigin,
+          downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
+        };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown SDK error";
+      throw new NativeExportError(
+        `ไม่สามารถส่งคำขอบันทึกไฟล์ไปยังแอปทางรัฐได้: ${message}`,
+        {
+          downloadOrigin: nativeFile.downloadOrigin,
+          downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
+        },
+      );
+    }
 
     // The SDK may become unavailable during a WebView transition. A presigned
     // URL is still safe to open and gives the officer a normal download path.
     window.open(nativeFile.downloadUrl, "_blank", "noopener,noreferrer");
-    return;
+    return {
+      delivery: "native",
+      nativeSaveRequested: false,
+      downloadOrigin: nativeFile.downloadOrigin,
+      downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
+    };
   }
 
   const blob = await response.blob();
@@ -67,6 +112,7 @@ async function exportLicenseDocuments(
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+  return { delivery: "browser" };
 }
 
 export function useLicenseDocumentExport(businessId: string) {

@@ -122,6 +122,7 @@ export function AppNavbar() {
     pathname === "/role-select" ||
     pathname === "/profile" ||
     pathname === "/officer-card" ||
+    pathname === "/verify-officer" ||
     pathname.startsWith("/inspection-tasks/") ||
     pathname.startsWith("/officer/inspections/") ||
     pathname === "/reports" ||

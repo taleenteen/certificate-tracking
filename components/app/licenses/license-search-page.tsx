@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -13,8 +13,8 @@ import preparePageImage from "@/assets/search/prepare-page.png";
 import { LicenseCertificateCard } from "@/components/app/licenses/license-certificate-card";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
-import { http } from "@/lib/http";
 import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import type { GroupedBusinessItem } from "@/app/(app)/license-search/page";
 
 type LicenseSearchPageViewProps = {
@@ -29,7 +29,6 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
 
   const [searchQueryQ, setSearchQueryQ] = useState(queryQ);
   const [searchQueryNumber, setSearchQueryNumber] = useState(queryNumber);
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [expandedBusinesses, setExpandedBusinesses] = useState<
     Record<string, boolean>
   >({});
@@ -56,12 +55,16 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
     );
   };
 
-  const handleScanMock = (value: string) => {
-    setIsQrScannerOpen(false);
+  const handleScan = useCallback((value: string) => {
     if (!openExternalQrUrl(value)) {
       toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
     }
-  };
+  }, []);
+  const {
+    isBrowserScannerOpen,
+    setIsBrowserScannerOpen,
+    startScanner,
+  } = useNativeQrScanner(handleScan);
 
   const updateUrlParams = (q: string | null, licenseNo: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -149,7 +152,7 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
             {/* QR Scan Button */}
             <button
               type="button"
-              onClick={() => setIsQrScannerOpen(true)}
+              onClick={() => void startScanner()}
               className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-[#145b57] bg-white text-[#145b57] hover:bg-emerald-50/30 text-xs font-bold transition-colors cursor-pointer h-[46px]"
             >
               <QrScannerIcon size={18} />
@@ -328,9 +331,9 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
       </div>
 
       <QrScannerDialog
-        open={isQrScannerOpen}
-        onOpenChange={setIsQrScannerOpen}
-        onScanMock={handleScanMock}
+        open={isBrowserScannerOpen}
+        onOpenChange={setIsBrowserScannerOpen}
+        onScanMock={handleScan}
         id="license-search-page-qr-scanner"
       />
     </main>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  ChevronLeft, 
   CheckCircle2, 
   AlertCircle, 
   IdCard, 
@@ -19,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { useVerifyOfficer } from "@/hooks/useOfficer";
+import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
@@ -51,8 +51,6 @@ const ScanIcon = () => (
 export default function VerifyOfficerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-
   const token = searchParams.get("token") || "";
   const { data: verifyData, isLoading: isVerifyLoading } = useVerifyOfficer(token);
 
@@ -60,25 +58,29 @@ export default function VerifyOfficerContent() {
   const hasToken = !!token;
   const isSuccess = hasToken ? (verifyData?.valid === true) : false;
 
-  const handleScanMock = (value: string) => {
-    setIsScannerOpen(false);
+  const handleScan = useCallback((value: string) => {
     // Extract token from scanned URL (supports both /verify-officer?token=... and raw token)
     try {
       const url = new URL(value);
       const extractedToken = url.searchParams.get("token");
       if (extractedToken) {
-        router.push(`/verify-officer?token=${encodeURIComponent(extractedToken)}`);
+        router.replace(`/verify-officer?token=${encodeURIComponent(extractedToken)}`);
         return;
       }
     } catch {
       // Not a valid URL — treat raw value as token if it looks like one
       if (value && !value.includes(" ")) {
-        router.push(`/verify-officer?token=${encodeURIComponent(value)}`);
+        router.replace(`/verify-officer?token=${encodeURIComponent(value)}`);
         return;
       }
     }
     toast.error("ไม่สามารถอ่าน QR Code ของเจ้าหน้าที่ได้ กรุณาลองใหม่");
-  };
+  }, [router]);
+  const {
+    isBrowserScannerOpen,
+    setIsBrowserScannerOpen,
+    startScanner,
+  } = useNativeQrScanner(handleScan);
 
   const handleConfirm = () => {
     toast.success("ยืนยันตัวตนเจ้าหน้าที่เรียบร้อยแล้ว");
@@ -104,12 +106,19 @@ export default function VerifyOfficerContent() {
   // Permissions: new spec returns array of {agencyCode, agencyNameTh, licenseTypeCode, licenseTypeNameTh}
   const officerPermissionsList: string[] = hasToken && verifyData?.valid
     ? verifyData.officer.permissions.map((p) => {
-        // Support both old shape (labelTh / licenseTypeCodes) and new shape (licenseTypeNameTh)
-        const label = (p as any).licenseTypeNameTh
-          || (p as any).labelTh
-          || (p as any).licenseTypeCodes?.join(", ")
+        // Support both old and current API permission payloads.
+        const permission = p as unknown as {
+          licenseTypeNameTh?: string;
+          labelTh?: string;
+          licenseTypeCodes?: string[];
+          agencyCode?: string;
+          agency?: string;
+        };
+        const label = permission.licenseTypeNameTh
+          || permission.labelTh
+          || permission.licenseTypeCodes?.join(", ")
           || "";
-        const agencyCode = (p as any).agencyCode || (p as any).agency || "";
+        const agencyCode = permission.agencyCode || permission.agency || "";
         return agencyCode ? `${label} (${agencyCode})` : label;
       }).filter(Boolean)
     : [];
@@ -140,17 +149,6 @@ export default function VerifyOfficerContent() {
   return (
     <main className="min-h-screen bg-[#f4f5f7] px-4 py-4 pb-24 text-slate-900 text-left">
       <div className="mx-auto max-w-[430px] space-y-4">
-        {/* Back Button */}
-        <div className="flex items-center">
-          <button
-            onClick={() => router.push("/home")}
-            className="flex items-center gap-1.5 text-sm font-bold text-slate-700 hover:opacity-80 transition-opacity cursor-pointer py-1"
-          >
-            <ChevronLeft className="h-4.5 w-4.5" />
-            <span>ย้อนกลับ</span>
-          </button>
-        </div>
-
         {/* Main Card */}
         <Card className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-col justify-between min-h-[460px]">
           
@@ -314,7 +312,7 @@ export default function VerifyOfficerContent() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsScannerOpen(true)}
+                  onClick={() => void startScanner()}
                   className="rounded-2xl border-[#0c604c] text-[#0c604c] hover:bg-slate-50 h-12 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                 >
                   <ScanIcon />
@@ -334,7 +332,7 @@ export default function VerifyOfficerContent() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsScannerOpen(true)}
+                onClick={() => void startScanner()}
                 className="w-full rounded-2xl border-[#0c604c] text-[#0c604c] hover:bg-slate-50 h-12 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
                 <ScanIcon />
@@ -348,9 +346,9 @@ export default function VerifyOfficerContent() {
 
       {/* Local Page camera QR Scanner Dialog */}
       <QrScannerDialog
-        open={isScannerOpen}
-        onOpenChange={setIsScannerOpen}
-        onScanMock={handleScanMock}
+        open={isBrowserScannerOpen}
+        onOpenChange={setIsBrowserScannerOpen}
+        onScanMock={handleScan}
         id="verify-officer-scanner"
         title="สแกนคิวอาร์โค้ดบัตรเจ้าหน้าที่"
         description="วางคิวอาร์โค้ดบัตรเจ้าหน้าที่ให้อยู่ภายในกรอบเพื่อดำเนินการ"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileDown, Loader2 } from "lucide-react";
+import { Check, Copy, FileDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -58,6 +58,7 @@ export function LicenseDocumentExportDialog({
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState<LicenseDocumentExportFormat>("pdf");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const exportDocuments = useLicenseDocumentExport(businessId);
   const selectedAgencyId = useMemo(
     () =>
@@ -90,6 +91,24 @@ export function LicenseDocumentExportDialog({
     exportDocuments.error instanceof NativeExportError
       ? exportDocuments.error
       : null;
+  const nativeDebug =
+    exportDocuments.data?.nativeDebug ?? nativeError?.diagnostics.nativeDebug;
+  const copyDiagnostic = async (label: string, value: string) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+    } else {
+      const input = document.createElement("textarea");
+      input.value = value;
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+    }
+    setCopiedValue(label);
+    window.setTimeout(() => setCopiedValue(null), 1_500);
+  };
 
   return (
     <Dialog
@@ -193,7 +212,39 @@ export function LicenseDocumentExportDialog({
               <p className="mt-1">SDK request: {exportDocuments.data?.nativeSaveRequested ? "sent" : "not confirmed"}</p>
               <p>Download origin: {exportDocuments.data?.downloadOrigin ?? nativeError?.diagnostics.downloadOrigin ?? "unknown"}</p>
               <p>URL lifetime: {exportDocuments.data?.downloadUrlExpiresInSeconds ?? nativeError?.diagnostics.downloadUrlExpiresInSeconds ?? "unknown"} seconds</p>
-              <p className="mt-1 text-amber-800">The presigned URL and mToken are never displayed.</p>
+              {nativeDebug && (
+                <div className="mt-3 space-y-2 border-t border-amber-300 pt-3">
+                  <p className="font-medium">Backend response</p>
+                  <pre className="max-h-40 overflow-auto rounded border border-amber-200 bg-white p-2 text-[11px] leading-4 whitespace-pre-wrap break-all">
+                    {JSON.stringify(nativeDebug.backendResponse, null, 2)}
+                  </pre>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1 border-amber-400 bg-white text-amber-950"
+                    onClick={() => copyDiagnostic("response", JSON.stringify(nativeDebug.backendResponse, null, 2))}
+                  >
+                    {copiedValue === "response" ? <Check /> : <Copy />}
+                    Copy backend response
+                  </Button>
+                  <p className="pt-1 font-medium">Tang Rat SDK call</p>
+                  <pre className="max-h-32 overflow-auto rounded border border-amber-200 bg-white p-2 text-[11px] leading-4 whitespace-pre-wrap break-all">
+                    {`window.czpSdk.${nativeDebug.sdkCall.method}(\n  ${JSON.stringify(nativeDebug.sdkCall.url)},\n  ${JSON.stringify(nativeDebug.sdkCall.fileName)},\n);`}
+                  </pre>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1 border-amber-400 bg-white text-amber-950"
+                    onClick={() => copyDiagnostic("sdk-call", `window.czpSdk.${nativeDebug.sdkCall.method}(\n  ${JSON.stringify(nativeDebug.sdkCall.url)},\n  ${JSON.stringify(nativeDebug.sdkCall.fileName)},\n);`)}
+                  >
+                    {copiedValue === "sdk-call" ? <Check /> : <Copy />}
+                    Copy SDK call
+                  </Button>
+                </div>
+              )}
+              <p className="mt-3 text-amber-800">UAT only: the copied presigned URL grants temporary access until it expires. Do not share it publicly.</p>
             </div>
           )}
         </div>

@@ -8,6 +8,22 @@ export type LicenseDocumentExportResult = {
   nativeSaveRequested?: boolean;
   downloadOrigin?: string;
   downloadUrlExpiresInSeconds?: number;
+  nativeDebug?: {
+    backendResponse: {
+      id?: string;
+      referenceNo?: string;
+      fileName: string;
+      contentType?: string;
+      downloadUrl: string;
+      downloadOrigin: string;
+      downloadUrlExpiresInSeconds: number;
+    };
+    sdkCall: {
+      method: "sendFileToNativeWithUrl";
+      url: string;
+      fileName: string;
+    };
+  };
 };
 
 export class NativeExportError extends Error {
@@ -15,7 +31,7 @@ export class NativeExportError extends Error {
     message: string,
     public readonly diagnostics: Pick<
       LicenseDocumentExportResult,
-      "downloadOrigin" | "downloadUrlExpiresInSeconds"
+      "downloadOrigin" | "downloadUrlExpiresInSeconds" | "nativeDebug"
     >,
   ) {
     super(message);
@@ -59,10 +75,21 @@ async function exportLicenseDocuments(
 
   if (nativeDelivery) {
     const nativeFile = (await response.json()) as {
+      id?: string;
+      referenceNo?: string;
       fileName: string;
+      contentType?: string;
       downloadUrl: string;
       downloadOrigin: string;
       downloadUrlExpiresInSeconds: number;
+    };
+    const nativeDebug = {
+      backendResponse: nativeFile,
+      sdkCall: {
+        method: "sendFileToNativeWithUrl" as const,
+        url: nativeFile.downloadUrl,
+        fileName: nativeFile.fileName,
+      },
     };
     try {
       const saved = await saveFileWithDgaNative(
@@ -75,6 +102,7 @@ async function exportLicenseDocuments(
           nativeSaveRequested: true,
           downloadOrigin: nativeFile.downloadOrigin,
           downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
+          nativeDebug,
         };
       }
     } catch (error) {
@@ -84,6 +112,7 @@ async function exportLicenseDocuments(
         {
           downloadOrigin: nativeFile.downloadOrigin,
           downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
+          nativeDebug,
         },
       );
     }
@@ -96,6 +125,7 @@ async function exportLicenseDocuments(
       nativeSaveRequested: false,
       downloadOrigin: nativeFile.downloadOrigin,
       downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
+      nativeDebug,
     };
   }
 

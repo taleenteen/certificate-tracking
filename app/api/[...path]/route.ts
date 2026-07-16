@@ -82,16 +82,11 @@ async function proxy(
     }
   }
 
-  // Logout: forget our cookies regardless of the upstream result.
-  if (path.join("/") === "auth/logout") {
-    await clearAuthCookies();
-  }
-
-  return relay(upstream);
+  return relay(upstream, path.join("/") === "auth/logout");
 }
 
 /** Turn the upstream Response into a NextResponse, harvesting tokens out of JSON bodies. */
-async function relay(upstream: Response): Promise<NextResponse> {
+async function relay(upstream: Response, isLogout = false): Promise<NextResponse> {
   const headers = new Headers();
   upstream.headers.forEach((value, key) => {
     if (!STRIP_RESPONSE_HEADERS.has(key.toLowerCase())) headers.set(key, value);
@@ -109,6 +104,16 @@ async function relay(upstream: Response): Promise<NextResponse> {
     } catch {
       // Mislabeled JSON — pass through untouched.
       return new NextResponse(text, { status: upstream.status, headers });
+    }
+
+    if (
+      isLogout &&
+      (!payload ||
+        typeof payload !== "object" ||
+        Array.isArray(payload) ||
+        (payload as Record<string, unknown>).logoutAllowed !== false)
+    ) {
+      await clearAuthCookies();
     }
 
     const sanitized =

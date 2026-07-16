@@ -13,6 +13,7 @@ type AuthUser = {
 
 type AuthResponse = {
   user?: AuthUser;
+  canLogout?: boolean;
   activeJuristicId?: string | null;
   juristicRole?: string | null;
   requiresPasswordChange?: boolean;
@@ -32,11 +33,20 @@ type DgaAuthorizeResponse = {
 
 type LogoutResponse = {
   success: boolean;
+  logoutAllowed?: boolean;
   endSessionUrl?: string;
 };
 
 const DGA_STATE_KEY = "dga_oidc_state";
 const DGA_REDIRECT_URI_KEY = "dga_oidc_redirect_uri";
+
+export type DgaAuthFlow = "mtoken" | "oidc";
+
+export function dgaAuthFlow(): DgaAuthFlow {
+  return process.env.NEXT_PUBLIC_DGA_AUTH_FLOW === "oidc"
+    ? "oidc"
+    : "mtoken";
+}
 
 function routeAfterLogin(
   roles: string[],
@@ -70,9 +80,9 @@ export function useLogin() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (credentials: { username?: string; password?: string; totpCode?: string; mToken?: string; type: 'tang-rat' | 'password' | 'self' }) => {
+    mutationFn: async (credentials: { username?: string; password?: string; totpCode?: string; mToken?: string; appId?: string; type: 'tang-rat' | 'password' | 'self' }) => {
       const { type, ...body } = credentials;
-      if (type === 'tang-rat') return http.post<AuthResponse>('auth/tang-rat', { mToken: body.mToken });
+      if (type === 'tang-rat') return http.post<AuthResponse>('auth/tang-rat', { mToken: body.mToken, appId: body.appId });
       if (type === 'self') return http.post<AuthResponse>('auth/self', { username: body.username, password: body.password, totpCode: body.totpCode });
       return http.post<AuthResponse>('auth/login', { username: body.username, password: body.password });
     },
@@ -89,6 +99,7 @@ export function useLogin() {
         user: data.user,
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
+        canLogout: data.canLogout,
       });
       routeAfterLogin(data.user?.roles ?? [], router, setActivePortalMode);
     },
@@ -139,6 +150,7 @@ export function useDgaCallback() {
         user: data.user,
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
+        canLogout: data.canLogout,
       });
       routeAfterLogin(data.user?.roles ?? [], router, setActivePortalMode);
     },
@@ -186,6 +198,7 @@ export function useRegister() {
         user: data.user,
         activeJuristicId: data.activeJuristicId,
         juristicRole: data.juristicRole,
+        canLogout: data.canLogout,
       });
       setActivePortalMode('public');
       router.push('/home?entry=public');
@@ -200,7 +213,8 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: () => http.post<LogoutResponse>('auth/logout'),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.logoutAllowed === false) return;
       // Always land on local login. Backend may still return DGA endSessionUrl
       // for OIDC sessions, but we intentionally skip that external redirect.
       clear();

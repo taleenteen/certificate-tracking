@@ -39,6 +39,7 @@ export function backendUrl(path: string[], search: string): string {
 interface TokenBody {
   accessToken?: unknown;
   refreshToken?: unknown;
+  refreshTokenExpiresInSeconds?: unknown;
 }
 
 /**
@@ -56,7 +57,13 @@ export async function harvestTokens<T extends TokenBody>(
     store.set(ACCESS_COOKIE, body.accessToken, { ...cookieBase, maxAge: 60 * 60 });
   }
   if (typeof body.refreshToken === "string") {
-    store.set(REFRESH_COOKIE, body.refreshToken, { ...cookieBase, maxAge: 7 * 24 * 60 * 60 });
+    const refreshMaxAge =
+      typeof body.refreshTokenExpiresInSeconds === "number" &&
+      Number.isSafeInteger(body.refreshTokenExpiresInSeconds) &&
+      body.refreshTokenExpiresInSeconds > 0
+        ? body.refreshTokenExpiresInSeconds
+        : 7 * 24 * 60 * 60;
+    store.set(REFRESH_COOKIE, body.refreshToken, { ...cookieBase, maxAge: refreshMaxAge });
   }
   const sanitized = { ...body };
   delete sanitized.accessToken;

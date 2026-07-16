@@ -107,6 +107,7 @@ export function AppNavbar() {
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const activePortalMode = useAuthStore((s) => s.activePortalMode);
+  const canLogout = useAuthStore((s) => s.canLogout);
   const setActivePortalMode = useAuthStore((s) => s.setActivePortalMode);
   const logout = useLogout();
   const queryClient = useQueryClient();
@@ -422,6 +423,7 @@ export function AppNavbar() {
                     roleLabel={roleLabel}
                     activePortalMode={activePortalMode}
                     canSwitchPortalMode={canSwitchPortalMode}
+                    canLogout={canLogout}
                     onNavigate={(href) => {
                       setOpenPanel(null);
                       router.push(href);
@@ -481,6 +483,7 @@ export function AppNavbar() {
                     roleLabel={roleLabel}
                     activePortalMode={activePortalMode}
                     canSwitchPortalMode={canSwitchPortalMode}
+                    canLogout={canLogout}
                     onNavigate={(href) => {
                       setOpenPanel(null);
                       router.push(href);
@@ -627,6 +630,7 @@ function ProfilePanel({
   roleLabel,
   activePortalMode,
   canSwitchPortalMode,
+  canLogout,
   onNavigate,
   onSwitchPortalMode,
   onLogout,
@@ -636,6 +640,7 @@ function ProfilePanel({
   roleLabel: string;
   activePortalMode: "public" | "officer" | null;
   canSwitchPortalMode: boolean;
+  canLogout: boolean;
   onNavigate: (href: string) => void;
   onSwitchPortalMode: () => void;
   onLogout: () => void;
@@ -697,21 +702,23 @@ function ProfilePanel({
         )}
       </div>
 
-      <div className="mx-4 h-px bg-slate-100" />
-
-      {/* Logout */}
-      <div className="px-2 py-2">
-        <button
-          type="button"
-          onClick={onLogout}
-          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
-        >
-          <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
-            <LogOut className="h-3.5 w-3.5" />
+      {canLogout && (
+        <>
+          <div className="mx-4 h-px bg-slate-100" />
+          <div className="px-2 py-2">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
+                <LogOut className="h-3.5 w-3.5" />
+              </div>
+              ออกจากระบบ
+            </button>
           </div>
-          ออกจากระบบ
-        </button>
-      </div>
+        </>
+      )}
     </DropdownCard>
   );
 }

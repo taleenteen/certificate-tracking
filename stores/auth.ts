@@ -16,6 +16,7 @@ interface AuthState {
   user: User | null;
   activeJuristicId: string | null;
   juristicRole: string | null;
+  canLogout: boolean;
   activePortalMode: 'public' | 'officer' | null;
   // runtime-only: true once session hydration has settled (success or 401).
   // Never persisted — always starts false so the auth guard waits for it.
@@ -24,7 +25,7 @@ interface AuthState {
   // Not persisted — lives only for the duration of the change-password flow.
   pendingTempToken: string | null;
 
-  setAuth: (payload: { user?: User; activeJuristicId?: string | null; juristicRole?: string | null }) => void;
+  setAuth: (payload: { user?: User; activeJuristicId?: string | null; juristicRole?: string | null; canLogout?: boolean }) => void;
   setContext: (payload: { activeJuristicId: string | null; juristicRole: string | null }) => void;
   setActivePortalMode: (mode: 'public' | 'officer' | null) => void;
   setHydrated: (v: boolean) => void;
@@ -38,6 +39,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       activeJuristicId: null,
       juristicRole: null,
+      canLogout: true,
       activePortalMode: null,
       hydrated: false,
       pendingTempToken: null,
@@ -51,6 +53,8 @@ export const useAuthStore = create<AuthState>()(
               : state.activeJuristicId,
           juristicRole:
             payload.juristicRole !== undefined ? payload.juristicRole : state.juristicRole,
+          canLogout:
+            payload.canLogout !== undefined ? payload.canLogout : state.canLogout,
         })),
 
       setContext: (payload) =>
@@ -70,6 +74,7 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           activeJuristicId: null,
           juristicRole: null,
+          canLogout: true,
           activePortalMode: null,
           pendingTempToken: null,
         }),
@@ -82,6 +87,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         activeJuristicId: state.activeJuristicId,
         juristicRole: state.juristicRole,
+        canLogout: state.canLogout,
         activePortalMode: state.activePortalMode,
       }),
     }

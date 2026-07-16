@@ -2,7 +2,18 @@
 
 import { ReactNode, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
 import { AuthBootstrap } from './auth-bootstrap';
+
+function RouteAwareAuthBootstrap({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  // A Tang Rat WebView arrival can carry a different person than the browser's
+  // previous session. Do not hydrate that previous session on the handoff page.
+  if (pathname === '/auth/dga') return <>{children}</>;
+
+  return <AuthBootstrap>{children}</AuthBootstrap>;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -16,9 +27,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthBootstrap>
+      <RouteAwareAuthBootstrap>
         {children}
-      </AuthBootstrap>
+      </RouteAwareAuthBootstrap>
     </QueryClientProvider>
   );
 }

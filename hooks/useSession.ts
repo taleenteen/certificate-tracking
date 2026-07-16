@@ -11,6 +11,7 @@ interface ProfileResponse {
   citizenIdVerified: boolean;
   citizenIdLast4: string | null;
   primaryChannel: string;
+  canLogout: boolean;
 }
 
 export function useSessionHydration() {
@@ -27,6 +28,7 @@ export function useSessionHydration() {
           roles: data.roles,
           agencyId: data.agencyId,
         },
+        canLogout: data.canLogout,
       });
     },
     onError: () => {

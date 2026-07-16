@@ -39,11 +39,13 @@ export async function waitForDgaSdk(timeoutMs = 4_000) {
 }
 
 export async function getDgaNativeContext() {
-  const sdk = getDgaSdk();
+  const sdk = getDgaSdk() ?? (await waitForDgaSdk(800));
   if (!sdk) return { sdk: undefined, platform: "unknown" as const, isNative: false };
 
   try {
-    const platform = (await sdk.getPlatform?.()) ?? "unknown";
+    const rawPlatform = await sdk.getPlatform?.();
+    const platform =
+      typeof rawPlatform === "string" ? rawPlatform.toLowerCase() : "unknown";
     return {
       sdk,
       platform,

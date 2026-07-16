@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { ChartConfig } from "@/components/ui/chart";
 import { Search, ScanSearch } from "lucide-react";
@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { http } from "@/lib/http";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import { SearchSheetOverlay } from "@/components/shared/search-sheet-overlay";
 import { HomepageService } from "@/components/app/home/homepage-service";
 import { ComplaintsSheetOverlay } from "@/components/shared/complaints-sheet-overlay";
@@ -376,14 +377,17 @@ export function HomeDashboard() {
   const { data: dashboardData } = useDashboard();
   const { data: licenses = [] } = useLicenses();
 
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<"license" | "officer">(
     "license",
   );
+  const scannerModeRef = useRef(scannerMode);
+
+  useEffect(() => {
+    scannerModeRef.current = scannerMode;
+  }, [scannerMode]);
 
   const handleScanMock = (value: string) => {
-    setIsQrScannerOpen(false);
-    if (scannerMode === "officer") {
+    if (scannerModeRef.current === "officer") {
       const token = extractOfficerToken(value);
       router.push(`/verify-officer?token=${token}`);
       return;
@@ -392,6 +396,11 @@ export function HomeDashboard() {
       toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
     }
   };
+  const {
+    isBrowserScannerOpen,
+    setIsBrowserScannerOpen,
+    startScanner,
+  } = useNativeQrScanner(handleScanMock);
 
   // Summary statistics mapping for charts and indicators using real backend data
   const summaryStats = useMemo<
@@ -492,19 +501,21 @@ export function HomeDashboard() {
         <HomepageService
           role={role}
           onLicenseScanClick={() => {
+            scannerModeRef.current = "license";
             setScannerMode("license");
-            setIsQrScannerOpen(true);
+            void startScanner();
           }}
           onOfficerScanClick={() => {
+            scannerModeRef.current = "officer";
             setScannerMode("officer");
-            setIsQrScannerOpen(true);
+            void startScanner();
           }}
           onComplaintsClick={() => setIsComplaintsSheetOpen(true)}
         />
 
         <QrScannerDialog
-          open={isQrScannerOpen}
-          onOpenChange={setIsQrScannerOpen}
+          open={isBrowserScannerOpen}
+          onOpenChange={setIsBrowserScannerOpen}
           onScanMock={handleScanMock}
           id="home-qr-scanner"
           title={
@@ -576,8 +587,9 @@ export function HomeDashboard() {
             <button
               type="button"
               onClick={() => {
+                scannerModeRef.current = "license";
                 setScannerMode("license");
-                setIsQrScannerOpen(true);
+                void startScanner();
               }}
               className="text-[#145b57] cursor-pointer hover:opacity-80 transition-opacity"
               aria-label="Scan QR Code"
@@ -931,8 +943,8 @@ export function HomeDashboard() {
       </section>
 
       <QrScannerDialog
-        open={isQrScannerOpen}
-        onOpenChange={setIsQrScannerOpen}
+        open={isBrowserScannerOpen}
+        onOpenChange={setIsBrowserScannerOpen}
         onScanMock={handleScanMock}
         id="home-qr-scanner"
         title={

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useLicenses, type LicenseResponse } from "@/hooks/useLicenses";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
 import { http } from "@/lib/http";
 
@@ -49,7 +50,6 @@ export function SearchSheetOverlay({
   const router = useRouter();
   const { data: licenses = [] } = useLicenses();
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Sync state and autofocus input on open
@@ -92,13 +92,17 @@ export function SearchSheetOverlay({
   }, [licenses, searchQuery]);
 
   const handleScanMock = (value: string) => {
-    setIsQrScannerOpen(false);
     if (openExternalQrUrl(value)) {
       onClose();
       return;
     }
     toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
   };
+  const {
+    isBrowserScannerOpen,
+    setIsBrowserScannerOpen,
+    startScanner,
+  } = useNativeQrScanner(handleScanMock);
 
   return (
     <>
@@ -158,7 +162,7 @@ export function SearchSheetOverlay({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setIsQrScannerOpen(true);
+                            void startScanner();
                           }}
                           className="text-[#145b57] hover:opacity-80 transition-opacity cursor-pointer p-1.5 flex items-center justify-center"
                           aria-label="Scan QR Code"
@@ -241,8 +245,8 @@ export function SearchSheetOverlay({
       </AnimatePresence>
 
       <QrScannerDialog
-        open={isQrScannerOpen}
-        onOpenChange={setIsQrScannerOpen}
+        open={isBrowserScannerOpen}
+        onOpenChange={setIsBrowserScannerOpen}
         onScanMock={handleScanMock}
         id="sheet-overlay-qr-scanner"
       />

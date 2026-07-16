@@ -13,7 +13,6 @@ import {
   LicenseCertificateCard,
   type LicenseCardItem,
 } from "@/components/app/licenses/license-certificate-card";
-import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +23,6 @@ import type { JuristicLicenseGroupResponse } from "@/hooks/useLicenses";
 import type { StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
 import { motion, AnimatePresence } from "framer-motion";
-import { openExternalQrUrl } from "@/lib/external-qr-url";
 
 dayjs.extend(buddhistEra);
 dayjs.locale("th");
@@ -54,7 +52,6 @@ export function LicenseListPageView({
 }: LicenseListPageViewProps) {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [expandedCompanies, setExpandedCompanies] = useState<Record<string, boolean>>({});
   const [expandedBusinesses, setExpandedBusinesses] = useState<Record<string, boolean>>({});
 
@@ -101,12 +98,6 @@ export function LicenseListPageView({
     };
   };
 
-  const handleScanMock = (value: string) => {
-    setIsQrScannerOpen(false);
-    if (!openExternalQrUrl(value)) {
-      toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
-    }
-  };
 
   // Filter personal licenses
   const filteredPersonalLicenses = useMemo(() => {
@@ -442,12 +433,6 @@ export function LicenseListPageView({
         </div>
       </div>
 
-      <QrScannerDialog
-        open={isQrScannerOpen}
-        onOpenChange={setIsQrScannerOpen}
-        onScanMock={handleScanMock}
-        id="licenses-page-qr-scanner"
-      />
     </main>
   );
 }

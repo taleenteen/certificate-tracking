@@ -26,6 +26,7 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
+| 2026-07-16 | [Native QR Scanner Routing](./2026-07-16-native-qr-scanner-routing.md) | Route all QR actions through Tang Rat native SDK with browser-camera fallback. | Implemented | TypeScript and focused ESLint passed; device verification pending. | Implemented |
 | 2026-07-16 | [Native Export Diagnostics](./2026-07-16-native-export-diagnostics.md) | Show UAT-only backend response and Tang Rat SDK handoff diagnostics for native file export. | Implemented | TypeScript and file-scoped ESLint passed; physical UAT device test pending. | Implemented |
 | 2026-07-12 | [Business License Export Redesign](./2026-07-12-business-export-redesign.md) | Redesign the business license export page to match mockup layout and display PDF page previews. | Verified | Verified build and mapped licenseNo correctly. | Verified |
 | 2026-07-11 | [Export License Banner Redesign](./2026-07-11-export-banner-redesign.md) | Redesign the export license banner on the details pages with custom gradient and download button. | Verified | Created component, wired triggers, and verified build. | Verified |

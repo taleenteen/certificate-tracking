@@ -30,6 +30,7 @@ import {
 } from "@/components/app/businesses/business-filter-panel";
 import { QrScannerDialog } from "./qr-scanner-dialog";
 import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import { SearchSuggestions } from "./search-suggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -144,7 +145,6 @@ export function AppNavbar() {
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [openPanel, setOpenPanel] = useState<
     "profile" | "notifications" | null
   >(null);
@@ -221,11 +221,15 @@ export function AppNavbar() {
   };
 
   const handleMockScan = (value: string) => {
-    setIsQrScannerOpen(false);
     if (!openExternalQrUrl(value)) {
       toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
     }
   };
+  const {
+    isBrowserScannerOpen,
+    setIsBrowserScannerOpen,
+    startScanner,
+  } = useNativeQrScanner(handleMockScan);
 
   const togglePanel = (panel: "profile" | "notifications") => {
     setOpenPanel((current) => (current === panel ? null : panel));
@@ -323,7 +327,7 @@ export function AppNavbar() {
                       size="icon"
                       variant="ghost"
                       aria-label="Scan QR code"
-                      onClick={() => setIsQrScannerOpen(true)}
+                      onClick={startScanner}
                       className="h-9 w-9 shrink-0 rounded-xl text-[#114e4b] hover:bg-slate-100 hover:text-[#114e4b]"
                     >
                       <ScanSearch className="h-4 w-4" />
@@ -506,8 +510,8 @@ export function AppNavbar() {
       </div>
 
       <QrScannerDialog
-        open={isQrScannerOpen}
-        onOpenChange={setIsQrScannerOpen}
+        open={isBrowserScannerOpen}
+        onOpenChange={setIsBrowserScannerOpen}
         onScanMock={handleMockScan}
         id="navbar-qr-scanner"
       />

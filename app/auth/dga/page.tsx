@@ -40,6 +40,10 @@ function redactAppId(appId: string | undefined) {
   return `present:...${appId.slice(-4)}`;
 }
 
+function displayAppId(appId: string | undefined) {
+  return mTokenDebugEnabled ? appId ?? "missing" : redactAppId(appId);
+}
+
 function AuthPanel({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex min-h-svh items-center justify-center bg-[#f7f8fb] px-5 py-8">
@@ -101,7 +105,7 @@ function MTokenLandingPage() {
           sdkReady: Boolean(sdk),
           mTokenSource,
           appIdSource,
-          appId: redactAppId(appId),
+          appId: displayAppId(appId),
         });
         setTokenMissing(true);
         return;
@@ -119,7 +123,7 @@ function MTokenLandingPage() {
         sdkReady: Boolean(sdk),
         mTokenSource,
         appIdSource,
-        appId: redactAppId(appId),
+        appId: displayAppId(appId),
       });
       login.mutate(
         { type: "tang-rat", mToken, appId },

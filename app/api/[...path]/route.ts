@@ -70,7 +70,18 @@ async function proxy(
   };
 
   const isAuthPath = path[0] === "auth";
+  const isTangRatLogin = path.join("/") === "auth/tang-rat";
   let upstream = await call(store.get(ACCESS_COOKIE)?.value);
+
+  // UAT diagnostic only. Keep identity tokens and request bodies out of logs.
+  // This is written to the frontend container log, which is accessible on the
+  // Ubuntu server even when a Tang Rat WebView has no browser devtools.
+  if (isTangRatLogin) {
+    console.info("[mtoken-bff] Tang Rat exchange completed", {
+      status: upstream.status,
+      ok: upstream.ok,
+    });
+  }
 
   // Auto-refresh once on 401 for protected (non-auth) endpoints.
   if (upstream.status === 401 && !isAuthPath) {

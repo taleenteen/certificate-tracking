@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { dgaAuthFlow, useDgaAuthorize, useLogin } from "@/hooks/useAuth";
+import { ApiError } from "@/lib/http";
 import { useAuthStore } from "@/stores/auth";
 
 type CzpSdk = {
@@ -19,6 +20,24 @@ declare global {
   interface Window {
     czpSdk?: CzpSdk;
   }
+}
+
+type MTokenDiagnostics = {
+  stage: "initializing" | "missing-input" | "exchanging" | "success" | "failed";
+  sdkReady: boolean;
+  mTokenSource: "url" | "sdk" | "missing";
+  appIdSource: "url" | "sdk" | "missing";
+  appId: string;
+  responseStatus?: number;
+  responseMessage?: string;
+};
+
+const mTokenDebugEnabled = process.env.NEXT_PUBLIC_MTOKEN_DEBUG === "true";
+
+function redactAppId(appId: string | undefined) {
+  if (!appId) return "missing";
+  if (appId.length <= 4) return "present";
+  return `present:...${appId.slice(-4)}`;
 }
 
 function AuthPanel({ children }: { children: React.ReactNode }) {
@@ -38,6 +57,13 @@ function MTokenLandingPage() {
   const setHydrated = useAuthStore((state) => state.setHydrated);
   const startedRef = useRef(false);
   const [tokenMissing, setTokenMissing] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<MTokenDiagnostics>({
+    stage: "initializing",
+    sdkReady: false,
+    mTokenSource: "missing",
+    appIdSource: "missing",
+    appId: "missing",
+  });
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -66,8 +92,17 @@ function MTokenLandingPage() {
       const appId =
         queryAppId ??
         (await Promise.resolve(sdk?.getAppId?.()));
+      const mTokenSource = queryMToken ? "url" : mToken ? "sdk" : "missing";
+      const appIdSource = queryAppId ? "url" : appId ? "sdk" : "missing";
 
       if (!mToken || !appId) {
+        setDiagnostics({
+          stage: "missing-input",
+          sdkReady: Boolean(sdk),
+          mTokenSource,
+          appIdSource,
+          appId: redactAppId(appId),
+        });
         setTokenMissing(true);
         return;
       }
@@ -79,7 +114,29 @@ function MTokenLandingPage() {
       clearAuth();
       setHydrated(false);
       window.history.replaceState(null, "", window.location.pathname + window.location.hash);
-      login.mutate({ type: "tang-rat", mToken, appId });
+      setDiagnostics({
+        stage: "exchanging",
+        sdkReady: Boolean(sdk),
+        mTokenSource,
+        appIdSource,
+        appId: redactAppId(appId),
+      });
+      login.mutate(
+        { type: "tang-rat", mToken, appId },
+        {
+          onSuccess: () => {
+            setDiagnostics((current) => ({ ...current, stage: "success" }));
+          },
+          onError: (error) => {
+            setDiagnostics((current) => ({
+              ...current,
+              stage: "failed",
+              responseStatus: error instanceof ApiError ? error.status : undefined,
+              responseMessage: error instanceof Error ? error.message : "Unknown error",
+            }));
+          },
+        },
+      );
     };
 
     void run();
@@ -119,6 +176,21 @@ function MTokenLandingPage() {
           </div>
         )}
       </div>
+
+      {mTokenDebugEnabled && (
+        <section className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
+          <p className="font-semibold">UAT mToken diagnostics</p>
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dt>Stage</dt><dd>{diagnostics.stage}</dd>
+            <dt>SDK ready</dt><dd>{String(diagnostics.sdkReady)}</dd>
+            <dt>mToken source</dt><dd>{diagnostics.mTokenSource}</dd>
+            <dt>appId source</dt><dd>{diagnostics.appIdSource}</dd>
+            <dt>appId</dt><dd>{diagnostics.appId}</dd>
+            {diagnostics.responseStatus !== undefined && <><dt>Response</dt><dd>{diagnostics.responseStatus}</dd></>}
+            {diagnostics.responseMessage && <><dt>Message</dt><dd>{diagnostics.responseMessage}</dd></>}
+          </dl>
+        </section>
+      )}
 
       <Button asChild variant="outline" className="mt-5 w-full rounded-xl">
         <Link href="/auth/login">

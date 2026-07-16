@@ -24,6 +24,13 @@ export default function LoginPage() {
   const didResumeRef = useRef(false);
 
   useEffect(() => {
+    // Preserve a legacy Tang Rat handoff if the provider still opens the old
+    // login route with query values. Native SDK-only handoffs must use /auth/dga.
+    if (window.location.search.includes("mToken=") || window.location.search.includes("appId=")) {
+      router.replace(`/auth/dga${window.location.search}`);
+      return;
+    }
+
     if (!hydrated || didResumeRef.current) return;
     didResumeRef.current = true;
 

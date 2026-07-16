@@ -17,6 +17,13 @@ export default function IndexPage() {
   const activePortalMode = useAuthStore((s) => s.activePortalMode);
 
   useEffect(() => {
+    // Compatibility for legacy Tang Rat registrations that still use the site
+    // root but append the handoff values to the landing URL.
+    if (window.location.search.includes("mToken=") || window.location.search.includes("appId=")) {
+      router.replace(`/auth/dga${window.location.search}`);
+      return;
+    }
+
     if (!hydrated) return;
 
     if (!user) {

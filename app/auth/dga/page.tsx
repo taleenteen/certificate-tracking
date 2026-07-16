@@ -8,19 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { dgaAuthFlow, useDgaAuthorize, useLogin } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/http";
+import { getDgaSdk, waitForDgaSdk } from "@/lib/dga-native";
 import { useAuthStore } from "@/stores/auth";
-
-type CzpSdk = {
-  getToken?: () => string | Promise<string | undefined> | undefined;
-  getAppId?: () => string | Promise<string | undefined> | undefined;
-  setTitle?: (title: string, isShowBackButton?: boolean) => void;
-};
-
-declare global {
-  interface Window {
-    czpSdk?: CzpSdk;
-  }
-}
 
 type MTokenDiagnostics = {
   stage: "initializing" | "missing-input" | "exchanging" | "success" | "failed";
@@ -73,21 +62,13 @@ function MTokenLandingPage() {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    const waitForSdk = async () => {
-      for (let attempt = 0; attempt < 40; attempt += 1) {
-        if (window.czpSdk) return window.czpSdk;
-        await new Promise((resolve) => window.setTimeout(resolve, 100));
-      }
-      return undefined;
-    };
-
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
       const queryMToken = params.get("mToken");
       const queryAppId = params.get("appId");
       const sdk =
-        window.czpSdk ??
-        (!queryMToken || !queryAppId ? await waitForSdk() : undefined);
+        getDgaSdk() ??
+        (!queryMToken || !queryAppId ? await waitForDgaSdk() : undefined);
       sdk?.setTitle?.("เข้าสู่ระบบ e-License", true);
 
       const mToken =

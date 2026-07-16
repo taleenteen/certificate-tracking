@@ -4,6 +4,7 @@ import { ReactNode, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { AuthBootstrap } from './auth-bootstrap';
+import { DgaNativeChrome } from './dga-native-chrome';
 
 function RouteAwareAuthBootstrap({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <DgaNativeChrome />
       <RouteAwareAuthBootstrap>
         {children}
       </RouteAwareAuthBootstrap>

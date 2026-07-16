@@ -5,6 +5,7 @@ import { XIcon } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { scanWithDgaNative } from "@/lib/dga-native";
 
 type QrScannerDialogProps = {
   open: boolean;
@@ -111,47 +112,62 @@ export function QrScannerDialog({
     if (open) {
       isScannerActiveRef.current = true;
       hasHandledScanRef.current = false;
+      let cancelled = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
 
-      // Start camera streaming after layout settles
-      const timer = setTimeout(() => {
-        if (!isScannerActiveRef.current) {
+      const startBrowserScanner = () => {
+        timer = setTimeout(() => {
+          if (!isScannerActiveRef.current || cancelled) {
+            return;
+          }
+
+          const scannerId = id;
+          const html5QrCode = new Html5Qrcode(scannerId);
+          scannerRef.current = html5QrCode;
+
+          const startPromise = html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 15, aspectRatio: 1.0 },
+            (decodedText) => {
+              void handleDecodedScan(decodedText);
+            },
+            () => {
+              // Ignore individual frames that do not contain a QR code.
+            },
+          );
+
+          startPromiseRef.current = startPromise;
+
+          startPromise.catch((err) => {
+            console.warn("Camera scan start skipped (fallback active):", err);
+          });
+        }, 300);
+      };
+
+      void scanWithDgaNative().then((nativeScan) => {
+        if (cancelled || !isScannerActiveRef.current) return;
+        if (!nativeScan.supported) {
+          startBrowserScanner();
           return;
         }
 
-        const scannerId = id;
-        const html5QrCode = new Html5Qrcode(scannerId);
-        scannerRef.current = html5QrCode;
-
-        const startPromise = html5QrCode.start(
-          { facingMode: "environment" }, // back camera on mobile devices
-          {
-            fps: 15,
-            aspectRatio: 1.0,
-          },
-          (decodedText) => {
-            // Successfully scanned real QR code
-            void handleDecodedScan(decodedText);
-          },
-          () => {
-            // Silent error callback on frames scanning ticks
-          }
-        );
-
-        startPromiseRef.current = startPromise;
-
-        startPromise.catch((err) => {
-          console.warn("Camera scan start skipped (fallback active):", err);
-        });
-      }, 300);
+        if (nativeScan.value) {
+          void handleDecodedScan(nativeScan.value);
+        } else {
+          isScannerActiveRef.current = false;
+          onOpenChange(false);
+        }
+      });
 
       return () => {
-        clearTimeout(timer);
+        cancelled = true;
+        if (timer) clearTimeout(timer);
         void cleanupScanner();
       };
     } else {
       void cleanupScanner();
     }
-  }, [cleanupScanner, handleDecodedScan, id, open]);
+  }, [cleanupScanner, handleDecodedScan, id, onOpenChange, open]);
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>

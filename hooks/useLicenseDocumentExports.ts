@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { getDgaNativeContext, saveFileWithDgaNative } from "@/lib/dga-native";
 
 export type LicenseDocumentExportFormat = "pdf" | "xlsx" | "csv";
 
@@ -14,12 +15,17 @@ async function exportLicenseDocuments(
   businessId: string,
   payload: { format: LicenseDocumentExportFormat; licenseIds: string[] },
 ) {
+  const nativeContext = await getDgaNativeContext();
+  const nativeDelivery = nativeContext.isNative;
   const response = await fetch(
     `/api/officer/businesses/${businessId}/license-document-exports`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        ...(nativeDelivery ? { delivery: "native" } : {}),
+      }),
     },
   );
   if (!response.ok) {
@@ -29,6 +35,23 @@ async function exportLicenseDocuments(
         ? body.message
         : "ไม่สามารถสร้างไฟล์เอกสารได้",
     );
+  }
+
+  if (nativeDelivery) {
+    const nativeFile = (await response.json()) as {
+      fileName: string;
+      downloadUrl: string;
+    };
+    const saved = await saveFileWithDgaNative(
+      nativeFile.downloadUrl,
+      nativeFile.fileName,
+    );
+    if (saved) return;
+
+    // The SDK may become unavailable during a WebView transition. A presigned
+    // URL is still safe to open and gives the officer a normal download path.
+    window.open(nativeFile.downloadUrl, "_blank", "noopener,noreferrer");
+    return;
   }
 
   const blob = await response.blob();

@@ -44,11 +44,13 @@ export async function getDgaNativeContext() {
 
   try {
     const platform = (await sdk.getPlatform?.()) ?? "unknown";
-    const isCitizenPortal = await sdk.isCitizenPortal?.();
     return {
       sdk,
       platform,
-      isNative: platform === "mobile" && isCitizenPortal !== false,
+      // The v5 UAT bridge can report an inconsistent isCitizenPortal value
+      // while still exposing the native interface. Platform is the documented
+      // universal signal and must decide whether we use browser fallback.
+      isNative: platform === "mobile",
     };
   } catch {
     return { sdk, platform: "unknown" as const, isNative: false };

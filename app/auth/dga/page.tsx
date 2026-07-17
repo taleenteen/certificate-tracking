@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { dgaAuthFlow, useDgaAuthorize, useLogin } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/http";
-import { getDgaSdk, waitForDgaSdk } from "@/lib/dga-native";
+import { waitForDgaMTokenCredentials } from "@/lib/dga-native";
 import { useAuthStore } from "@/stores/auth";
 
 type MTokenDiagnostics = {
@@ -17,6 +17,7 @@ type MTokenDiagnostics = {
   mTokenSource: "url" | "sdk" | "missing";
   appIdSource: "url" | "sdk" | "missing";
   appId: string;
+  waitedMs?: number;
   responseStatus?: number;
   responseMessage?: string;
 };
@@ -48,8 +49,9 @@ function MTokenLandingPage() {
   const queryClient = useQueryClient();
   const clearAuth = useAuthStore((state) => state.clear);
   const setHydrated = useAuthStore((state) => state.setHydrated);
-  const startedRef = useRef(false);
+  const submittedRef = useRef(false);
   const [tokenMissing, setTokenMissing] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
   const [diagnostics, setDiagnostics] = useState<MTokenDiagnostics>({
     stage: "initializing",
     sdkReady: false,
@@ -59,24 +61,17 @@ function MTokenLandingPage() {
   });
 
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
+    let cancelled = false;
 
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
       const queryMToken = params.get("mToken");
       const queryAppId = params.get("appId");
-      const sdk =
-        getDgaSdk() ??
-        (!queryMToken || !queryAppId ? await waitForDgaSdk() : undefined);
+      const { sdk, mToken, appId, waitedMs } =
+        await waitForDgaMTokenCredentials({ queryMToken, queryAppId });
+      if (cancelled) return;
       sdk?.setTitle?.("เข้าสู่ระบบ e-License", true);
 
-      const mToken =
-        queryMToken ??
-        (await Promise.resolve(sdk?.getToken?.()));
-      const appId =
-        queryAppId ??
-        (await Promise.resolve(sdk?.getAppId?.()));
       const mTokenSource = queryMToken ? "url" : mToken ? "sdk" : "missing";
       const appIdSource = queryAppId ? "url" : appId ? "sdk" : "missing";
 
@@ -87,6 +82,7 @@ function MTokenLandingPage() {
           mTokenSource,
           appIdSource,
           appId: displayAppId(appId),
+          waitedMs,
         });
         setTokenMissing(true);
         return;
@@ -105,7 +101,10 @@ function MTokenLandingPage() {
         mTokenSource,
         appIdSource,
         appId: displayAppId(appId),
+        waitedMs,
       });
+      if (submittedRef.current) return;
+      submittedRef.current = true;
       login.mutate(
         { type: "tang-rat", mToken, appId },
         {
@@ -125,7 +124,10 @@ function MTokenLandingPage() {
     };
 
     void run();
-  }, [clearAuth, login, queryClient, setHydrated]);
+    return () => {
+      cancelled = true;
+    };
+  }, [clearAuth, login, queryClient, retryNonce, setHydrated]);
 
   const missingToken = tokenMissing && !login.isPending && !login.isSuccess && !login.isError;
 
@@ -171,10 +173,31 @@ function MTokenLandingPage() {
             <dt>mToken source</dt><dd>{diagnostics.mTokenSource}</dd>
             <dt>appId source</dt><dd>{diagnostics.appIdSource}</dd>
             <dt>appId</dt><dd>{diagnostics.appId}</dd>
+            {diagnostics.waitedMs !== undefined && <><dt>SDK wait</dt><dd>{diagnostics.waitedMs} ms</dd></>}
             {diagnostics.responseStatus !== undefined && <><dt>Response</dt><dd>{diagnostics.responseStatus}</dd></>}
             {diagnostics.responseMessage && <><dt>Message</dt><dd>{diagnostics.responseMessage}</dd></>}
           </dl>
         </section>
+      )}
+
+      {missingToken && (
+        <Button
+          type="button"
+          className="mt-5 w-full rounded-xl bg-[#1a2a80] text-white hover:bg-[#151f66]"
+          onClick={() => {
+            setTokenMissing(false);
+            setDiagnostics({
+              stage: "initializing",
+              sdkReady: false,
+              mTokenSource: "missing",
+              appIdSource: "missing",
+              appId: "missing",
+            });
+            setRetryNonce((current) => current + 1);
+          }}
+        >
+          ลองเชื่อมต่ออีกครั้ง
+        </Button>
       )}
 
       <Button asChild variant="outline" className="mt-5 w-full rounded-xl">

@@ -12,6 +12,13 @@ type CzpSdk = {
   sendFileToNativeWithUrl?: (url: string, fileName: string) => void | Promise<void>;
 };
 
+export type DgaMTokenCredentials = {
+  sdk?: CzpSdk;
+  mToken?: string;
+  appId?: string;
+  waitedMs: number;
+};
+
 declare global {
   interface Window {
     czpSdk?: CzpSdk;
@@ -36,6 +43,36 @@ export async function waitForDgaSdk(timeoutMs = 4_000) {
     await new Promise((resolve) => window.setTimeout(resolve, 100));
   }
   return undefined;
+}
+
+export async function waitForDgaMTokenCredentials(options: {
+  queryMToken?: string | null;
+  queryAppId?: string | null;
+  timeoutMs?: number;
+}): Promise<DgaMTokenCredentials> {
+  const startedAt = Date.now();
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  let sdk = getDgaSdk();
+  let mToken = options.queryMToken ?? undefined;
+  let appId = options.queryAppId ?? undefined;
+
+  while (Date.now() - startedAt < timeoutMs) {
+    sdk ??= getDgaSdk();
+    try {
+      mToken ??= await Promise.resolve(sdk?.getToken?.());
+      appId ??= await Promise.resolve(sdk?.getAppId?.());
+    } catch {
+      // The native bridge can be attached after the SDK script is evaluated.
+      // Retry until the bounded readiness window expires.
+    }
+
+    if (mToken && appId) {
+      return { sdk, mToken, appId, waitedMs: Date.now() - startedAt };
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 150));
+  }
+
+  return { sdk, mToken, appId, waitedMs: Date.now() - startedAt };
 }
 
 export async function getDgaNativeContext() {

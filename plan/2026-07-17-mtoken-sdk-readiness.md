@@ -7,7 +7,7 @@
 
 ## Objective
 
-Prevent Tang Rat UAT login from failing on slower or older WebViews when the SDK object loads before native mToken/appId values are available.
+Prevent Tang Rat UAT login from failing or remaining pending on slower/older WebViews when the SDK object loads before native mToken/appId values are available.
 
 ## Context and constraints
 
@@ -20,6 +20,7 @@ Prevent Tang Rat UAT login from failing on slower or older WebViews when the SDK
 - Poll for complete mToken credentials for a bounded period before showing a missing-input error.
 - Add retry only before a token has been submitted.
 - Extend UAT diagnostics with readiness wait duration.
+- Keep remote SDK download off the render-critical path and measure BFF/API exchange duration.
 
 ## Out of scope
 
@@ -46,11 +47,15 @@ Prevent Tang Rat UAT login from failing on slower or older WebViews when the SDK
 
 - 2026-07-17: Audit identified an SDK-native-bridge race caused by single-read credential retrieval.
 - 2026-07-17: Added bounded complete-credential readiness polling, pre-submit retry, and UAT wait-duration diagnostics. TypeScript, focused ESLint, and whitespace validation passed.
+- 2026-07-17: Added client/BFF exchange timing and deferred non-blocking SDK loading; backend owns upstream DGA deadline logs.
+- 2026-07-17: Re-ran frontend TypeScript, focused ESLint, and whitespace validation after performance changes. Backend provider unit test passed.
 
 ## Changed files
 
 - `lib/dga-native.ts`
 - `app/auth/dga/page.tsx`
+- `app/api/[...path]/route.ts`
+- `app/layout.tsx`
 - `plan/README.md`
 
 ## Open questions and risks

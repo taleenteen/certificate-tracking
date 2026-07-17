@@ -18,6 +18,7 @@ type MTokenDiagnostics = {
   appIdSource: "url" | "sdk" | "missing";
   appId: string;
   waitedMs?: number;
+  exchangeMs?: number;
   responseStatus?: number;
   responseMessage?: string;
 };
@@ -105,16 +106,22 @@ function MTokenLandingPage() {
       });
       if (submittedRef.current) return;
       submittedRef.current = true;
+      const exchangeStartedAt = performance.now();
       login.mutate(
         { type: "tang-rat", mToken, appId },
         {
           onSuccess: () => {
-            setDiagnostics((current) => ({ ...current, stage: "success" }));
+            setDiagnostics((current) => ({
+              ...current,
+              stage: "success",
+              exchangeMs: Math.round(performance.now() - exchangeStartedAt),
+            }));
           },
           onError: (error) => {
             setDiagnostics((current) => ({
               ...current,
               stage: "failed",
+              exchangeMs: Math.round(performance.now() - exchangeStartedAt),
               responseStatus: error instanceof ApiError ? error.status : undefined,
               responseMessage: error instanceof Error ? error.message : "Unknown error",
             }));
@@ -174,6 +181,7 @@ function MTokenLandingPage() {
             <dt>appId source</dt><dd>{diagnostics.appIdSource}</dd>
             <dt>appId</dt><dd>{diagnostics.appId}</dd>
             {diagnostics.waitedMs !== undefined && <><dt>SDK wait</dt><dd>{diagnostics.waitedMs} ms</dd></>}
+            {diagnostics.exchangeMs !== undefined && <><dt>API exchange</dt><dd>{diagnostics.exchangeMs} ms</dd></>}
             {diagnostics.responseStatus !== undefined && <><dt>Response</dt><dd>{diagnostics.responseStatus}</dd></>}
             {diagnostics.responseMessage && <><dt>Message</dt><dd>{diagnostics.responseMessage}</dd></>}
           </dl>

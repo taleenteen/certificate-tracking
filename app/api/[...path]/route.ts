@@ -41,6 +41,7 @@ async function proxy(
   req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> },
 ): Promise<NextResponse> {
+  const startedAt = Date.now();
   const { path } = await ctx.params;
   const store = await cookies();
 
@@ -80,6 +81,7 @@ async function proxy(
     console.info("[mtoken-bff] Tang Rat exchange completed", {
       status: upstream.status,
       ok: upstream.ok,
+      durationMs: Date.now() - startedAt,
     });
   }
 
@@ -93,15 +95,26 @@ async function proxy(
     }
   }
 
-  return relay(upstream, path.join("/") === "auth/logout");
+  return relay(
+    upstream,
+    path.join("/") === "auth/logout",
+    isTangRatLogin ? Date.now() - startedAt : undefined,
+  );
 }
 
 /** Turn the upstream Response into a NextResponse, harvesting tokens out of JSON bodies. */
-async function relay(upstream: Response, isLogout = false): Promise<NextResponse> {
+async function relay(
+  upstream: Response,
+  isLogout = false,
+  bffDurationMs?: number,
+): Promise<NextResponse> {
   const headers = new Headers();
   upstream.headers.forEach((value, key) => {
     if (!STRIP_RESPONSE_HEADERS.has(key.toLowerCase())) headers.set(key, value);
   });
+  if (bffDurationMs !== undefined) {
+    headers.set("server-timing", `bff;dur=${bffDurationMs}`);
+  }
 
   const contentType = upstream.headers.get("content-type") ?? "";
 

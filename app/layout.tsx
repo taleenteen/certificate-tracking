@@ -28,9 +28,9 @@ export default function RootLayout({
   const usesMToken = process.env.NEXT_PUBLIC_DGA_AUTH_FLOW !== "oidc";
 
   return (
-    <html lang="th">
+      <html lang="th">
       {usesMToken && (
-        <Script id="dga-sdk-v5" src={dgaSdkSource()} strategy="beforeInteractive" />
+        <Script id="dga-sdk-v5" src={dgaSdkSource()} strategy="afterInteractive" />
       )}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

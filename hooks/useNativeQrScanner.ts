@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { scanWithDgaNative } from "@/lib/dga-native";
+import { useDgaNativeRuntime } from "@/components/providers/dga-native-runtime";
 
 export function useNativeQrScanner(onScan: (value: string) => void) {
+  const nativeRuntime = useDgaNativeRuntime();
   const [isBrowserScannerOpen, setIsBrowserScannerOpen] = useState(false);
   const isNativeScanPending = useRef(false);
   const nativeScanRequestId = useRef(0);
@@ -30,8 +33,29 @@ export function useNativeQrScanner(onScan: (value: string) => void) {
     isNativeScanPending.current = true;
     const requestId = ++nativeScanRequestId.current;
     try {
-      const nativeScan = await scanWithDgaNative();
-      if (nativeScan.supported) {
+      const runtime =
+        nativeRuntime.status === "web"
+          ? nativeRuntime
+          : await nativeRuntime.refresh();
+
+      if (runtime.status === "native-unavailable") {
+        toast.error(
+          "ไม่สามารถเชื่อมต่อกล้องของแอปทางรัฐได้ กรุณาปิดและเปิด e-Service ใหม่",
+        );
+        return;
+      }
+
+      if (runtime.isNative) {
+        if (!runtime.canScanQr) {
+          toast.error("แอปทางรัฐเวอร์ชันนี้ไม่รองรับการสแกน QR Code");
+          return;
+        }
+
+        const nativeScan = await scanWithDgaNative(runtime.sdk);
+        if (!nativeScan.supported) {
+          toast.error("ไม่สามารถเปิดกล้องของแอปทางรัฐได้ กรุณาลองใหม่");
+          return;
+        }
         if (nativeScan.value && requestId === nativeScanRequestId.current) {
           onScan(nativeScan.value);
         }
@@ -44,7 +68,7 @@ export function useNativeQrScanner(onScan: (value: string) => void) {
         isNativeScanPending.current = false;
       }
     }
-  }, [onScan]);
+  }, [nativeRuntime, onScan]);
 
   return { isBrowserScannerOpen, setIsBrowserScannerOpen, startScanner };
 }

@@ -1,5 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import { getDgaNativeContext, saveFileWithDgaNative } from "@/lib/dga-native";
+import { saveFileWithDgaNative } from "@/lib/dga-native";
+import {
+  useDgaNativeRuntime,
+  type DgaNativeRuntime,
+} from "@/components/providers/dga-native-runtime";
 
 export type LicenseDocumentExportFormat = "pdf" | "xlsx" | "csv";
 
@@ -50,9 +54,25 @@ function fileNameFromDisposition(value: string | null, fallback: string) {
 async function exportLicenseDocuments(
   businessId: string,
   payload: { format: LicenseDocumentExportFormat; licenseIds: string[] },
+  currentRuntime: DgaNativeRuntime,
 ) {
-  const nativeContext = await getDgaNativeContext();
-  const nativeDelivery = nativeContext.isNative;
+  const runtime =
+    currentRuntime.status === "web"
+      ? currentRuntime
+      : await currentRuntime.refresh();
+  if (runtime.status === "native-unavailable") {
+    throw new NativeExportError(
+      "ไม่สามารถเชื่อมต่อการบันทึกไฟล์ของแอปทางรัฐได้ กรุณาปิดและเปิด e-Service ใหม่",
+      {},
+    );
+  }
+  if (runtime.isNative && !runtime.canSaveFile) {
+    throw new NativeExportError(
+      "แอปทางรัฐเวอร์ชันนี้ไม่รองรับการบันทึกไฟล์",
+      {},
+    );
+  }
+  const nativeDelivery = runtime.isNative;
   const response = await fetch(
     `/api/officer/businesses/${businessId}/license-document-exports`,
     {
@@ -93,6 +113,7 @@ async function exportLicenseDocuments(
     };
     try {
       const saved = await saveFileWithDgaNative(
+        runtime.sdk,
         nativeFile.downloadUrl,
         nativeFile.fileName,
       );
@@ -117,16 +138,14 @@ async function exportLicenseDocuments(
       );
     }
 
-    // The SDK may become unavailable during a WebView transition. A presigned
-    // URL is still safe to open and gives the officer a normal download path.
-    window.open(nativeFile.downloadUrl, "_blank", "noopener,noreferrer");
-    return {
-      delivery: "native",
-      nativeSaveRequested: false,
-      downloadOrigin: nativeFile.downloadOrigin,
-      downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
-      nativeDebug,
-    };
+    throw new NativeExportError(
+      "ไม่สามารถส่งคำขอบันทึกไฟล์ไปยังแอปทางรัฐได้",
+      {
+        downloadOrigin: nativeFile.downloadOrigin,
+        downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
+        nativeDebug,
+      },
+    );
   }
 
   const blob = await response.blob();
@@ -146,10 +165,11 @@ async function exportLicenseDocuments(
 }
 
 export function useLicenseDocumentExport(businessId: string) {
+  const nativeRuntime = useDgaNativeRuntime();
   return useMutation({
     mutationFn: (payload: {
       format: LicenseDocumentExportFormat;
       licenseIds: string[];
-    }) => exportLicenseDocuments(businessId, payload),
+    }) => exportLicenseDocuments(businessId, payload, nativeRuntime),
   });
 }

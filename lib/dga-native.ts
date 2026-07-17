@@ -1,6 +1,6 @@
 export type DgaPlatform = "mobile" | "web" | "unknown";
 
-type CzpSdk = {
+export type CzpSdk = {
   getPlatform?: () => DgaPlatform | Promise<DgaPlatform>;
   isCitizenPortal?: () => boolean | Promise<boolean>;
   getToken?: () => string | Promise<string | undefined> | undefined;
@@ -11,6 +11,9 @@ type CzpSdk = {
   scanQrCode?: () => Promise<string>;
   sendFileToNativeWithUrl?: (url: string, fileName: string) => void | Promise<void>;
 };
+
+const nativeEntryStorageKey = "dga-native-entry";
+const nativeEntryEvent = "dga-native-entry";
 
 declare global {
   interface Window {
@@ -38,14 +41,34 @@ export async function waitForDgaSdk(timeoutMs = 4_000) {
   return undefined;
 }
 
-export async function getDgaNativeContext() {
-  const sdk = getDgaSdk() ?? (await waitForDgaSdk(800));
+export function markDgaNativeEntry() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(nativeEntryStorageKey, "1");
+  window.dispatchEvent(new Event(nativeEntryEvent));
+}
+
+export function hasDgaNativeEntry() {
+  return typeof window !== "undefined" &&
+    window.sessionStorage.getItem(nativeEntryStorageKey) === "1";
+}
+
+export function onDgaNativeEntry(listener: () => void) {
+  window.addEventListener(nativeEntryEvent, listener);
+  return () => window.removeEventListener(nativeEntryEvent, listener);
+}
+
+export async function getDgaNativeContext(timeoutMs = 800) {
+  const sdk = getDgaSdk() ?? (await waitForDgaSdk(timeoutMs));
   if (!sdk) return { sdk: undefined, platform: "unknown" as const, isNative: false };
 
   try {
     const rawPlatform = await sdk.getPlatform?.();
-    const platform =
+    const normalizedPlatform =
       typeof rawPlatform === "string" ? rawPlatform.toLowerCase() : "unknown";
+    const platform: DgaPlatform =
+      normalizedPlatform === "mobile" || normalizedPlatform === "web"
+        ? normalizedPlatform
+        : "unknown";
     return {
       sdk,
       platform,
@@ -59,14 +82,13 @@ export async function getDgaNativeContext() {
   }
 }
 
-export async function scanWithDgaNative() {
-  const context = await getDgaNativeContext();
-  if (!context.isNative || !context.sdk?.scanQrCode) {
+export async function scanWithDgaNative(sdk: CzpSdk | undefined) {
+  if (!sdk?.scanQrCode) {
     return { supported: false as const, value: null };
   }
 
   try {
-    return { supported: true as const, value: await context.sdk.scanQrCode() };
+    return { supported: true as const, value: await sdk.scanQrCode() };
   } catch {
     // Cancellation and native scanner failures must not fall through to a
     // second camera prompt in the WebView.
@@ -74,10 +96,13 @@ export async function scanWithDgaNative() {
   }
 }
 
-export async function saveFileWithDgaNative(url: string, fileName: string) {
-  const context = await getDgaNativeContext();
-  if (!context.isNative || !context.sdk?.sendFileToNativeWithUrl) return false;
+export async function saveFileWithDgaNative(
+  sdk: CzpSdk | undefined,
+  url: string,
+  fileName: string,
+) {
+  if (!sdk?.sendFileToNativeWithUrl) return false;
 
-  await context.sdk.sendFileToNativeWithUrl(url, fileName);
+  await sdk.sendFileToNativeWithUrl(url, fileName);
   return true;
 }

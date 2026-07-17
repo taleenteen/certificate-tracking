@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { dgaAuthFlow, useDgaAuthorize, useLogin } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/http";
-import { getDgaSdk, waitForDgaSdk } from "@/lib/dga-native";
+import { getDgaSdk, markDgaNativeEntry, waitForDgaSdk } from "@/lib/dga-native";
 import { useAuthStore } from "@/stores/auth";
 
 type MTokenDiagnostics = {
@@ -66,6 +66,7 @@ function MTokenLandingPage() {
       const params = new URLSearchParams(window.location.search);
       const queryMToken = params.get("mToken");
       const queryAppId = params.get("appId");
+      if (queryMToken && queryAppId) markDgaNativeEntry();
       const sdk =
         getDgaSdk() ??
         (!queryMToken || !queryAppId ? await waitForDgaSdk() : undefined);

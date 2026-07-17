@@ -17,7 +17,9 @@ await exportLicense.mutateAsync({
 });
 ```
 
-The hook downloads the binary response in the browser. The backend validates
+In a regular browser, the hook downloads the binary response. In a Tang Rat
+session, it asks the native SDK to save the backend-provided presigned URL; it
+does not fall back to the browser after a native bridge failure. The backend validates
 the officer, agency scope, ownership conflict, and that all selected licenses
 belong to the specified business and one agency.
 

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getDgaNativeContext } from "@/lib/dga-native";
+import { useDgaNativeRuntime } from "./dga-native-runtime";
 
 const PAGE_TITLES: Record<string, string> = {
   "/home": "e-License",
@@ -23,23 +23,21 @@ function pageTitle(pathname: string) {
 
 export function DgaNativeChrome() {
   const pathname = usePathname();
+  const { sdk, isNative } = useDgaNativeRuntime();
 
   useEffect(() => {
-    let active = true;
+    if (!sdk || !isNative) return;
 
-    void getDgaNativeContext().then(({ sdk, isNative }) => {
-      if (!active || !sdk || !isNative) return;
-
-      const showBackButton = pathname !== "/home";
+    const showBackButton = pathname !== "/home";
+    try {
       sdk.setTitle?.(pageTitle(pathname), showBackButton);
       sdk.setBackButtonVisible?.(showBackButton);
       sdk.setCaptureButtonVisible?.(true);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [pathname]);
+    } catch {
+      // Native chrome is optional UI enhancement; feature actions handle
+      // unavailable SDK capability explicitly.
+    }
+  }, [isNative, pathname, sdk]);
 
   return null;
 }

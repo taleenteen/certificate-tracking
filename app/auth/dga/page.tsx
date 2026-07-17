@@ -71,7 +71,12 @@ function MTokenLandingPage() {
       const { sdk, mToken, appId, waitedMs } =
         await waitForDgaMTokenCredentials({ queryMToken, queryAppId });
       if (cancelled) return;
-      sdk?.setTitle?.("เข้าสู่ระบบ e-License", true);
+      try {
+        sdk?.setTitle?.("เข้าสู่ระบบ e-License", true);
+      } catch {
+        // Native chrome controls are optional for authentication. Some UAT
+        // WebViews expose the SDK before their title bridge is ready.
+      }
 
       const mTokenSource = queryMToken ? "url" : mToken ? "sdk" : "missing";
       const appIdSource = queryAppId ? "url" : appId ? "sdk" : "missing";

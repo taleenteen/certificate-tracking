@@ -31,9 +31,14 @@ export function DgaNativeChrome() {
       if (!active || !sdk || !isNative) return;
 
       const showBackButton = pathname !== "/home";
-      sdk.setTitle?.(pageTitle(pathname), showBackButton);
-      sdk.setBackButtonVisible?.(showBackButton);
-      sdk.setCaptureButtonVisible?.(true);
+      try {
+        sdk.setTitle?.(pageTitle(pathname), showBackButton);
+        sdk.setBackButtonVisible?.(showBackButton);
+        sdk.setCaptureButtonVisible?.(true);
+      } catch {
+        // Native chrome enhancements must not break a usable WebView when an
+        // older UAT bridge does not implement one of these controls correctly.
+      }
     });
 
     return () => {

@@ -48,6 +48,7 @@ Prevent Tang Rat UAT login from failing or remaining pending on slower/older Web
 - 2026-07-17: Audit identified an SDK-native-bridge race caused by single-read credential retrieval.
 - 2026-07-17: Added bounded complete-credential readiness polling, pre-submit retry, and UAT wait-duration diagnostics. TypeScript, focused ESLint, and whitespace validation passed.
 - 2026-07-17: Added client/BFF exchange timing; preserved DGA's `beforeInteractive` SDK load order after production runtime review.
+- 2026-07-17: Guarded optional Tang Rat native title/back/capture bridge calls so an incompatible UAT chrome method cannot crash the client application.
 - 2026-07-17: Re-ran frontend TypeScript, focused ESLint, and whitespace validation after performance changes. Backend provider unit test passed.
 
 ## Changed files
@@ -56,6 +57,7 @@ Prevent Tang Rat UAT login from failing or remaining pending on slower/older Web
 - `app/auth/dga/page.tsx`
 - `app/api/[...path]/route.ts`
 - `app/layout.tsx`
+- `components/providers/dga-native-chrome.tsx`
 - `plan/README.md`
 
 ## Open questions and risks

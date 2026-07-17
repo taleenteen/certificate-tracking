@@ -19,6 +19,7 @@ export function HomeHeroSearch({
 }: HomeHeroSearchProps) {
   const [businessName, setBusinessName] = useState(initialQ);
   const [licenseNumber, setLicenseNumber] = useState(initialLicenseNumber);
+  const canEnterLicenseNumber = businessName.trim().length > 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +65,7 @@ export function HomeHeroSearch({
               />
               <button
                 type="submit"
-                className="absolute right-1.5 h-[36px] px-3.5 bg-[#145b57] hover:bg-[#0c403d] text-white text-[12px] font-bold rounded-[9px] flex items-center gap-1 cursor-pointer transition-colors shadow-sm border-0"
+                className="absolute right-1.5 flex h-[36px] items-center gap-1 rounded-[9px] border-0 bg-[#145b57] px-3.5 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#0c403d]"
               >
                 <Search className="h-3.5 w-3.5" />
                 <span>ค้นหา</span>
@@ -86,7 +87,8 @@ export function HomeHeroSearch({
               placeholder="เช่น RNG4-00001"
               value={licenseNumber}
               onChange={(e) => setLicenseNumber(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border-0 bg-slate-100/90 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] h-[46px]"
+              disabled={!canEnterLicenseNumber}
+              className="h-[46px] w-full rounded-lg border-0 bg-slate-100/90 px-4 py-3 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-70"
             />
           </div>
         </form>

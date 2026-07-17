@@ -20,7 +20,7 @@ Prevent Tang Rat UAT login from failing or remaining pending on slower/older Web
 - Poll for complete mToken credentials for a bounded period before showing a missing-input error.
 - Add retry only before a token has been submitted.
 - Extend UAT diagnostics with readiness wait duration.
-- Keep remote SDK download off the render-critical path and measure BFF/API exchange duration.
+- Measure BFF/API exchange duration while preserving DGA's required early SDK load order.
 
 ## Out of scope
 
@@ -47,7 +47,7 @@ Prevent Tang Rat UAT login from failing or remaining pending on slower/older Web
 
 - 2026-07-17: Audit identified an SDK-native-bridge race caused by single-read credential retrieval.
 - 2026-07-17: Added bounded complete-credential readiness polling, pre-submit retry, and UAT wait-duration diagnostics. TypeScript, focused ESLint, and whitespace validation passed.
-- 2026-07-17: Added client/BFF exchange timing and deferred non-blocking SDK loading; backend owns upstream DGA deadline logs.
+- 2026-07-17: Added client/BFF exchange timing; preserved DGA's `beforeInteractive` SDK load order after production runtime review.
 - 2026-07-17: Re-ran frontend TypeScript, focused ESLint, and whitespace validation after performance changes. Backend provider unit test passed.
 
 ## Changed files

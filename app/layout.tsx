@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
       <html lang="th">
       {usesMToken && (
-        <Script id="dga-sdk-v5" src={dgaSdkSource()} strategy="afterInteractive" />
+        <Script id="dga-sdk-v5" src={dgaSdkSource()} strategy="beforeInteractive" />
       )}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

@@ -19,8 +19,11 @@ export default function IndexPage() {
   useEffect(() => {
     // Compatibility for legacy Tang Rat registrations that still use the site
     // root but append the handoff values to the landing URL.
-    if (window.location.search.includes("mToken=") || window.location.search.includes("appId=")) {
-      router.replace(`/auth/dga${window.location.search}`);
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("mToken") || params.has("appId")) {
+      // DECISION: use a document navigation so a native WebView starts the
+      // dedicated mToken route without waiting for the root route cache.
+      window.location.replace(`/auth/dga${window.location.search}`);
       return;
     }
 

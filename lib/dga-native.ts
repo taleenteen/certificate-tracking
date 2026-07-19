@@ -12,6 +12,13 @@ export type CzpSdk = {
   sendFileToNativeWithUrl?: (url: string, fileName: string) => void | Promise<void>;
 };
 
+export type DgaMTokenCredentials = {
+  sdk?: CzpSdk;
+  mToken?: string;
+  appId?: string;
+  waitedMs: number;
+};
+
 const nativeEntryStorageKey = "dga-native-entry";
 const nativeEntryEvent = "dga-native-entry";
 
@@ -39,6 +46,57 @@ export async function waitForDgaSdk(timeoutMs = 4_000) {
     await new Promise((resolve) => window.setTimeout(resolve, 100));
   }
   return undefined;
+}
+
+async function readDgaValue(
+  read: (() => string | Promise<string | undefined> | undefined) | undefined,
+  timeoutMs: number,
+) {
+  if (!read) return undefined;
+
+  return new Promise<string | undefined>((resolve) => {
+    const timer = window.setTimeout(() => resolve(undefined), timeoutMs);
+    Promise.resolve()
+      .then(read)
+      .then(
+        (value) => {
+          window.clearTimeout(timer);
+          resolve(value);
+        },
+        () => {
+          window.clearTimeout(timer);
+          resolve(undefined);
+        },
+      );
+  });
+}
+
+export async function waitForDgaMTokenCredentials(options: {
+  queryMToken?: string | null;
+  queryAppId?: string | null;
+  timeoutMs?: number;
+}): Promise<DgaMTokenCredentials> {
+  const startedAt = Date.now();
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  let sdk = getDgaSdk();
+  let mToken = options.queryMToken ?? undefined;
+  let appId = options.queryAppId ?? undefined;
+
+  while (Date.now() - startedAt < timeoutMs) {
+    sdk ??= getDgaSdk();
+    if (!mToken) {
+      mToken = await readDgaValue(() => sdk?.getToken?.(), 1_000);
+    }
+    if (!appId) {
+      appId = await readDgaValue(() => sdk?.getAppId?.(), 1_000);
+    }
+    if (mToken && appId) {
+      return { sdk, mToken, appId, waitedMs: Date.now() - startedAt };
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 150));
+  }
+
+  return { sdk, mToken, appId, waitedMs: Date.now() - startedAt };
 }
 
 export function markDgaNativeEntry() {

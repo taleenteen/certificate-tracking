@@ -1,6 +1,6 @@
 # Native Entry Reliability
 
-- Status: In Progress
+- Status: Implemented
 - Owner: Codex
 - Date created: 2026-07-19
 - Last updated: 2026-07-19
@@ -47,21 +47,32 @@ reads cannot keep the login UI pending indefinitely.
 
 ## Validation checklist
 
-- [ ] TypeScript check.
-- [ ] File-scoped ESLint.
-- [ ] Production build.
+- [x] TypeScript check.
+- [x] File-scoped ESLint.
+- [x] Production build.
 
 ## Progress log
 
 - 2026-07-19: Identified the root-screen failure path: global
   `beforeInteractive` SDK loading can delay hydration, while the root redirect
   only recognizes URL-based handoffs.
+- 2026-07-19: Changed the SDK to `afterInteractive`, made root URL handoffs use
+  a parameter-aware full-document transition, and bounded each native bridge
+  credential read. `bunx tsc --noEmit --incremental false`, file-scoped ESLint,
+  and `bun run build` compiled successfully. Physical Tang Rat verification is
+  still required.
 
 ## Changed files
 
-- Pending implementation.
+- `app/layout.tsx`
+- `app/page.tsx`
+- `app/auth/dga/page.tsx`
+- `lib/dga-native.ts`
+- `plan/README.md`
 
 ## Open questions and risks
 
 - DGA must register `/auth/dga` as the landing URL for SDK-only launches; a
   no-parameter root request is intentionally treated as a normal browser visit.
+- A device test must confirm that the configured DGA SDK environment loads and
+  that a URL handoff reaches `/auth/dga` before the 10-second bridge deadline.

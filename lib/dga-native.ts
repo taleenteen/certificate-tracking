@@ -5,6 +5,7 @@ export type CzpSdk = {
   isCitizenPortal?: () => boolean | Promise<boolean>;
   getToken?: () => string | Promise<string | undefined> | undefined;
   getAppId?: () => string | Promise<string | undefined> | undefined;
+  getParameterByName?: (name: string, url?: string) => string | null | undefined;
   setTitle?: (title: string, isShowBackButton?: boolean) => void;
   setBackButtonVisible?: (visible: boolean) => void;
   setCaptureButtonVisible?: (visible: boolean) => void;
@@ -29,9 +30,7 @@ declare global {
 }
 
 export function dgaSdkSource() {
-  return process.env.NEXT_PUBLIC_DGA_SDK_ENV === "production"
-    ? "https://czp.dga.or.th/cportal/sdk/iu/v5/sdk.js"
-    : "https://cpt-uat.dg-paas.cloud/cportal/sdk/iu/v5/sdk-uat.js";
+  return "https://czp.dga.or.th/cportal/sdk/iu/v5/sdk.js";
 }
 
 export function getDgaSdk() {
@@ -79,13 +78,19 @@ export async function waitForDgaMTokenCredentials(options: {
   const startedAt = Date.now();
   const timeoutMs = options.timeoutMs ?? 10_000;
   let sdk = getDgaSdk();
-  let mToken = options.queryMToken ?? undefined;
-  let appId = options.queryAppId ?? undefined;
+  let mToken = options.queryMToken ?? getDgaEntryQueryValue(["mToken", "mtoken", "token"]);
+  let appId = options.queryAppId ?? getDgaEntryQueryValue(["appId", "app_id", "client_id"]);
 
   while (Date.now() - startedAt < timeoutMs) {
     sdk ??= getDgaSdk();
     if (!mToken) {
+      mToken = getDgaSdkParameter(sdk, ["mToken", "mtoken", "token"]);
+    }
+    if (!mToken) {
       mToken = await readDgaValue(() => sdk?.getToken?.(), 1_000);
+    }
+    if (!appId) {
+      appId = getDgaSdkParameter(sdk, ["appId", "app_id", "client_id"]);
     }
     if (!appId) {
       appId = await readDgaValue(() => sdk?.getAppId?.(), 1_000);
@@ -97,6 +102,29 @@ export async function waitForDgaMTokenCredentials(options: {
   }
 
   return { sdk, mToken, appId, waitedMs: Date.now() - startedAt };
+}
+
+export function getDgaEntryQueryValue(names: readonly string[]) {
+  if (typeof window === "undefined") return undefined;
+
+  const params = new URLSearchParams(window.location.search);
+  for (const name of names) {
+    const value = params.get(name)?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function getDgaSdkParameter(sdk: CzpSdk | undefined, names: readonly string[]) {
+  for (const name of names) {
+    try {
+      const value = sdk?.getParameterByName?.(name)?.trim();
+      if (value) return value;
+    } catch {
+      // Some SDK builds do not expose URL parameter access in every WebView.
+    }
+  }
+  return undefined;
 }
 
 export function markDgaNativeEntry() {
@@ -142,15 +170,17 @@ export async function getDgaNativeContext(timeoutMs = 800) {
 
 export async function scanWithDgaNative(sdk: CzpSdk | undefined) {
   if (!sdk?.scanQrCode) {
-    return { supported: false as const, value: null };
+    return { supported: false as const, value: null, failed: false };
   }
 
   try {
-    return { supported: true as const, value: await sdk.scanQrCode() };
+    return {
+      supported: true as const,
+      value: await sdk.scanQrCode(),
+      failed: false,
+    };
   } catch {
-    // Cancellation and native scanner failures must not fall through to a
-    // second camera prompt in the WebView.
-    return { supported: true as const, value: null };
+    return { supported: true as const, value: null, failed: true };
   }
 }
 

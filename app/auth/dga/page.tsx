@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { dgaAuthFlow, useDgaAuthorize, useLogin } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/http";
 import {
+  getDgaEntryQueryValue,
   markDgaNativeEntry,
   waitForDgaMTokenCredentials,
 } from "@/lib/dga-native";
@@ -67,11 +68,17 @@ function MTokenLandingPage() {
     let cancelled = false;
 
     const run = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const queryMToken = params.get("mToken");
-      const queryAppId = params.get("appId");
+      const queryMToken = getDgaEntryQueryValue(["mToken", "mtoken", "token"]);
+      const queryAppId = getDgaEntryQueryValue(["appId", "app_id", "client_id"]);
       const { sdk, mToken, appId, waitedMs } =
-        await waitForDgaMTokenCredentials({ queryMToken, queryAppId });
+        await waitForDgaMTokenCredentials({
+          queryMToken,
+          queryAppId,
+          // Match the known-working Citizen Portal entry behaviour: a native
+          // handoff is allowed a longer bridge startup window than a manual
+          // browser visit, but each bridge call is still individually bounded.
+          timeoutMs: queryMToken || queryAppId ? 20_000 : 10_000,
+        });
       if (cancelled) return;
       try {
         sdk?.setTitle?.("เข้าสู่ระบบ e-License", true);

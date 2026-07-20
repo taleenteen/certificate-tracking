@@ -38,22 +38,29 @@ export function useNativeQrScanner(onScan: (value: string) => void) {
           ? nativeRuntime
           : await nativeRuntime.refresh();
 
+      const openBrowserScanner = (message?: string) => {
+        if (message) toast.message(message);
+        setIsBrowserScannerOpen(true);
+      };
+
       if (runtime.status === "native-unavailable") {
-        toast.error(
-          "ไม่สามารถเชื่อมต่อกล้องของแอปทางรัฐได้ กรุณาปิดและเปิด e-Service ใหม่",
-        );
+        openBrowserScanner("เชื่อมต่อกล้องของแอปทางรัฐไม่ได้ จึงเปิดกล้องของอุปกรณ์แทน");
         return;
       }
 
       if (runtime.isNative) {
         if (!runtime.canScanQr) {
-          toast.error("แอปทางรัฐเวอร์ชันนี้ไม่รองรับการสแกน QR Code");
+          openBrowserScanner("แอปทางรัฐเวอร์ชันนี้ไม่รองรับ QR Code จึงเปิดกล้องของอุปกรณ์แทน");
           return;
         }
 
         const nativeScan = await scanWithDgaNative(runtime.sdk);
         if (!nativeScan.supported) {
-          toast.error("ไม่สามารถเปิดกล้องของแอปทางรัฐได้ กรุณาลองใหม่");
+          openBrowserScanner("เปิดกล้องของแอปทางรัฐไม่ได้ จึงเปิดกล้องของอุปกรณ์แทน");
+          return;
+        }
+        if (nativeScan.failed) {
+          openBrowserScanner("การสแกนผ่านแอปทางรัฐขัดข้อง จึงเปิดกล้องของอุปกรณ์แทน");
           return;
         }
         if (nativeScan.value && requestId === nativeScanRequestId.current) {

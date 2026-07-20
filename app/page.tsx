@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { getResumeSessionPath } from "@/lib/auth-routing";
+import { getDgaEntryQueryValue } from "@/lib/dga-native";
 import { useAuthStore } from "@/stores/auth";
 
 /**
@@ -19,8 +20,10 @@ export default function IndexPage() {
   useEffect(() => {
     // Compatibility for legacy Tang Rat registrations that still use the site
     // root but append the handoff values to the landing URL.
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("mToken") || params.has("appId")) {
+    if (
+      getDgaEntryQueryValue(["mToken", "mtoken", "token"]) ||
+      getDgaEntryQueryValue(["appId", "app_id", "client_id"])
+    ) {
       // DECISION: use a document navigation so a native WebView starts the
       // dedicated mToken route without waiting for the root route cache.
       window.location.replace(`/auth/dga${window.location.search}`);

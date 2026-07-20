@@ -55,45 +55,57 @@ async function exportLicenseDocuments(
   businessId: string,
   payload: { format: LicenseDocumentExportFormat; licenseIds: string[] },
   currentRuntime: DgaNativeRuntime,
-) {
+): Promise<LicenseDocumentExportResult> {
   const runtime =
     currentRuntime.status === "web"
       ? currentRuntime
       : await currentRuntime.refresh();
-  if (runtime.status === "native-unavailable") {
-    throw new NativeExportError(
-      "ไม่สามารถเชื่อมต่อการบันทึกไฟล์ของแอปทางรัฐได้ กรุณาปิดและเปิด e-Service ใหม่",
-      {},
+  const createExport = async (delivery: "native" | "browser") => {
+    const response = await fetch(
+      `/api/officer/businesses/${businessId}/license-document-exports`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...payload,
+          ...(delivery === "native" ? { delivery: "native" } : {}),
+        }),
+      },
     );
-  }
-  if (runtime.isNative && !runtime.canSaveFile) {
-    throw new NativeExportError(
-      "แอปทางรัฐเวอร์ชันนี้ไม่รองรับการบันทึกไฟล์",
-      {},
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(
+        typeof body?.message === "string"
+          ? body.message
+          : "ไม่สามารถสร้างไฟล์เอกสารได้",
+      );
+    }
+    return response;
+  };
+
+  const downloadBrowserResponse = async (
+    response: Response,
+  ): Promise<LicenseDocumentExportResult> => {
+    const blob = await response.blob();
+    const fileName = fileNameFromDisposition(
+      response.headers.get("content-disposition"),
+      `license-documents.${payload.format}`,
     );
-  }
-  const nativeDelivery = runtime.isNative;
-  const response = await fetch(
-    `/api/officer/businesses/${businessId}/license-document-exports`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        ...payload,
-        ...(nativeDelivery ? { delivery: "native" } : {}),
-      }),
-    },
-  );
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(
-      typeof body?.message === "string"
-        ? body.message
-        : "ไม่สามารถสร้างไฟล์เอกสารได้",
-    );
-  }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    return { delivery: "browser" as const };
+  };
+
+  const nativeDelivery = runtime.isNative && runtime.canSaveFile;
 
   if (nativeDelivery) {
+    const response = await createExport("native");
     const nativeFile = (await response.json()) as {
       id?: string;
       referenceNo?: string;
@@ -126,10 +138,23 @@ async function exportLicenseDocuments(
           nativeDebug,
         };
       }
+    } catch {
+      // Use the same completed export through the BFF, so native failure does
+      // not create a second export record or audit entry.
+    }
+
+    try {
+      const fallbackResponse = await fetch(
+        `/api/officer/license-document-exports/${nativeFile.id}/file`,
+      );
+      if (!fallbackResponse.ok) {
+        throw new Error(`HTTP ${fallbackResponse.status}`);
+      }
+      return downloadBrowserResponse(fallbackResponse);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown SDK error";
+      const message = error instanceof Error ? error.message : "Unknown fallback error";
       throw new NativeExportError(
-        `ไม่สามารถส่งคำขอบันทึกไฟล์ไปยังแอปทางรัฐได้: ${message}`,
+        `ไม่สามารถบันทึกไฟล์ผ่านแอปทางรัฐหรือดาวน์โหลดผ่านเบราว์เซอร์ได้: ${message}`,
         {
           downloadOrigin: nativeFile.downloadOrigin,
           downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
@@ -137,31 +162,9 @@ async function exportLicenseDocuments(
         },
       );
     }
-
-    throw new NativeExportError(
-      "ไม่สามารถส่งคำขอบันทึกไฟล์ไปยังแอปทางรัฐได้",
-      {
-        downloadOrigin: nativeFile.downloadOrigin,
-        downloadUrlExpiresInSeconds: nativeFile.downloadUrlExpiresInSeconds,
-        nativeDebug,
-      },
-    );
   }
 
-  const blob = await response.blob();
-  const fileName = fileNameFromDisposition(
-    response.headers.get("content-disposition"),
-    `license-documents.${payload.format}`,
-  );
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-  return { delivery: "browser" };
+  return downloadBrowserResponse(await createExport("browser"));
 }
 
 export function useLicenseDocumentExport(businessId: string) {

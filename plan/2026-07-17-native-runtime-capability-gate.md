@@ -1,6 +1,6 @@
 # Native Runtime Capability Gate
 
-- Status: Implemented
+- Status: Verified
 - Owner: Agent
 - Date created: 2026-07-17
 - Last updated: 2026-07-17
@@ -16,8 +16,8 @@ contains `mToken` and `appId`.
 - The SDK script remains globally loaded with `beforeInteractive`.
 - The stable login flow is URL-first and must continue to exchange valid URL
   parameters even when the SDK bridge is late or unavailable.
-- A Tang Rat session with a missing bridge must not silently open the browser
-  QR camera or browser download flow.
+- A Tang Rat session with a missing bridge must retain the regular browser QR
+  camera and browser download fallback.
 - A regular browser must retain QR camera and blob-download behaviour.
 
 ## Scope
@@ -26,7 +26,8 @@ contains `mToken` and `appId`.
   can retry the bridge check on user action.
 - Persist a tab-only Tang Rat entry marker after a URL-based mToken handoff.
 - Route QR scanning, file export, and native chrome through that provider.
-- Present a controlled error for an expected native session without a bridge.
+- Prefer native QR/export, then fall back to browser QR/download when native
+  capability is unavailable or a native invocation fails.
 
 ## Out of scope
 
@@ -38,15 +39,16 @@ contains `mToken` and `appId`.
 1. Keep `/auth/dga` URL-first; mark the tab as a Tang Rat handoff only after
    it reads the URL parameters.
 2. Resolve `mobile`, `web`, or `native-unavailable` centrally.
-3. Use native QR/export only for `mobile`; use browser equivalents only for
-   confirmed web sessions.
+3. Use native QR/export first for `mobile`; fall back to browser equivalents
+   when the native capability is missing or fails.
 4. Retry the native bridge when a user invokes a native action.
 
 ## Security and permission considerations
 
 - The marker is UX-only in `sessionStorage`; authorization remains server-side.
 - No mToken, app ID, QR content, or presigned URL is persisted by this work.
-- Native export continues to request `delivery: native` only for native runtime.
+- Native export requests `delivery: native` only when the native save method is
+  available, then downloads that same export through the BFF if the SDK fails.
 
 ## Implementation checklist
 
@@ -54,6 +56,8 @@ contains `mToken` and `appId`.
 - [x] Preserve URL-first mToken login and set handoff marker.
 - [x] Refactor QR, export, and native chrome callers.
 - [x] Update the export integration documentation and plan index.
+- [x] Restore browser fallback after native QR/export capability or invocation
+  failures while preserving native-first behavior.
 
 ## Validation checklist
 
@@ -71,6 +75,11 @@ contains `mToken` and `appId`.
   a controlled retryable error instead of silently switching to browser APIs.
 - 2026-07-17: `bunx tsc --noEmit --incremental false`, focused ESLint,
   `git diff --check`, and `bun run build` passed.
+- 2026-07-20: Restored browser fallback after unavailable or failed native QR
+  scanning. Native document export now falls back through the BFF using the
+  same completed export record, avoiding duplicate exports and audit rows.
+  `bunx tsc --noEmit --incremental false`, focused ESLint, `git diff --check`,
+  and `bun run build` passed.
 
 ## Changed files
 

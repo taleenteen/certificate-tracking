@@ -1,9 +1,9 @@
 # Native Entry Reliability
 
-- Status: Implemented
+- Status: Verified
 - Owner: Codex
 - Date created: 2026-07-19
-- Last updated: 2026-07-19
+- Last updated: 2026-07-20
 
 ## Objective
 
@@ -28,6 +28,9 @@ reads cannot keep the login UI pending indefinitely.
   root-route hydration while remaining available to native features.
 - Use a full-document replacement for root URL handoffs.
 - Bound SDK credential reads and present a retryable missing-credential state.
+- Resolve mToken handoff values from the parameter aliases and SDK URL accessor
+  used by the device-proven reference implementation.
+- Use the stable production Citizen Portal SDK URL for every environment.
 
 ## Out of scope
 
@@ -44,6 +47,8 @@ reads cannot keep the login UI pending indefinitely.
 - [x] Change global DGA SDK loading to run after the page becomes interactive.
 - [x] Make root URL handoffs use parameter-aware hard navigation.
 - [x] Add bounded SDK credential polling and retry UI.
+- [x] Accept handoff parameter aliases and the SDK URL-parameter accessor.
+- [x] Replace the conditional UAT SDK URL with the stable production SDK URL.
 
 ## Validation checklist
 
@@ -61,6 +66,16 @@ reads cannot keep the login UI pending indefinitely.
   credential read. `bunx tsc --noEmit --incremental false`, file-scoped ESLint,
   and `bun run build` compiled successfully. Physical Tang Rat verification is
   still required.
+- 2026-07-20: Compared the mToken resolver with the device-proven reference
+  implementation. Added its supported URL aliases and `getParameterByName()`
+  fallback and its 20-second native-handoff wait window, while intentionally
+  excluding its browser `sessionStorage` token persistence. `bunx tsc --noEmit
+  --incremental false`, focused ESLint, and `bun run build` passed.
+- 2026-07-20: The owner chose the production Citizen Portal SDK URL as the
+  single supported source because the UAT script is unstable in native WebViews.
+- 2026-07-20: Replaced the conditional SDK source with the production Citizen
+  Portal SDK URL. `bunx tsc --noEmit --incremental false`, focused ESLint, and
+  `bun run build` passed.
 
 ## Changed files
 
@@ -75,4 +90,6 @@ reads cannot keep the login UI pending indefinitely.
 - DGA must register `/auth/dga` as the landing URL for SDK-only launches; a
   no-parameter root request is intentionally treated as a normal browser visit.
 - A device test must confirm that the configured DGA SDK environment loads and
-  that a URL handoff reaches `/auth/dga` before the 10-second bridge deadline.
+  that a URL handoff reaches `/auth/dga` before the 20-second bridge deadline.
+- UAT now also loads the production SDK; it must be compatible with the target
+  Tang Rat app registration and backend environment.

@@ -13,17 +13,23 @@ import { toast } from "sonner";
 
 export default function OfficerCardPage() {
   const router = useRouter();
-  const { data: profile, isLoading: isProfileLoading, error: profileError } = useMyProfile();
+  const {
+    data: profile,
+    isLoading: isProfileLoading,
+    error: profileError,
+  } = useMyProfile();
   const { data: agencies = [] } = useAgencies();
 
   const [timeLeft, setTimeLeft] = useState(120); // 120 seconds fallback matching mockup 01:59
 
   // Enable QR queries if user is an officer
   const isOfficer = profile?.roles?.includes("officer");
-  const { data: qrData, isLoading: isQrLoading, error: qrError, refetch } = useOfficerQrProfile(
-    profile?.id || "",
-    !!isOfficer
-  );
+  const {
+    data: qrData,
+    isLoading: isQrLoading,
+    error: qrError,
+    refetch,
+  } = useOfficerQrProfile(profile?.id || "", !!isOfficer);
 
   // Sync countdown timer from API expiresAt or fallback countdown
   useEffect(() => {
@@ -36,7 +42,10 @@ export default function OfficerCardPage() {
     }
 
     const updateTimer = () => {
-      const remaining = Math.max(0, Math.round((new Date(qrData.expiresAt).getTime() - Date.now()) / 1000));
+      const remaining = Math.max(
+        0,
+        Math.round((new Date(qrData.expiresAt).getTime() - Date.now()) / 1000),
+      );
       setTimeLeft(remaining);
       if (remaining <= 0) {
         refetch();
@@ -50,17 +59,21 @@ export default function OfficerCardPage() {
 
   // Resolve agency name
   const matchedAgency = agencies.find((a) => a.id === profile?.agencyId);
-  const agencyName = matchedAgency?.nameTh || "กรมส่งเสริมการปกครองท้องถิ่น (สถ.)";
+  const agencyName =
+    matchedAgency?.nameTh || "กรมส่งเสริมการปกครองท้องถิ่น (สถ.)";
 
   // Format timeLeft into MM : SS
   const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (seconds % 60).toString().padStart(2, "0");
     return `${m} : ${s}`;
   };
 
   // Mock photo URL of a professional officer in suit matching mockup
-  const mockPhotoUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=180&auto=format&fit=crop&q=80";
+  const mockPhotoUrl =
+    "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=180&auto=format&fit=crop&q=80";
 
   // Mock list of permissions from mockup image 2
   const fallbackPermissions = [
@@ -74,9 +87,12 @@ export default function OfficerCardPage() {
   ];
 
   const profileAny = profile as any;
-  const permissionsToRender = profileAny?.permissions && profileAny.permissions.length > 0
-    ? profileAny.permissions.map((p: any) => p.labelTh || p.licenseTypeCodes.join(", "))
-    : fallbackPermissions;
+  const permissionsToRender =
+    profileAny?.permissions && profileAny.permissions.length > 0
+      ? profileAny.permissions.map(
+          (p: any) => p.labelTh || p.licenseTypeCodes.join(", "),
+        )
+      : fallbackPermissions;
 
   if (isProfileLoading) {
     return (
@@ -92,8 +108,12 @@ export default function OfficerCardPage() {
     return (
       <main className="mx-auto w-full max-w-[430px] bg-[#f4f5f7] min-h-[calc(100vh-120px)] px-4 py-6 flex flex-col justify-center items-center text-center">
         <AlertCircle className="size-12 text-rose-500 mb-2" />
-        <h3 className="text-base font-bold text-slate-800">ไม่มีสิทธิ์เข้าถึงหน้านี้</h3>
-        <p className="text-xs text-slate-500 mt-1">เฉพาะเจ้าหน้าที่ผู้มีอำนาจตรวจสอบเท่านั้น</p>
+        <h3 className="text-base font-bold text-slate-800">
+          ไม่มีสิทธิ์เข้าถึงหน้านี้
+        </h3>
+        <p className="text-xs text-slate-500 mt-1">
+          เฉพาะเจ้าหน้าที่ผู้มีอำนาจตรวจสอบเท่านั้น
+        </p>
         <button
           onClick={() => router.push("/home")}
           className="mt-4 bg-[#145b57] text-white hover:bg-[#114e4b] rounded-xl px-4 py-2 text-xs font-bold transition-colors cursor-pointer border-0"
@@ -119,7 +139,7 @@ export default function OfficerCardPage() {
 
       {/* Page Title */}
       <h1 className="text-[22px] font-extrabold text-slate-800 text-center my-4 tracking-tight">
-        บัตรเจ้าหน้าที่
+        QR Code เพื่อยืนยันตัวตนเจ้าหน้าที่
       </h1>
 
       <div className="space-y-4">
@@ -161,7 +181,9 @@ export default function OfficerCardPage() {
                 <div className="relative p-2 bg-white rounded-2xl border border-slate-200/80 shadow-md">
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      (typeof window !== "undefined" ? window.location.origin : "") + "/verify-officer?token=mock-officer-token"
+                      (typeof window !== "undefined"
+                        ? window.location.origin
+                        : "") + "/verify-officer?token=mock-officer-token",
                     )}`}
                     alt="Mock Officer QR"
                     className="size-44 object-contain rounded-xl"
@@ -174,7 +196,9 @@ export default function OfficerCardPage() {
                 <div className="relative p-2 bg-white rounded-2xl border border-slate-200/80 shadow-md">
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      (typeof window !== "undefined" ? window.location.origin : "") + `/verify-officer?token=${qrData.qrToken}`
+                      (typeof window !== "undefined"
+                        ? window.location.origin
+                        : "") + `/verify-officer?token=${qrData.qrToken}`,
                     )}`}
                     alt="Officer QR Profile"
                     className="size-44 object-contain rounded-xl"
@@ -201,14 +225,18 @@ export default function OfficerCardPage() {
             {/* Details Table */}
             <div className="space-y-4">
               <div className="flex items-start text-xs leading-normal">
-                <span className="w-20 text-slate-500 font-bold shrink-0">ตำแหน่ง :</span>
+                <span className="w-20 text-slate-500 font-bold shrink-0">
+                  ตำแหน่ง :
+                </span>
                 <span className="text-slate-800 font-extrabold">
                   เจ้าหน้าที่ผู้มีอำนาจตรวจสอบใบอนุญาต
                 </span>
               </div>
               <div className="border-b border-dashed border-slate-200/80 w-full" />
               <div className="flex items-start text-xs leading-normal">
-                <span className="w-20 text-slate-500 font-bold shrink-0">หน่วยงาน :</span>
+                <span className="w-20 text-slate-500 font-bold shrink-0">
+                  หน่วยงาน :
+                </span>
                 <span className="text-slate-800 font-extrabold">
                   {agencyName}
                 </span>
@@ -221,10 +249,14 @@ export default function OfficerCardPage() {
         <Card className="rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)] text-left">
           <CardContent className="p-0 space-y-3.5">
             <div>
-              <h3 className="text-[14px] font-bold text-slate-800 tracking-tight">สิทธิ์ของเจ้าหน้าที่</h3>
-              <p className="text-[10px] font-semibold text-slate-400 mt-0.5">ที่มีสิทธิ์เข้าตรวจสอบ</p>
+              <h3 className="text-[14px] font-bold text-slate-800 tracking-tight">
+                สิทธิ์ของเจ้าหน้าที่
+              </h3>
+              <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                ที่มีสิทธิ์เข้าตรวจสอบ
+              </p>
             </div>
-            
+
             <div className="flex flex-wrap gap-2 pt-1.5">
               {permissionsToRender.map((perm: string, index: number) => (
                 <span

@@ -60,7 +60,11 @@ export function HomeHeroSearch({
                 type="text"
                 placeholder="เช่น สถานประกอบการตัวอย่าง"
                 value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setBusinessName(value);
+                  if (!value.trim()) setLicenseNumber("");
+                }}
                 className="w-full pl-4 pr-24 py-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#145b57] focus:border-[#145b57] h-[46px]"
               />
               <button

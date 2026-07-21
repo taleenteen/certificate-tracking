@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Check, Copy, FileDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +30,6 @@ type ExportableLicense = {
   id: string;
   title: string;
   licenseNumber: string;
-  agencyId: string | null;
 };
 
 type LicenseDocumentExportDialogProps = {
@@ -60,20 +59,12 @@ export function LicenseDocumentExportDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const exportDocuments = useLicenseDocumentExport(businessId);
-  const selectedAgencyId = useMemo(
-    () =>
-      licenses.find((license) => selectedIds.includes(license.id))?.agencyId ??
-      null,
-    [licenses, selectedIds],
-  );
 
   const toggleLicense = (license: ExportableLicense) => {
     setSelectedIds((current) => {
       if (current.includes(license.id)) {
         return current.filter((id) => id !== license.id);
       }
-      if (selectedAgencyId && license.agencyId !== selectedAgencyId)
-        return current;
       return [...current, license.id];
     });
   };
@@ -133,7 +124,7 @@ export function LicenseDocumentExportDialog({
         <DialogHeader>
           <DialogTitle>Export เอกสารใบอนุญาต</DialogTitle>
           <DialogDescription>
-            เลือกใบอนุญาตจากหน่วยงานเดียวกันเพื่อสร้างเอกสารอ้างอิงจากแพลตฟอร์ม
+            เลือกใบอนุญาตที่ต้องการเพื่อสร้างเอกสารอ้างอิงจากแพลตฟอร์ม
           </DialogDescription>
         </DialogHeader>
 
@@ -166,21 +157,14 @@ export function LicenseDocumentExportDialog({
           <div className="max-h-64 divide-y overflow-y-auto rounded-md border">
             {licenses.map((license) => {
               const isSelected = selectedIds.includes(license.id);
-              const isDifferentAgency = Boolean(
-                selectedAgencyId && license.agencyId !== selectedAgencyId,
-              );
               return (
                 <label
                   key={license.id}
-                  className={`flex cursor-pointer items-center gap-3 px-3 py-3 ${
-                    isDifferentAgency
-                      ? "cursor-not-allowed bg-slate-50 text-slate-400"
-                      : ""
-                  }`}
+                  className="flex cursor-pointer items-center gap-3 px-3 py-3"
                 >
                   <Checkbox
                     checked={isSelected}
-                    disabled={isDifferentAgency || exportDocuments.isPending}
+                    disabled={exportDocuments.isPending}
                     onCheckedChange={() => toggleLicense(license)}
                   />
                   <span className="min-w-0">
@@ -195,12 +179,6 @@ export function LicenseDocumentExportDialog({
               );
             })}
           </div>
-          {selectedAgencyId && (
-            <p className="text-xs text-slate-500">
-              สามารถเลือกได้เฉพาะใบอนุญาตภายใต้หน่วยงานเดียวกันต่อการ export
-              หนึ่งครั้ง
-            </p>
-          )}
           {exportDocuments.error && (
             <p className="text-sm text-destructive">
               {exportDocuments.error.message}

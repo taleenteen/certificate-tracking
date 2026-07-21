@@ -26,6 +26,7 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
+| 2026-07-21 | [Multi-Agency License Export](./2026-07-21-multi-agency-license-export.md) | Allow all licenses under one business to be selected and exported across agencies. | Verified | Automated backend and frontend checks passed; physical export test pending. | Verified |
 | 2026-07-19 | [Native Entry Reliability](./2026-07-19-native-entry-reliability.md) | Prevent Tang Rat root handoffs from waiting on the global SDK and bound native credential reads. | Verified | Automated checks passed; Tang Rat device verification pending. | Verified |
 | 2026-07-17 | [Native Runtime Capability Gate](./2026-07-17-native-runtime-capability-gate.md) | Centralize Tang Rat SDK capability checks while preserving URL-first mToken login. | Verified | Automated checks passed; Tang Rat device verification pending. | Verified |
 | 2026-07-16 | [Native QR Scanner Routing](./2026-07-16-native-qr-scanner-routing.md) | Route all QR actions through Tang Rat native SDK with browser-camera fallback. | Implemented | TypeScript and focused ESLint passed; device verification pending. | Implemented |

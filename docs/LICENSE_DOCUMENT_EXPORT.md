@@ -22,7 +22,8 @@ session, it asks the native SDK to save the backend-provided presigned URL first
 If the native bridge is unavailable or rejects the request, it downloads the
 same completed export through the BFF instead. The backend validates
 the officer, agency scope, ownership conflict, and that all selected licenses
-belong to the specified business and one agency.
+belong to the specified business. A single export may include multiple agencies;
+the immutable snapshot and generated file retain the agency for every license.
 
 Available formats:
 
@@ -50,8 +51,8 @@ the private file or a MinIO object URL.
 
 - Show creation controls only in officer mode.
 - Use one selected license for a compact detail-page action.
-- For bulk export, prevent selection across agencies in the UI; the backend
-  enforces the same rule.
+- For bulk export, allow every license under the selected business, including
+  licenses from different agencies.
 - Show the export error returned by the API and disable the action while it is
   generating.
 - Treat the generated PDF reference number as the support/search identifier.

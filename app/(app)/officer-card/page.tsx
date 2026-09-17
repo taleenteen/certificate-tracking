@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useMyProfile } from "@/hooks/useMyProfile";
 import { useAgencies } from "@/hooks/useAgencies";
 import { useOfficerQrProfile } from "@/hooks/useOfficer";
+import { useLicenseTypes } from "@/hooks/useLicenseTypes";
+import { QrCodeImage } from "@/components/shared/qr-code-image";
+import { officerVerifyPath } from "@/lib/officer-qr-token";
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +22,7 @@ export default function OfficerCardPage() {
     error: profileError,
   } = useMyProfile();
   const { data: agencies = [] } = useAgencies();
+  const { data: licenseTypes = [] } = useLicenseTypes();
 
   const [timeLeft, setTimeLeft] = useState(120); // 120 seconds fallback matching mockup 01:59
 
@@ -57,6 +61,16 @@ export default function OfficerCardPage() {
     return () => clearInterval(interval);
   }, [qrData, refetch]);
 
+  // Resolved on the client only: the origin the officer loaded the app from is
+  // by definition reachable by the citizen's phone scanning the code.
+  const [verifyOrigin, setVerifyOrigin] = useState("");
+  useEffect(() => {
+    // Reading window is only possible after mount; this syncs an external
+    // platform value into React, which is what effects are for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVerifyOrigin(window.location.origin);
+  }, []);
+
   // Resolve agency name
   const matchedAgency = agencies.find((a) => a.id === profile?.agencyId);
   const agencyName =
@@ -71,28 +85,12 @@ export default function OfficerCardPage() {
     return `${m} : ${s}`;
   };
 
-  // Mock photo URL of a professional officer in suit matching mockup
-  const mockPhotoUrl =
-    "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=180&auto=format&fit=crop&q=80";
-
-  // Mock list of permissions from mockup image 2
-  const fallbackPermissions = [
-    "ใบอนุญาตประกอบกิจการโรงแรม",
-    "ใบอนุญาตประกอบกิจการร้านอาหาร",
-    "ใบอนุญาตจัดตั้งสถานที่สะสมอาหาร",
-    "ใบอนุญาตจำหน่ายสุรา",
-    "ใบอนุญาตจัดตั้งสถานที่จำหน่ายอาหาร",
-    "ใบอนุญาตจำหน่ายยาสูบ",
-    "ใบอนุญาตประกอบกิจการสถานประกอบการเพื่อสุขภาพ",
-  ];
-
-  const profileAny = profile as any;
-  const permissionsToRender =
-    profileAny?.permissions && profileAny.permissions.length > 0
-      ? profileAny.permissions.map(
-          (p: any) => p.labelTh || p.licenseTypeCodes.join(", "),
-        )
-      : fallbackPermissions;
+  // An officer's inspection scope is the active license types of their own
+  // agency — the same set the public verify page shows to citizens. Never show
+  // a placeholder list here: this screen is read as a government credential.
+  const permissionsToRender = licenseTypes
+    .filter((type) => type.isActive && type.agencyId === profile?.agencyId)
+    .map((type) => type.nameTh);
 
   if (isProfileLoading) {
     return (
@@ -172,52 +170,55 @@ export default function OfficerCardPage() {
 
             {/* QR Code Section */}
             <div className="flex flex-col items-center justify-center py-2 text-center">
-              {isQrLoading ? (
+              {isQrLoading || !verifyOrigin ? (
                 <div className="size-48 bg-slate-50 rounded-2xl flex items-center justify-center text-xs text-slate-400 font-semibold animate-pulse">
                   กำลังดาวน์โหลด QR...
                 </div>
               ) : qrError || !qrData ? (
-                // Fallback simulation in case API is not running
-                <div className="relative p-2 bg-white rounded-2xl border border-slate-200/80 shadow-md">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      (typeof window !== "undefined"
-                        ? window.location.origin
-                        : "") + "/verify-officer?token=mock-officer-token",
-                    )}`}
-                    alt="Mock Officer QR"
-                    className="size-44 object-contain rounded-xl"
-                  />
+                <div className="size-48 rounded-2xl border border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-2 px-4 text-center">
+                  <AlertCircle className="size-6 text-rose-500" />
+                  <p className="text-[11px] font-semibold text-slate-500 leading-normal">
+                    ยังไม่สามารถออก QR Code ได้
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => refetch()}
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#145b57] px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-[#114e4b] cursor-pointer border-0"
+                  >
+                    <RefreshCw className="size-3" />
+                    ลองใหม่
+                  </button>
                 </div>
               ) : (
                 // DECISION: QR encodes the frontend verify page URL (/verify-officer?token=...)
                 // so citizens land on the UI page, not raw backend JSON.
                 // The frontend page then calls GET /api/public/officers/verify/:token.
+                // The code is drawn locally — the token must not travel to a
+                // third-party QR image service.
                 <div className="relative p-2 bg-white rounded-2xl border border-slate-200/80 shadow-md">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      (typeof window !== "undefined"
-                        ? window.location.origin
-                        : "") + `/verify-officer?token=${qrData.qrToken}`,
-                    )}`}
-                    alt="Officer QR Profile"
-                    className="size-44 object-contain rounded-xl"
+                  <QrCodeImage
+                    value={`${verifyOrigin}${officerVerifyPath(qrData.qrToken)}`}
+                    size={176}
+                    alt="QR Code ยืนยันตัวตนเจ้าหน้าที่"
+                    className="rounded-xl"
                   />
                 </div>
               )}
 
-              {/* Countdown Timer */}
-              <div className="mt-4 space-y-1">
-                <p className="text-[12px] text-slate-500 font-bold">
-                  QR Code จะหมดอายุใน
-                </p>
-                <p className="text-[26px] font-black text-slate-800 leading-none py-1">
-                  {formatTime(timeLeft)}
-                </p>
-                <p className="text-[10px] text-slate-400 font-semibold">
-                  ให้ประชาชนหรือผู้ประกอบการสแกนเพื่อตรวจสอบตัวตน
-                </p>
-              </div>
+              {/* Countdown Timer — only meaningful next to a real QR code */}
+              {qrData && !qrError && (
+                <div className="mt-4 space-y-1">
+                  <p className="text-[12px] text-slate-500 font-bold">
+                    QR Code จะหมดอายุใน
+                  </p>
+                  <p className="text-[26px] font-black text-slate-800 leading-none py-1">
+                    {formatTime(timeLeft)}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-semibold">
+                    ให้ประชาชนหรือผู้ประกอบการสแกนเพื่อตรวจสอบตัวตน
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="border-b border-slate-100 my-5" />
@@ -257,16 +258,22 @@ export default function OfficerCardPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-1.5">
-              {permissionsToRender.map((perm: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-emerald-50/80 border border-emerald-100 text-emerald-800 text-[10px] font-bold px-3 py-1.5 rounded-xl leading-normal shrink-0"
-                >
-                  {perm}
-                </span>
-              ))}
-            </div>
+            {permissionsToRender.length > 0 ? (
+              <div className="flex flex-wrap gap-2 pt-1.5">
+                {permissionsToRender.map((perm: string, index: number) => (
+                  <span
+                    key={index}
+                    className="bg-emerald-50/80 border border-emerald-100 text-emerald-800 text-[10px] font-bold px-3 py-1.5 rounded-xl leading-normal shrink-0"
+                  >
+                    {perm}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="pt-1.5 text-[11px] font-semibold text-slate-400">
+                ไม่พบข้อมูลสิทธิ์การตรวจสอบของหน่วยงานนี้
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

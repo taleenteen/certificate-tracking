@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -29,7 +29,7 @@ import {
   type BusinessCategory,
 } from "@/components/app/businesses/business-filter-panel";
 import { QrScannerDialog } from "./qr-scanner-dialog";
-import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useExternalQrLink } from "@/components/shared/external-qr-link-dialog";
 import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import { SearchSuggestions } from "./search-suggestions";
 import { Button } from "@/components/ui/button";
@@ -220,11 +220,17 @@ export function AppNavbar() {
     setIsFilterOpen(false);
   };
 
-  const handleMockScan = (value: string) => {
-    if (!openExternalQrUrl(value)) {
-      toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
-    }
-  };
+  const { requestOpen: requestExternalQrLink, dialog: externalQrLinkDialog } =
+    useExternalQrLink();
+
+  const handleMockScan = useCallback(
+    (value: string) => {
+      if (!requestExternalQrLink(value)) {
+        toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
+      }
+    },
+    [requestExternalQrLink],
+  );
   const {
     isBrowserScannerOpen,
     setIsBrowserScannerOpen,
@@ -509,6 +515,7 @@ export function AppNavbar() {
         )}
       </div>
 
+      {externalQrLinkDialog}
       <QrScannerDialog
         open={isBrowserScannerOpen}
         onOpenChange={setIsBrowserScannerOpen}

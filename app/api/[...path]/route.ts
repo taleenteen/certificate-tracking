@@ -18,16 +18,20 @@ import {
   clearAuthCookies,
   harvestTokens,
   refreshTokens,
+  stripTokenFields,
 } from "@/server/backend";
 
 // Host/hop-by-hop headers we must not forward upstream. We strip `cookie` so our
 // httpOnly auth cookies never leak to the backend — auth goes via Bearer only.
+// `authorization` is stripped too and re-set below, so the caller can never
+// smuggle its own Bearer past the cookie-derived one.
 const STRIP_REQUEST_HEADERS = new Set([
   "host",
   "connection",
   "content-length",
   "accept-encoding",
   "cookie",
+  "authorization",
 ]);
 
 const STRIP_RESPONSE_HEADERS = new Set([
@@ -54,12 +58,21 @@ async function proxy(
       ? undefined
       : await req.arrayBuffer();
 
+  // Bearer explicitly supplied by the caller (e.g. the tempToken used by the
+  // forced-password-change flow). Per lib/http.ts it is a fallback only: a
+  // cookie session always wins, so a stale cookie cannot hijack the request.
+  const clientAuthorization = req.headers.get("authorization") ?? undefined;
+
   const call = (accessToken: string | undefined): Promise<Response> => {
     const headers = new Headers();
     req.headers.forEach((value, key) => {
       if (!STRIP_REQUEST_HEADERS.has(key.toLowerCase())) headers.set(key, value);
     });
-    if (accessToken) headers.set("authorization", `Bearer ${accessToken}`);
+    if (accessToken) {
+      headers.set("authorization", `Bearer ${accessToken}`);
+    } else if (clientAuthorization) {
+      headers.set("authorization", clientAuthorization);
+    }
     return fetch(backendUrl(path, cleanSearch), {
       method: req.method,
       headers,
@@ -93,11 +106,19 @@ async function proxy(
     }
   }
 
-  return relay(upstream, path.join("/") === "auth/logout");
+  return relay(upstream, isAuthPath, path.join("/") === "auth/logout");
 }
 
-/** Turn the upstream Response into a NextResponse, harvesting tokens out of JSON bodies. */
-async function relay(upstream: Response, isLogout = false): Promise<NextResponse> {
+/**
+ * Turn the upstream Response into a NextResponse. Tokens in an auth response
+ * body move into httpOnly cookies; on any other path they are only stripped —
+ * a non-auth resource must never be able to rewrite the session.
+ */
+async function relay(
+  upstream: Response,
+  isAuthPath: boolean,
+  isLogout = false,
+): Promise<NextResponse> {
   const headers = new Headers();
   upstream.headers.forEach((value, key) => {
     if (!STRIP_RESPONSE_HEADERS.has(key.toLowerCase())) headers.set(key, value);
@@ -127,10 +148,13 @@ async function relay(upstream: Response, isLogout = false): Promise<NextResponse
       await clearAuthCookies();
     }
 
-    const sanitized =
-      payload && typeof payload === "object" && !Array.isArray(payload)
+    const isTokenBearingObject =
+      !!payload && typeof payload === "object" && !Array.isArray(payload);
+    const sanitized = isTokenBearingObject
+      ? isAuthPath
         ? await harvestTokens(payload as Record<string, unknown>)
-        : payload;
+        : stripTokenFields(payload as Record<string, unknown>)
+      : payload;
     return NextResponse.json(sanitized, { status: upstream.status, headers });
   }
 

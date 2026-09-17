@@ -50,30 +50,40 @@ async function request<T>(method: string, path: string, body?: unknown, opts?: R
         String((data as { message: unknown }).message)) ||
       `Request failed (${res.status})`;
 
+    // A 403 while a juristic context is active usually means that membership was
+    // revoked, and every following request would fail the same way — so drop the
+    // context to let the app recover. Deliberately NOT a redirect: a single
+    // background query returning 403 used to throw the user out of whatever form
+    // they were filling in. Callers decide what to render instead.
     if (res.status === 403 && path !== "auth/context") {
-      import("@/stores/auth").then(({ useAuthStore }) => {
-        useAuthStore.getState().setAuth({ activeJuristicId: null, juristicRole: null });
-      }).catch((err) => {
-        console.error("Failed to import useAuthStore in ApiError handler:", err);
-      });
-
-      fetch("/api/auth/context", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ juristicId: null }),
-      }).catch((err) => {
-        console.error("Failed to automatically reset server-side context on 403 Forbidden:", err);
-      });
-
-      if (typeof window !== "undefined") {
-        window.location.href = "/home";
-      }
+      void clearActiveJuristicContext();
     }
 
     throw new ApiError(res.status, message, data);
   }
 
   return data as T;
+}
+
+async function clearActiveJuristicContext(): Promise<void> {
+  try {
+    const { useAuthStore } = await import("@/stores/auth");
+    if (!useAuthStore.getState().activeJuristicId) return;
+    useAuthStore.getState().setAuth({ activeJuristicId: null, juristicRole: null });
+  } catch (err) {
+    console.error("Failed to read auth store while handling 403 Forbidden:", err);
+    return;
+  }
+
+  try {
+    await fetch("/api/auth/context", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ juristicId: null }),
+    });
+  } catch (err) {
+    console.error("Failed to reset server-side context on 403 Forbidden:", err);
+  }
 }
 
 export const http = {

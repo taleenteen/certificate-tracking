@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { ChartConfig } from "@/components/ui/chart";
 import { Search, ScanSearch } from "lucide-react";
@@ -33,8 +33,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { http } from "@/lib/http";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
-import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useExternalQrLink } from "@/components/shared/external-qr-link-dialog";
 import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
+import {
+  extractOfficerToken,
+  officerVerifyPath,
+} from "@/lib/officer-qr-token";
 import { SearchSheetOverlay } from "@/components/shared/search-sheet-overlay";
 import { HomepageService } from "@/components/app/home/homepage-service";
 import { ComplaintsSheetOverlay } from "@/components/shared/complaints-sheet-overlay";
@@ -338,28 +342,6 @@ const inspectionTrendConfig = {
   },
 } satisfies ChartConfig;
 
-const extractOfficerToken = (scannedText: string): string => {
-  try {
-    if (
-      scannedText.startsWith("http://") ||
-      scannedText.startsWith("https://")
-    ) {
-      const url = new URL(scannedText);
-      const parts = url.pathname.split("/").filter(Boolean);
-      const idx = parts.findIndex((p) => p === "verify");
-      if (idx !== -1 && parts[idx + 1]) {
-        return parts.slice(idx + 1).join("/");
-      }
-      if (parts.length > 0) {
-        return parts[parts.length - 1];
-      }
-    }
-  } catch (e) {
-    console.error("Failed to parse officer URL:", e);
-  }
-  return scannedText;
-};
-
 export function HomeDashboard() {
   const user = useAuthStore((s) => s.user);
   const activePortalMode = useAuthStore((s) => s.activePortalMode);
@@ -386,16 +368,26 @@ export function HomeDashboard() {
     scannerModeRef.current = scannerMode;
   }, [scannerMode]);
 
-  const handleScanMock = (value: string) => {
-    if (scannerModeRef.current === "officer") {
-      const token = extractOfficerToken(value);
-      router.push(`/verify-officer?token=${token}`);
-      return;
-    }
-    if (!openExternalQrUrl(value)) {
-      toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
-    }
-  };
+  const { requestOpen: requestExternalQrLink, dialog: externalQrLinkDialog } =
+    useExternalQrLink();
+
+  const handleScanMock = useCallback(
+    (value: string) => {
+      if (scannerModeRef.current === "officer") {
+        const token = extractOfficerToken(value);
+        if (!token) {
+          toast.error("ไม่สามารถอ่าน QR Code ของเจ้าหน้าที่ได้ กรุณาลองใหม่");
+          return;
+        }
+        router.push(officerVerifyPath(token));
+        return;
+      }
+      if (!requestExternalQrLink(value)) {
+        toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
+      }
+    },
+    [requestExternalQrLink, router],
+  );
   const {
     isBrowserScannerOpen,
     setIsBrowserScannerOpen,
@@ -513,6 +505,7 @@ export function HomeDashboard() {
           onComplaintsClick={() => setIsComplaintsSheetOpen(true)}
         />
 
+        {externalQrLinkDialog}
         <QrScannerDialog
           open={isBrowserScannerOpen}
           onOpenChange={setIsBrowserScannerOpen}
@@ -942,6 +935,7 @@ export function HomeDashboard() {
         </div>
       </section>
 
+      {externalQrLinkDialog}
       <QrScannerDialog
         open={isBrowserScannerOpen}
         onOpenChange={setIsBrowserScannerOpen}

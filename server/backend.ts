@@ -42,11 +42,25 @@ interface TokenBody {
   refreshTokenExpiresInSeconds?: unknown;
 }
 
+/** Remove token fields from a body so the browser never sees a raw token. */
+export function stripTokenFields<T extends TokenBody>(
+  body: T,
+): Omit<T, "accessToken" | "refreshToken"> {
+  const sanitized = { ...body };
+  delete sanitized.accessToken;
+  delete sanitized.refreshToken;
+  return sanitized;
+}
+
 /**
- * If a backend JSON body carries tokens, move them into httpOnly cookies and
- * strip them from the body so the browser never sees a raw token. One rule
- * covers every auth endpoint uniformly — no per-endpoint auth code needed.
- * Returns the sanitized body.
+ * If an AUTH endpoint's JSON body carries tokens, move them into httpOnly
+ * cookies and strip them from the body. One rule covers every auth endpoint
+ * uniformly — no per-endpoint auth code needed. Returns the sanitized body.
+ *
+ * Only auth responses may write these cookies: a non-auth resource that happens
+ * to carry a field named `accessToken` (e.g. a stored integration credential in
+ * the super-admin connections screen) would otherwise overwrite the caller's
+ * own session.
  */
 export async function harvestTokens<T extends TokenBody>(
   body: T,
@@ -65,10 +79,7 @@ export async function harvestTokens<T extends TokenBody>(
         : 7 * 24 * 60 * 60;
     store.set(REFRESH_COOKIE, body.refreshToken, { ...cookieBase, maxAge: refreshMaxAge });
   }
-  const sanitized = { ...body };
-  delete sanitized.accessToken;
-  delete sanitized.refreshToken;
-  return sanitized;
+  return stripTokenFields(body);
 }
 
 export async function clearAuthCookies(): Promise<void> {

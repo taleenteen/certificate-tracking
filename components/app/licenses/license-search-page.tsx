@@ -13,7 +13,7 @@ import preparePageImage from "@/assets/search/prepare-page.png";
 import { LicenseCertificateCard } from "@/components/app/licenses/license-certificate-card";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
-import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useExternalQrLink } from "@/components/shared/external-qr-link-dialog";
 import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import type { GroupedBusinessItem } from "@/app/(app)/license-search/page";
 
@@ -56,11 +56,17 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
     );
   };
 
-  const handleScan = useCallback((value: string) => {
-    if (!openExternalQrUrl(value)) {
-      toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
-    }
-  }, []);
+  const { requestOpen: requestExternalQrLink, dialog: externalQrLinkDialog } =
+    useExternalQrLink();
+
+  const handleScan = useCallback(
+    (value: string) => {
+      if (!requestExternalQrLink(value)) {
+        toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
+      }
+    },
+    [requestExternalQrLink],
+  );
   const {
     isBrowserScannerOpen,
     setIsBrowserScannerOpen,
@@ -336,6 +342,7 @@ export function LicenseSearchPageView({ items }: LicenseSearchPageViewProps) {
         </div>
       </div>
 
+      {externalQrLinkDialog}
       <QrScannerDialog
         open={isBrowserScannerOpen}
         onOpenChange={setIsBrowserScannerOpen}

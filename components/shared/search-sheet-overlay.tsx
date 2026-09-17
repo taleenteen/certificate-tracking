@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Search, X, ArrowLeft, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { useLicenses, type LicenseResponse } from "@/hooks/useLicenses";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
-import { openExternalQrUrl } from "@/lib/external-qr-url";
+import { useExternalQrLink } from "@/components/shared/external-qr-link-dialog";
 import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
 import { http } from "@/lib/http";
@@ -91,13 +91,19 @@ export function SearchSheetOverlay({
       .slice(0, 5);
   }, [licenses, searchQuery]);
 
-  const handleScanMock = (value: string) => {
-    if (openExternalQrUrl(value)) {
-      onClose();
-      return;
-    }
-    toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
-  };
+  const { requestOpen: requestExternalQrLink, dialog: externalQrLinkDialog } =
+    useExternalQrLink();
+
+  const handleScanMock = useCallback(
+    (value: string) => {
+      if (requestExternalQrLink(value)) {
+        onClose();
+        return;
+      }
+      toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
+    },
+    [onClose, requestExternalQrLink],
+  );
   const {
     isBrowserScannerOpen,
     setIsBrowserScannerOpen,
@@ -244,6 +250,7 @@ export function SearchSheetOverlay({
         )}
       </AnimatePresence>
 
+      {externalQrLinkDialog}
       <QrScannerDialog
         open={isBrowserScannerOpen}
         onOpenChange={setIsBrowserScannerOpen}

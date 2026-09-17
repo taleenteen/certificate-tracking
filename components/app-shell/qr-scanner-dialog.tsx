@@ -29,25 +29,43 @@ export function QrScannerDialog({
   const isScannerActiveRef = useRef(false);
   const hasHandledScanRef = useRef(false);
 
+  // Keep the latest callbacks in refs so the camera effect can depend on `open`
+  // and `id` alone. A handler recreated on every parent render would otherwise
+  // tear down and restart the camera on each react-query refetch / state change.
+  const onScanRef = useRef(onScanMock);
+  const onOpenChangeRef = useRef(onOpenChange);
+  useEffect(() => {
+    onScanRef.current = onScanMock;
+    onOpenChangeRef.current = onOpenChange;
+  });
+
   // DECISION: Clean up and stop camera scanner process to release resources
-  const cleanupScanner = useCallback(async () => {
+  const cleanupScanner = useCallback(async (): Promise<void> => {
     isScannerActiveRef.current = false;
 
-    if (cleanupPromiseRef.current) {
-      return cleanupPromiseRef.current;
-    }
-
-    // HTML5-QRCode stop with promise sequence handling to prevent race conditions
+    // Take the CURRENT instance before looking at an in-flight cleanup: that
+    // cleanup belongs to an older instance, so returning it early would leave
+    // this one streaming after the dialog closed.
     const scanner = scannerRef.current;
     scannerRef.current = null;
+    const startPromise = startPromiseRef.current;
+    startPromiseRef.current = null;
 
+    const pending = cleanupPromiseRef.current;
     if (!scanner) {
+      await pending;
       return;
     }
 
+    // HTML5-QRCode stop with promise sequence handling to prevent race conditions
     const cleanupPromise = (async () => {
-      const startPromise = startPromiseRef.current;
-      startPromiseRef.current = null;
+      if (pending) {
+        try {
+          await pending;
+        } catch {
+          // A failed earlier cleanup must not block stopping this instance.
+        }
+      }
 
       if (startPromise) {
         try {
@@ -87,9 +105,9 @@ export function QrScannerDialog({
         void cleanupScanner();
       }
 
-      onOpenChange(nextOpen);
+      onOpenChangeRef.current(nextOpen);
     },
-    [cleanupScanner, onOpenChange]
+    [cleanupScanner]
   );
 
   const handleDecodedScan = useCallback(
@@ -100,11 +118,11 @@ export function QrScannerDialog({
 
       hasHandledScanRef.current = true;
       isScannerActiveRef.current = false;
-      onOpenChange(false);
-      onScanMock(decodedText);
+      onOpenChangeRef.current(false);
+      onScanRef.current(decodedText);
       await cleanupScanner();
     },
-    [cleanupScanner, onOpenChange, onScanMock]
+    [cleanupScanner]
   );
 
   useEffect(() => {
@@ -145,7 +163,7 @@ export function QrScannerDialog({
     } else {
       void cleanupScanner();
     }
-  }, [cleanupScanner, handleDecodedScan, id, onOpenChange, open]);
+  }, [cleanupScanner, handleDecodedScan, id, open]);
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>

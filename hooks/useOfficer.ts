@@ -41,8 +41,10 @@ export function useOfficerQrProfile(officerId: string, enabled: boolean) {
     queryKey: ["officer-qr-profile", officerId],
     queryFn: () => http.get<OfficerQrProfileResponse>(`officers/${officerId}/qr-profile`),
     enabled: enabled && !!officerId,
-    refetchInterval: 50_000, // Re-mint the token every 50 seconds to prevent expiration
-    staleTime: 45_000,
+    // Backend TTL is 3 minutes (OFFICER_QR_TOKEN_TTL_MS); re-mint well before it
+    // so a code on screen is never close to expiring when someone scans it.
+    refetchInterval: 150_000,
+    staleTime: 145_000,
   });
 }
 

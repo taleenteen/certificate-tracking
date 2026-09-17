@@ -19,6 +19,10 @@ import { Button } from "@/components/ui/button";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { useVerifyOfficer } from "@/hooks/useOfficer";
 import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
+import {
+  extractOfficerToken,
+  officerVerifyPath,
+} from "@/lib/officer-qr-token";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
@@ -59,22 +63,12 @@ export default function VerifyOfficerContent() {
   const isSuccess = hasToken ? (verifyData?.valid === true) : false;
 
   const handleScan = useCallback((value: string) => {
-    // Extract token from scanned URL (supports both /verify-officer?token=... and raw token)
-    try {
-      const url = new URL(value);
-      const extractedToken = url.searchParams.get("token");
-      if (extractedToken) {
-        router.replace(`/verify-officer?token=${encodeURIComponent(extractedToken)}`);
-        return;
-      }
-    } catch {
-      // Not a valid URL — treat raw value as token if it looks like one
-      if (value && !value.includes(" ")) {
-        router.replace(`/verify-officer?token=${encodeURIComponent(value)}`);
-        return;
-      }
+    const extractedToken = extractOfficerToken(value);
+    if (!extractedToken) {
+      toast.error("ไม่สามารถอ่าน QR Code ของเจ้าหน้าที่ได้ กรุณาลองใหม่");
+      return;
     }
-    toast.error("ไม่สามารถอ่าน QR Code ของเจ้าหน้าที่ได้ กรุณาลองใหม่");
+    router.replace(officerVerifyPath(extractedToken));
   }, [router]);
   const {
     isBrowserScannerOpen,
@@ -128,7 +122,7 @@ export default function VerifyOfficerContent() {
   const failMessage = rawReason === "INVALID_TOKEN"
     ? "รหัสโทเคนอ้างอิงไม่ถูกต้อง หรือไม่พบข้อมูลเจ้าหน้าที่ในฐานข้อมูลระบบ"
     : rawReason === "EXPIRED_TOKEN"
-      ? "QR Code ของเจ้าหน้าที่หมดอายุแล้ว (อายุการใช้งานรหัสจำกัดที่ 60 วินาที)"
+      ? "QR Code ของเจ้าหน้าที่หมดอายุแล้ว กรุณาให้เจ้าหน้าที่แสดงรหัสใหม่แล้วสแกนอีกครั้ง"
       : rawReason === "NOT_OFFICER"
         ? "บัญชีผู้ใช้ที่สแกนไม่มีบทบาทเป็นเจ้าหน้าที่ปฏิบัติงาน"
         : rawReason === "OFFICER_NOT_ACTIVE"

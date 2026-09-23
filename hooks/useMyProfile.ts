@@ -9,6 +9,7 @@ export interface ProfileResponse {
   citizenIdVerified: boolean;
   citizenIdLast4: string | null;
   primaryChannel: string;
+  canLogout?: boolean;
 }
 
 export function useMyProfile() {

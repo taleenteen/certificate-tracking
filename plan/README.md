@@ -26,6 +26,8 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
+| 2026-09-23 | [Profile Logout Condition Alignment](./2026-09-23-profile-logout-condition.md) | Apply layout's canLogout condition to the logout button on the profile page. | Verified | TypeScript typecheck and Next.js production build passed. | Verified |
+| 2026-08-26 | [Interview Topic 2: Code Structure](./2026-08-26-interview-topic-2-code-structure.md) | Thai interview script plus Word document of folder structure and architecture for Topic 2. | Implemented | Word file written at docs/Topic-2-Code-Structure.docx for user editing. | Documentation only |
 | 2026-07-21 | [Multi-Agency License Export](./2026-07-21-multi-agency-license-export.md) | Allow all licenses under one business to be selected and exported across agencies. | Verified | Automated backend and frontend checks passed; physical export test pending. | Verified |
 | 2026-07-19 | [Native Entry Reliability](./2026-07-19-native-entry-reliability.md) | Prevent Tang Rat root handoffs from waiting on the global SDK and bound native credential reads. | Verified | Automated checks passed; Tang Rat device verification pending. | Verified |
 | 2026-07-17 | [Native Runtime Capability Gate](./2026-07-17-native-runtime-capability-gate.md) | Centralize Tang Rat SDK capability checks while preserving URL-first mToken login. | Verified | Automated checks passed; Tang Rat device verification pending. | Verified |

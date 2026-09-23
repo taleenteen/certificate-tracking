@@ -35,10 +35,14 @@ export default function ProfilePage() {
   const router = useRouter();
   const logout = useLogout();
   const activeJuristicId = useAuthStore((s) => s.activeJuristicId);
+  const storeCanLogout = useAuthStore((s) => s.canLogout);
 
   const { data: profile, isLoading: isProfileLoading, error: profileError } = useMyProfile();
   const { data: agencies = [] } = useAgencies();
   const { data: business, isLoading: isBusinessLoading } = useBusiness(activeJuristicId || "");
+
+  const canLogout = profile?.canLogout ?? storeCanLogout;
+  const hasSecurityActions = profile?.primaryChannel !== "tang_rat" || canLogout;
 
   // Resolve user agency name
   const userAgency = agencies.find((a) => a.id === profile?.agencyId);
@@ -248,38 +252,42 @@ export default function ProfilePage() {
         )}
 
         {/* Card 3: Security & Actions */}
-        <Card className="rounded-[24px] border-0 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)] overflow-hidden">
-          <CardContent className="p-3 space-y-0.5">
-            {profile?.primaryChannel !== "tang_rat" && (
-              <Link
-                href="/auth/change-password"
-                className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#145b57]/10 text-[#145b57]">
-                    <KeyRound className="h-4.5 w-4.5" />
+        {hasSecurityActions && (
+          <Card className="rounded-[24px] border-0 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)] overflow-hidden">
+            <CardContent className="p-3 space-y-0.5">
+              {profile?.primaryChannel !== "tang_rat" && (
+                <Link
+                  href="/auth/change-password"
+                  className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#145b57]/10 text-[#145b57]">
+                      <KeyRound className="h-4.5 w-4.5" />
+                    </div>
+                    <span className="text-[13px] font-bold text-slate-800">เปลี่ยนรหัสผ่าน</span>
                   </div>
-                  <span className="text-[13px] font-bold text-slate-800">เปลี่ยนรหัสผ่าน</span>
-                </div>
-                <ChevronRight className="size-4 text-slate-400" />
-              </Link>
-            )}
+                  <ChevronRight className="size-4 text-slate-400" />
+                </Link>
+              )}
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-rose-600 hover:bg-rose-50/50 transition-colors text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
-                  <LogOut className="h-4.5 w-4.5" />
-                </div>
-                <span className="text-[13px] font-bold">ออกจากระบบ</span>
-              </div>
-              <ChevronRight className="size-4 text-rose-400" />
-            </button>
-          </CardContent>
-        </Card>
+              {canLogout && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-rose-600 hover:bg-rose-50/50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
+                      <LogOut className="h-4.5 w-4.5" />
+                    </div>
+                    <span className="text-[13px] font-bold">ออกจากระบบ</span>
+                  </div>
+                  <ChevronRight className="size-4 text-rose-400" />
+                </button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
       </section>
     </main>

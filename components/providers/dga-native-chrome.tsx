@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useDgaNativeRuntime } from "./dga-native-runtime";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/home": "e-License",
+  "/home": "ระบบตรวจสอบใบอนุญาตอิเล็กทรอนิกส์",
   "/licenses": "ใบอนุญาตของฉัน",
   "/license-search": "ค้นหาใบอนุญาต",
   "/businesses": "สถานประกอบการ",
@@ -18,7 +18,7 @@ function pageTitle(pathname: string) {
   if (pathname.startsWith("/licenses/")) return "รายละเอียดใบอนุญาต";
   if (pathname.startsWith("/businesses/")) return "รายละเอียดสถานประกอบการ";
   if (pathname.startsWith("/officer/inspections/")) return "รายละเอียดรายการ";
-  return PAGE_TITLES[pathname] ?? "e-License";
+  return PAGE_TITLES[pathname] ?? "ระบบตรวจสอบใบอนุญาตอิเล็กทรอนิกส์";
 }
 
 export function DgaNativeChrome() {
@@ -28,12 +28,9 @@ export function DgaNativeChrome() {
   useEffect(() => {
     if (!sdk || !isNative) return;
 
-    const isHome = pathname === "/home";
-    const showBackButton = !isHome;
+    const showBackButton = pathname !== "/home";
     try {
-      if (!isHome) {
-        sdk.setTitle?.(pageTitle(pathname), showBackButton);
-      }
+      sdk.setTitle?.(pageTitle(pathname), showBackButton);
       sdk.setBackButtonVisible?.(showBackButton);
       sdk.setCaptureButtonVisible?.(true);
     } catch {

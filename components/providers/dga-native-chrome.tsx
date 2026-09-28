@@ -28,9 +28,12 @@ export function DgaNativeChrome() {
   useEffect(() => {
     if (!sdk || !isNative) return;
 
-    const showBackButton = pathname !== "/home";
+    const isHome = pathname === "/home";
+    const showBackButton = !isHome;
     try {
-      sdk.setTitle?.(pageTitle(pathname), showBackButton);
+      if (!isHome) {
+        sdk.setTitle?.(pageTitle(pathname), showBackButton);
+      }
       sdk.setBackButtonVisible?.(showBackButton);
       sdk.setCaptureButtonVisible?.(true);
     } catch {

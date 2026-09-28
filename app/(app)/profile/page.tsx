@@ -41,8 +41,9 @@ export default function ProfilePage() {
   const { data: agencies = [] } = useAgencies();
   const { data: business, isLoading: isBusinessLoading } = useBusiness(activeJuristicId || "");
 
+  const isTangRat = profile?.primaryChannel === "tang_rat";
   const canLogout = profile?.canLogout ?? storeCanLogout;
-  const hasSecurityActions = profile?.primaryChannel !== "tang_rat" || canLogout;
+  const hasSecurityActions = !isTangRat || canLogout;
 
   // Resolve user agency name
   const userAgency = agencies.find((a) => a.id === profile?.agencyId);
@@ -81,17 +82,19 @@ export default function ProfilePage() {
   return (
     <main className="mx-auto w-full max-w-[430px] overflow-x-hidden bg-[#f4f5f7] text-slate-900 md:max-w-none text-left">
       
-      {/* Upper Navigation Header */}
-      <section className="bg-white px-4 py-4 flex items-center gap-3 border-b border-slate-100">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="size-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
-        >
-          <ArrowLeft className="size-4" />
-        </button>
-        <h1 className="text-[16px] font-bold text-slate-950">โปรไฟล์ของฉัน</h1>
-      </section>
+      {/* Upper Navigation Header (ซ่อนเมื่อเข้าใช้งานผ่านทางรัฐ เพื่อไม่ให้ซ้ำซ้อนกับ Native Header ของแอป) */}
+      {!isTangRat && (
+        <section className="bg-white px-4 py-4 flex items-center gap-3 border-b border-slate-100">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="size-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <h1 className="text-[16px] font-bold text-slate-950">โปรไฟล์ของฉัน</h1>
+        </section>
+      )}
 
       {/* Profile Info Header Panel */}
       <section className="px-4 py-6">

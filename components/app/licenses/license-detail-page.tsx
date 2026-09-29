@@ -27,8 +27,8 @@ import {
 } from "@/components/ui/dialog";
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
 import { useLicenseDocumentExport } from "@/hooks/useLicenseDocumentExports";
+import { useLicenseCopy } from "@/hooks/useLicenseCopy";
 import { ExportBanner } from "@/components/app/licenses/export-banner";
-import { LicenseCopyDiagnostics, useLicenseCopyDiagnostics } from "./license-copy-diagnostics";
 
 type LicenseDetailPageViewProps = {
   data: LicenseDetailData;
@@ -40,7 +40,7 @@ export function LicenseDetailPageView({
   isStaff = false,
 }: LicenseDetailPageViewProps) {
   const searchParams = useSearchParams();
-  const { copy, copyError, entries, isCopied } = useLicenseCopyDiagnostics();
+  const { copy, copyError, isCopied } = useLicenseCopy();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const exportLicense = useLicenseDocumentExport(data.businessId ?? "");
 
@@ -125,8 +125,11 @@ export function LicenseDetailPageView({
                   )}
                 </button>
               </div>
-              {copyError && <p role="alert" className="mt-1 text-xs text-rose-600">{copyError}</p>}
-              <LicenseCopyDiagnostics entries={entries} />
+              {copyError && (
+                <p role="alert" className="mt-1 text-xs text-rose-600">
+                  {copyError}
+                </p>
+              )}
             </div>
 
             {/* Business type and Location Details */}

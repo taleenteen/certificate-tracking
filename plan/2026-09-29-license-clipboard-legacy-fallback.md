@@ -1,6 +1,6 @@
 # License Clipboard Legacy Fallback
 
-- Status: Implemented
+- Status: Verified
 - Owner: Frontend implementation agent
 - Date created: 2026-09-29
 - Last updated: 2026-09-29
@@ -12,8 +12,8 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 ## Context and constraints
 
 - Huawei Tang Rat WebView reports Chromium 114 and rejects `writeText` with `NotAllowedError: Write permission denied` despite HTTPS and user activation.
-- Both license card and detail view use the shared `useLicenseCopyDiagnostics` hook.
-- The existing temporary on-page diagnostics should show the outcome of both copy methods until the device check is complete.
+- Both license card and detail view originally used the shared `useLicenseCopyDiagnostics` hook. After diagnosis, the copy behavior lives in `useLicenseCopy`.
+- The temporary on-page diagnostics showed the outcome of both copy methods until the user confirmed the Huawei copy worked; the block has since been removed.
 - `document.execCommand("copy")` is deprecated and must be treated as a tested compatibility fallback, not a guaranteed fix.
 
 ## Scope
@@ -22,11 +22,12 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - Attempt fallback if the Clipboard API is unavailable or rejects.
 - Check the fallback's boolean result, log its outcome, and show copied state only on success.
 - Preserve the current card and detail button wiring.
+- After the user confirmed copying works on Huawei, remove the temporary diagnostic UI and event log while keeping the shared fallback and user-facing failure message.
 
 ## Out of scope
 
 - Native app or SDK changes.
-- Removing the temporary diagnostic block before physical-device validation.
+- Removing the temporary diagnostic block before physical-device validation (original scope; validation has since been reported by the user).
 - Clipboard read permission or reading clipboard contents from JavaScript.
 
 ## Proposed workflow
@@ -47,27 +48,32 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - [x] Add legacy copy fallback to the shared hook.
 - [x] Record both outcomes and clear user feedback when both fail.
 - [x] Update the plan and index at handoff.
+- [x] Remove temporary diagnostic UI and logging, retaining the working fallback.
 
 ## Validation checklist
 
 - [x] `bunx tsc --noEmit --incremental false` passed.
 - [x] File-scoped ESLint and `git diff --check` passed.
-- [ ] Huawei Tang Rat WebView: paste the copied number after pressing the button.
+- [x] User confirmed copying works in the Huawei Tang Rat WebView with the fallback before log removal.
 - [ ] Confirm modern browser copy still succeeds through `writeText`.
 
 ## Progress log
 
 - 2026-09-29: Started a compatibility fallback after the Huawei device log showed permission denial in Chromium WebView 114.
 - 2026-09-29: Added a temporary textarea selection fallback after `writeText` failure. The helper checks `execCommand("copy")`'s boolean result, removes the textarea, and restores focus. The diagnostic block records both paths and the controls show an error if both fail. TypeScript, focused ESLint, and whitespace checks passed; physical clipboard contents remain unverified.
+- 2026-09-29: User reported the Huawei WebView copy works with the fallback and requested removal of all temporary logging. Cleanup is in progress; preserve the original diagnostic rationale above as history.
+- 2026-09-29: Removed the diagnostic component, event capture, user agent display, pending timer, and log output. Moved the unchanged textarea copy method into `hooks/useLicenseCopy.ts`; both buttons still use `writeText` first and `execCommand("copy")` after failure. Kept the user-facing error only when both methods fail. TypeScript, focused ESLint, and whitespace checks passed after cleanup.
 
 ## Changed files
 
 - `plan/2026-09-29-license-clipboard-legacy-fallback.md`
 - `plan/README.md`
-- `components/app/licenses/license-copy-diagnostics.tsx`
+- `components/app/licenses/license-copy-diagnostics.tsx` (fallback implementation first added here, then file removed during cleanup)
 - `components/app/licenses/license-certificate-card.tsx`
 - `components/app/licenses/license-detail-page.tsx`
+- `hooks/useLicenseCopy.ts` (added during cleanup)
 
 ## Open questions and risks
 
-- Some WebViews may reject `execCommand` after the asynchronous Clipboard API rejects because the user gesture may no longer count; the physical-device result will decide if a synchronous old-WebView path is needed.
+- `execCommand` remains a deprecated compatibility path. The user confirmed it works on the reported Huawei WebView; other older WebViews may differ.
+- The modern browser path has not been manually retested after diagnostic cleanup; the hook still calls `writeText` first.

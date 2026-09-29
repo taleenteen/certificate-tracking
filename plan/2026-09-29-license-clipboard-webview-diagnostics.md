@@ -57,6 +57,7 @@ Show an on-page diagnostic log for license-number copy actions so a tester can d
 - 2026-09-29: Added a shared diagnostic block to both copy controls. It reports tap arrival, browser context, API availability, pending calls, success, and redacted errors. Reviewed the diff and checked whitespace. Did not run tests because this change is diagnostic and device behavior must be checked in Tang Rat.
 - 2026-09-29: Initially planned URL opt-in with `?clipboardDebug=1`. Changed to an always-visible temporary block because testers may be unable to edit the URL inside Tang Rat WebView; otherwise the diagnostic would be inaccessible through the normal app flow.
 - 2026-09-29: User supplied a device log identifying Android 10 / Huawei AGS6-W09 / Chromium WebView 114.0.5735.196 inside CitizenPortal. The tap reached `onClick`, the page was HTTPS and focused with transient activation, and `navigator.clipboard.writeText` rejected with `NotAllowedError: Write permission denied.` Chromium added gesture-based sanitized clipboard writing to Android WebView after version 114 (commit `1c68b3c5be460478836d5693bf6528f16f07b3f2`, August 2023). Diagnosis is consistent with the older embedded WebView denying this API; no copy-path fix has been made.
+- 2026-09-29: The user confirmed the subsequent fallback copied successfully on Huawei. At the user's request, the temporary on-page log and its component were removed; the copy helper was retained in `hooks/useLicenseCopy.ts`.
 
 ## Changed files
 
@@ -68,5 +69,4 @@ Show an on-page diagnostic log for license-number copy actions so a tester can d
 
 ## Open questions and risks
 
-- A synchronous `document.execCommand("copy")` path needs a real-device check before using it as a fallback. If it also fails, the host app needs a supported native clipboard path or a newer WebView provider.
-- The temporary block is visible on every rendered license card and detail view until removed after diagnosis.
+- The temporary diagnostic block is removed. The Huawei device outcome is recorded above; other WebView versions may behave differently.

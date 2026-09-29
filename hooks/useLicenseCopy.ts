@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 
+function isLegacyAndroidWebView() {
+  const userAgent = navigator.userAgent;
+  const chromiumMajor = Number(/Chrome\/(\d+)/i.exec(userAgent)?.[1]);
+  return /;\s*wv\)/i.test(userAgent) && chromiumMajor > 0 && chromiumMajor < 118;
+}
+
 function copyWithSelection(value: string) {
   const textarea = document.createElement("textarea");
   const previouslyFocused = document.activeElement;
@@ -42,17 +48,29 @@ export function useLicenseCopy() {
   const copy = async (licenseNumber: string) => {
     setCopyError(null);
     let copied = false;
+    const legacyWebView = isLegacyAndroidWebView();
 
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(licenseNumber);
-        copied = true;
+    if (legacyWebView) {
+      // This needs to run during the tap, before awaiting the denied Clipboard API.
+      try {
+        copied = copyWithSelection(licenseNumber);
+      } catch {
+        copied = false;
       }
-    } catch {
-      // Older WebViews can expose writeText but deny write permission.
     }
 
     if (!copied) {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(licenseNumber);
+          copied = true;
+        }
+      } catch {
+        // Older WebViews can expose writeText but deny write permission.
+      }
+    }
+
+    if (!copied && !legacyWebView) {
       try {
         copied = copyWithSelection(licenseNumber);
       } catch {

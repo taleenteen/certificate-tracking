@@ -26,7 +26,7 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
-| 2026-09-29 | [License Clipboard Legacy Fallback](./2026-09-29-license-clipboard-legacy-fallback.md) | Try a legacy selection based copy after Async Clipboard fails in older WebViews. | Verified | Huawei copy confirmed by user; temporary logs removed; TypeScript and focused ESLint passed. | Verified |
+| 2026-09-29 | [License Clipboard Legacy Fallback](./2026-09-29-license-clipboard-legacy-fallback.md) | Support copying through older Android WebViews. | Implemented | Synchronous legacy path added on `log/huawei-copy`; static checks pass, Huawei paste check pending. | Implemented |
 | 2026-09-29 | [License Clipboard WebView Diagnostics](./2026-09-29-license-clipboard-webview-diagnostics.md) | Diagnose clipboard failure in Huawei Tang Rat WebView; temporary on-page log removed after diagnosis. | Verified | WebView 114 denied `writeText`; fallback confirmed working by user. | Verified |
 | 2026-09-24 | [Hide Profile Header for Tang Rat](./2026-09-24-profile-hide-header-tang-rat.md) | Hide profile upper navigation header when accessing via Tang Rat. | Verified | TypeScript typecheck and Next.js production build passed. | Verified |
 | 2026-09-24 | [Skip Home DGA Title](./2026-09-24-skip-home-dga-title.md) | Update home page title to ระบบตรวจสอบใบอนุญาตอิเล็กทรอนิกส์ via Tang Rat SDK. | Verified | TypeScript typecheck and Next.js production build passed. | Verified |

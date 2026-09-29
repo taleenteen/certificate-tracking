@@ -1,6 +1,6 @@
 # License Clipboard Legacy Fallback
 
-- Status: Verified
+- Status: Implemented
 - Owner: Frontend implementation agent
 - Date created: 2026-09-29
 - Last updated: 2026-09-29
@@ -23,6 +23,7 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - Check the fallback's boolean result, log its outcome, and show copied state only on success.
 - Preserve the current card and detail button wiring.
 - After the user confirmed copying works on Huawei, remove the temporary diagnostic UI and event log while keeping the shared fallback and user-facing failure message.
+- Route the observed pre-fix Chromium Android WebView to the synchronous selection copy path during the click handler, while leaving the modern Clipboard API first for other engines.
 
 ## Out of scope
 
@@ -49,12 +50,14 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - [x] Record both outcomes and clear user feedback when both fail.
 - [x] Update the plan and index at handoff.
 - [x] Remove temporary diagnostic UI and logging, retaining the working fallback.
+- [x] Handle the older Android WebView before awaiting `writeText` and recheck the copy path statically.
 
 ## Validation checklist
 
 - [x] `bunx tsc --noEmit --incremental false` passed.
 - [x] File-scoped ESLint and `git diff --check` passed.
 - [x] User confirmed copying works in the Huawei Tang Rat WebView with the fallback before log removal.
+- [ ] Recheck copying and paste on Huawei Tang Rat WebView after the synchronous legacy path change.
 - [ ] Confirm modern browser copy still succeeds through `writeText`.
 
 ## Progress log
@@ -63,6 +66,8 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - 2026-09-29: Added a temporary textarea selection fallback after `writeText` failure. The helper checks `execCommand("copy")`'s boolean result, removes the textarea, and restores focus. The diagnostic block records both paths and the controls show an error if both fail. TypeScript, focused ESLint, and whitespace checks passed; physical clipboard contents remain unverified.
 - 2026-09-29: User reported the Huawei WebView copy works with the fallback and requested removal of all temporary logging. Cleanup is in progress; preserve the original diagnostic rationale above as history.
 - 2026-09-29: Removed the diagnostic component, event capture, user agent display, pending timer, and log output. Moved the unchanged textarea copy method into `hooks/useLicenseCopy.ts`; both buttons still use `writeText` first and `execCommand("copy")` after failure. Kept the user-facing error only when both methods fail. TypeScript, focused ESLint, and whitespace checks passed after cleanup.
+- 2026-09-29: User reported that copying fails again in the no-log build. Git history shows the no-log version on `log/huawei-copy` still attempts `execCommand` after awaiting the denied `writeText` call, while the earlier diagnostic build copied successfully. This disproves the prior assumption that removing diagnostics left the device behavior unchanged. The exact timing mechanism is unconfirmed; move the known old WebView path into the synchronous click phase and preserve the failed attempt as a fallback for other engines.
+- 2026-09-29: On `log/huawei-copy`, added a WebView and Chromium-major check in `hooks/useLicenseCopy.ts`. WebView versions before 118 attempt `execCommand("copy")` synchronously during the tap, then try `writeText` if that fails. Other engines still try `writeText` first and selection copy after failure. No diagnostic UI was reintroduced. TypeScript, focused ESLint, and `git diff --check` passed; device paste is pending.
 
 ## Changed files
 
@@ -75,5 +80,6 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 
 ## Open questions and risks
 
-- `execCommand` remains a deprecated compatibility path. The user confirmed it works on the reported Huawei WebView; other older WebViews may differ.
+- `execCommand` remains a deprecated compatibility path. The user confirmed copying worked in the diagnostic build but reported failure after the no-log refactor; other older WebViews may differ.
 - The modern browser path has not been manually retested after diagnostic cleanup; the hook still calls `writeText` first.
+- The device report after this synchronous path has not yet been collected; do not call the regression resolved until the user confirms pasted text.

@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 import { type StatusBadgeStatus } from "@/components/shared/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CertificatePreview } from "./certificate-preview";
+import { LicenseCopyDiagnostics, useLicenseCopyDiagnostics } from "./license-copy-diagnostics";
 import approvedIcon from "@/assets/icon/approved.svg";
 import almostExpireIcon from "@/assets/icon/almost-expire.svg";
 import expiredIcon from "@/assets/icon/expired.svg";
@@ -45,18 +45,12 @@ const STATUS_STAMP_MAP = {
 };
 
 export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
-  const [isCopied, setIsCopied] = useState(false);
+  const { copy, entries, isCopied } = useLicenseCopyDiagnostics();
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  const handleCopy = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(item.licenseNumber);
-      setIsCopied(true);
-      window.setTimeout(() => setIsCopied(false), 1500);
-    } catch {
-      setIsCopied(false);
-    }
+    void copy(item.licenseNumber);
   };
 
   return (
@@ -83,6 +77,7 @@ export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
               )}
             </button>
           </div>
+          <LicenseCopyDiagnostics entries={entries} />
         </div>
 
         {/* Certificate Large Preview Area */}

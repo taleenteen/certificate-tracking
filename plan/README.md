@@ -26,6 +26,7 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
+| 2026-09-29 | [License Clipboard WebView Diagnostics](./2026-09-29-license-clipboard-webview-diagnostics.md) | Show temporary on-page copy diagnostics for Huawei Tang Rat WebView investigation. | Implemented | Code and diff reviewed; Huawei Tang Rat device result pending. | Implemented |
 | 2026-09-24 | [Hide Profile Header for Tang Rat](./2026-09-24-profile-hide-header-tang-rat.md) | Hide profile upper navigation header when accessing via Tang Rat. | Verified | TypeScript typecheck and Next.js production build passed. | Verified |
 | 2026-09-24 | [Skip Home DGA Title](./2026-09-24-skip-home-dga-title.md) | Update home page title to ระบบตรวจสอบใบอนุญาตอิเล็กทรอนิกส์ via Tang Rat SDK. | Verified | TypeScript typecheck and Next.js production build passed. | Verified |
 | 2026-09-23 | [Profile Logout Condition Alignment](./2026-09-23-profile-logout-condition.md) | Apply layout's canLogout condition to the logout button on the profile page. | Verified | TypeScript typecheck and Next.js production build passed. | Verified |

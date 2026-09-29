@@ -28,6 +28,7 @@ import {
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
 import { useLicenseDocumentExport } from "@/hooks/useLicenseDocumentExports";
 import { ExportBanner } from "@/components/app/licenses/export-banner";
+import { LicenseCopyDiagnostics, useLicenseCopyDiagnostics } from "./license-copy-diagnostics";
 
 type LicenseDetailPageViewProps = {
   data: LicenseDetailData;
@@ -39,7 +40,7 @@ export function LicenseDetailPageView({
   isStaff = false,
 }: LicenseDetailPageViewProps) {
   const searchParams = useSearchParams();
-  const [isCopied, setIsCopied] = useState(false);
+  const { copy, entries, isCopied } = useLicenseCopyDiagnostics();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const exportLicense = useLicenseDocumentExport(data.businessId ?? "");
 
@@ -56,14 +57,8 @@ export function LicenseDetailPageView({
     ? `/e-map?selected=${data.businessId}`
     : "/e-map";
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(data.licenseNumber);
-      setIsCopied(true);
-      window.setTimeout(() => setIsCopied(false), 1500);
-    } catch {
-      setIsCopied(false);
-    }
+  const handleCopy = () => {
+    void copy(data.licenseNumber);
   };
 
   const handleExport = () => {
@@ -130,6 +125,7 @@ export function LicenseDetailPageView({
                   )}
                 </button>
               </div>
+              <LicenseCopyDiagnostics entries={entries} />
             </div>
 
             {/* Business type and Location Details */}

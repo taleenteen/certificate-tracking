@@ -9,8 +9,42 @@ function formatError(error: unknown, licenseNumber: string) {
   return licenseNumber ? message.replaceAll(licenseNumber, "[redacted]") : message;
 }
 
+function copyWithSelection(value: string) {
+  const textarea = document.createElement("textarea");
+  const previouslyFocused = document.activeElement;
+  textarea.value = value;
+  textarea.readOnly = true;
+  textarea.setAttribute("aria-hidden", "true");
+  textarea.style.position = "fixed";
+  textarea.style.top = "0";
+  textarea.style.left = "0";
+  textarea.style.width = "1px";
+  textarea.style.height = "1px";
+  textarea.style.opacity = "0";
+  textarea.style.pointerEvents = "none";
+  textarea.style.userSelect = "text";
+  document.body.appendChild(textarea);
+
+  try {
+    textarea.focus({ preventScroll: true });
+    textarea.select();
+    textarea.setSelectionRange(0, value.length);
+    return document.execCommand("copy");
+  } finally {
+    textarea.remove();
+    if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) {
+      try {
+        previouslyFocused.focus({ preventScroll: true });
+      } catch {
+        // Restoring focus must not hide a successful copy result.
+      }
+    }
+  }
+}
+
 export function useLicenseCopyDiagnostics() {
   const [isCopied, setIsCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const [entries, setEntries] = useState<string[]>([]);
 
   const append = useCallback((message: string) => {
@@ -19,6 +53,7 @@ export function useLicenseCopyDiagnostics() {
   }, []);
 
   const copy = async (licenseNumber: string) => {
+    setCopyError(null);
     setEntries([]);
     append("ได้รับเหตุการณ์กดปุ่ม (onClick)");
     append(
@@ -45,16 +80,31 @@ export function useLicenseCopyDiagnostics() {
       window.setTimeout(() => setIsCopied(false), 1_500);
     } catch (error) {
       append(`writeText() ล้มเหลว: ${formatError(error, licenseNumber)}`);
-      setIsCopied(false);
+      try {
+        append(
+          `เริ่มวิธีสำรอง execCommand("copy"), activation=${navigator.userActivation?.isActive ?? "unknown"}`,
+        );
+        const copied = copyWithSelection(licenseNumber);
+        append(`execCommand("copy") คืนค่า ${copied}`);
+        if (!copied) throw new Error("WebView ไม่ยอมคัดลอกข้อความที่เลือก");
+        setIsCopied(true);
+        window.setTimeout(() => setIsCopied(false), 1_500);
+      } catch (fallbackError) {
+        append(`วิธีสำรองล้มเหลว: ${formatError(fallbackError, licenseNumber)}`);
+        setIsCopied(false);
+        setCopyError("ไม่สามารถคัดลอกเลขใบอนุญาตได้ใน WebView นี้");
+      }
     } finally {
       if (pendingTimer !== undefined) window.clearTimeout(pendingTimer);
     }
   };
 
-  return { copy, entries, isCopied };
+  return { copy, copyError, entries, isCopied };
 }
 
 export function LicenseCopyDiagnostics({ entries }: { entries: string[] }) {
+  const latestEntry = entries.at(-1);
+
   return (
     <section
       aria-label="บันทึกการคัดลอกเลขใบอนุญาต"
@@ -67,6 +117,7 @@ export function LicenseCopyDiagnostics({ entries }: { entries: string[] }) {
           ? "รอกดปุ่มคัดลอกเลขใบอนุญาต"
           : "ผลจากการกดครั้งล่าสุด"}
       </p>
+      {latestEntry && <p className="mt-2 font-semibold break-all">ล่าสุด: {latestEntry}</p>}
       {entries.length > 0 && (
         <pre className="mt-2 max-h-44 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed">
           {entries.join("\n")}

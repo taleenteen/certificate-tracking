@@ -40,7 +40,7 @@ export function LicenseDetailPageView({
   isStaff = false,
 }: LicenseDetailPageViewProps) {
   const searchParams = useSearchParams();
-  const { copy, entries, isCopied } = useLicenseCopyDiagnostics();
+  const { copy, copyError, entries, isCopied } = useLicenseCopyDiagnostics();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const exportLicense = useLicenseDocumentExport(data.businessId ?? "");
 
@@ -125,6 +125,7 @@ export function LicenseDetailPageView({
                   )}
                 </button>
               </div>
+              {copyError && <p role="alert" className="mt-1 text-xs text-rose-600">{copyError}</p>}
               <LicenseCopyDiagnostics entries={entries} />
             </div>
 

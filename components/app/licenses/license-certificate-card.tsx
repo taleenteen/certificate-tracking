@@ -45,7 +45,7 @@ const STATUS_STAMP_MAP = {
 };
 
 export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
-  const { copy, entries, isCopied } = useLicenseCopyDiagnostics();
+  const { copy, copyError, entries, isCopied } = useLicenseCopyDiagnostics();
 
   const handleCopy = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,6 +77,7 @@ export function LicenseCertificateCard({ item }: LicenseCertificateCardProps) {
               )}
             </button>
           </div>
+          {copyError && <p role="alert" className="mt-1 text-xs text-rose-600">{copyError}</p>}
           <LicenseCopyDiagnostics entries={entries} />
         </div>
 

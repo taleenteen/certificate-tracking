@@ -20,11 +20,11 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useCreateTask, useAssignTask, useInspectionTasks, type InspectionTaskSummary } from '@/hooks/useInspectionTasks';
-import { useUsers } from '@/hooks/useUsers';
+import { useUsers, type SystemUserSummary } from '@/hooks/useUsers';
 import { useAdminBusinesses } from '@/hooks/useBusinesses';
 import { useAuthStore } from '@/stores/auth';
 import { useAgencies } from '@/hooks/useAgencies';
-import { Check, Search, FileText, AlertCircle, ChevronLeft } from 'lucide-react';
+import { Check, Search, FileText } from 'lucide-react';
 
 interface CreateModeProps {
   mode: 'create';
@@ -60,7 +60,7 @@ const getLoadInfo = (count: number) => {
   };
 };
 
-const getOfficerZonesDisplay = (userZones: any[]) => {
+const getOfficerZonesDisplay = (userZones: SystemUserSummary['userZones']) => {
   if (!userZones || userZones.length === 0) return 'ไม่ระบุพื้นที่';
   return userZones.map((uz) => {
     const code = uz.zone.code;
@@ -84,7 +84,7 @@ export function InspectionFormModal({ open, onOpenChange, mode, task }: Inspecti
 
   // Create-mode fields
   const [dueDate, setDueDate] = React.useState('');
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [, setErrors] = React.useState<Record<string, string>>({});
 
   // Assign-mode fields
   const [assignTo, setAssignTo] = React.useState('');
@@ -102,14 +102,14 @@ export function InspectionFormModal({ open, onOpenChange, mode, task }: Inspecti
     province: string;
   } | null>(null);
   const [timePeriod, setTimePeriod] = React.useState('10:00–12:00');
-  const [selectedOfficer, setSelectedOfficer] = React.useState<any | null>(null);
+  const [selectedOfficer, setSelectedOfficer] = React.useState<SystemUserSummary | null>(null);
 
   const createTask = useCreateTask();
   const assignTask = useAssignTask(task?.id ?? '');
 
   // Fetch businesses for selection in Step 1
   const { data: businessesResponse, isLoading: isBusinessesLoading } = useAdminBusinesses(searchQuery);
-  const businesses = businessesResponse?.data ?? [];
+  const businesses = React.useMemo(() => businessesResponse?.data ?? [], [businessesResponse]);
 
   React.useEffect(() => {
     if (open) {
@@ -186,7 +186,7 @@ export function InspectionFormModal({ open, onOpenChange, mode, task }: Inspecti
           toast.success('มอบหมายเจ้าหน้าที่สำเร็จ');
           onOpenChange(false);
         },
-        onError: (err: any) => toast.error(err?.message ?? 'ไม่สามารถมอบหมายได้'),
+        onError: (err) => toast.error(err?.message ?? 'ไม่สามารถมอบหมายได้'),
       },
     );
   };
@@ -210,7 +210,7 @@ export function InspectionFormModal({ open, onOpenChange, mode, task }: Inspecti
         onSuccess: () => {
           setSuccess(true);
         },
-        onError: (err: any) => {
+        onError: (err) => {
           toast.error(err?.message ?? 'ไม่สามารถสร้างงานตรวจสอบได้');
         },
       }

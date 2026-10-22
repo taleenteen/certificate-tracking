@@ -58,12 +58,15 @@ export interface StatusItem {
   color: 'success' | 'warning' | 'critical' | 'purple' | 'muted';
 }
 
+/** Loose shape covering every category's fields; only the active category's fields are set. */
+export type MasterDataItem = Partial<AgencyItem & LicenseTypeItem & LocationItem & StatusItem>;
+
 interface MasterDataModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category: MasterDataCategory;
-  item?: any | null;
-  onSave: (item: any) => void;
+  item?: MasterDataItem | null;
+  onSave: (item: MasterDataItem) => void;
   agencies?: AgencyRecord[];
   existingLicenseTypes?: string[];
 }
@@ -75,7 +78,6 @@ export function MasterDataModal({
   item,
   onSave,
   agencies = [],
-  existingLicenseTypes = [],
 }: MasterDataModalProps) {
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
@@ -137,6 +139,7 @@ export function MasterDataModal({
         setStatusColor(item?.color || 'muted');
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- form state is (re)initialized only when the modal opens or its target changes; re-running on `agencies` refetch (or on the `= []` default, which is a new array every render) would wipe in-progress user input
   }, [open, category, item]);
 
   const validate = () => {
@@ -166,7 +169,7 @@ export function MasterDataModal({
     e.preventDefault();
     if (!validate()) return;
 
-    let payload: any = { id: item?.id };
+    let payload: MasterDataItem = { id: item?.id };
 
     if (category === 'agencies') {
       payload = {
@@ -276,7 +279,7 @@ export function MasterDataModal({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-[13px] font-semibold text-main">แหล่งข้อมูล</Label>
-                  <Select value={agencyDataSource} onValueChange={(v: any) => setAgencyDataSource(v)}>
+                  <Select value={agencyDataSource} onValueChange={(v) => setAgencyDataSource(v as AgencyItem['dataSource'])}>
                     <SelectTrigger className="w-full border-gray-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="API">API (Real-time)</SelectItem>
@@ -286,7 +289,7 @@ export function MasterDataModal({
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[13px] font-semibold text-main">สถานะ API</Label>
-                  <Select value={agencyApiStatus} onValueChange={(v: any) => setAgencyApiStatus(v)}>
+                  <Select value={agencyApiStatus} onValueChange={(v) => setAgencyApiStatus(v as AgencyItem['apiStatus'])}>
                     <SelectTrigger className="w-full border-gray-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="CONNECTED">เชื่อมต่อแล้ว</SelectItem>
@@ -515,7 +518,7 @@ export function MasterDataModal({
                 </Label>
                 <Select
                   value={statusColor}
-                  onValueChange={(val: any) => setStatusColor(val)}
+                  onValueChange={(val) => setStatusColor(val as StatusItem['color'])}
                 >
                   <SelectTrigger id="statusColor" className="w-full border-gray-200">
                     <SelectValue placeholder="เลือกสีสถานะ" />

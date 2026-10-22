@@ -4,10 +4,10 @@ import * as React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw } from 'lucide-react';
-import { MasterDataModal, MasterDataCategory } from './master-data-modal';
-import { useZones, useCreateZone, useUpdateZone, type Zone } from '@/hooks/useZones';
-import { useLicenseTypes, useCreateLicenseType, useUpdateLicenseType, type LicenseTypeRecord } from '@/hooks/useLicenseTypes';
-import { useAgencies, useCreateAgency, useUpdateAgency, type AgencyRecord } from '@/hooks/useAgencies';
+import { MasterDataModal, MasterDataCategory, type MasterDataItem, type AgencyItem, type LicenseTypeItem, type LocationItem } from './master-data-modal';
+import { useZones, useCreateZone, useUpdateZone } from '@/hooks/useZones';
+import { useLicenseTypes, useCreateLicenseType, useUpdateLicenseType } from '@/hooks/useLicenseTypes';
+import { useAgencies, useCreateAgency, useUpdateAgency } from '@/hooks/useAgencies';
 import { toast } from 'sonner';
 
 const STATUSES_STATIC = [
@@ -40,7 +40,7 @@ function statusColorClass(color: string) {
 export function MasterDataTable() {
   const [activeTab, setActiveTab] = React.useState<TabId>('agencies');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [editingItem, setEditingItem] = React.useState<any>(null);
+  const [editingItem, setEditingItem] = React.useState<MasterDataItem | null>(null);
 
   const { data: zones = [], isLoading: zonesLoading, isError: zonesError, refetch: refetchZones } = useZones();
   const { data: licenseTypes = [], isLoading: ltLoading, isError: ltError, refetch: refetchLt } = useLicenseTypes();
@@ -61,27 +61,28 @@ export function MasterDataTable() {
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (item: any) => {
+  const handleEditClick = (item: MasterDataItem) => {
     setEditingItem(item);
     setIsModalOpen(true);
   };
 
-  const handleSave = (savedItem: any) => {
+  const handleSave = (savedItem: MasterDataItem) => {
     if (activeTab === 'agencies') {
       if (savedItem.id) {
         updateAgency.mutate(
           { nameTh: savedItem.nameTh, nameEn: savedItem.nameEn, dataSource: savedItem.dataSource, apiStatus: savedItem.apiStatus, isActive: savedItem.isActive },
           {
             onSuccess: () => { toast.success('แก้ไขหน่วยงานสำเร็จ'); setIsModalOpen(false); },
-            onError: (e: any) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
+            onError: (e) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
           },
         );
       } else {
+        const agency = savedItem as AgencyItem;
         createAgency.mutate(
-          { code: savedItem.code, nameTh: savedItem.nameTh, nameEn: savedItem.nameEn, dataSource: savedItem.dataSource, apiStatus: savedItem.apiStatus },
+          { code: agency.code, nameTh: agency.nameTh, nameEn: agency.nameEn, dataSource: agency.dataSource, apiStatus: agency.apiStatus },
           {
             onSuccess: () => { toast.success('เพิ่มหน่วยงานสำเร็จ'); setIsModalOpen(false); },
-            onError: (e: any) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
+            onError: (e) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
           },
         );
       }
@@ -91,33 +92,35 @@ export function MasterDataTable() {
           { nameTh: savedItem.nameTh ?? savedItem.zone, province: savedItem.province },
           {
             onSuccess: () => { toast.success('แก้ไขเขตพื้นที่สำเร็จ'); setIsModalOpen(false); },
-            onError: (e: any) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
+            onError: (e) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
           },
         );
       } else {
+        const location = savedItem as LocationItem & { nameTh?: string };
         createZone.mutate(
-          { code: savedItem.code, nameTh: savedItem.zone ?? savedItem.nameTh, province: savedItem.province },
+          { code: location.code, nameTh: location.zone ?? location.nameTh, province: location.province },
           {
             onSuccess: () => { toast.success('เพิ่มเขตพื้นที่สำเร็จ'); setIsModalOpen(false); },
-            onError: (e: any) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
+            onError: (e) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
           },
         );
       }
     } else if (activeTab === 'licenseTypes') {
       if (savedItem.id) {
         updateLt.mutate(
-          { nameTh: savedItem.name ?? savedItem.nameTh, agencyId: savedItem.agencyId, validityYears: parseInt(savedItem.duration) || 1, description: savedItem.law },
+          { nameTh: savedItem.name ?? savedItem.nameTh, agencyId: savedItem.agencyId, validityYears: parseInt(savedItem.duration ?? '') || 1, description: savedItem.law },
           {
             onSuccess: () => { toast.success('แก้ไขประเภทใบอนุญาตสำเร็จ'); setIsModalOpen(false); },
-            onError: (e: any) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
+            onError: (e) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
           },
         );
       } else {
+        const licenseType = savedItem as LicenseTypeItem & { nameTh?: string };
         createLt.mutate(
-          { code: savedItem.code, nameTh: savedItem.name ?? savedItem.nameTh, agencyId: savedItem.agencyId, validityYears: parseInt(savedItem.duration) || 1, description: savedItem.law },
+          { code: licenseType.code, nameTh: licenseType.name ?? licenseType.nameTh, agencyId: licenseType.agencyId, validityYears: parseInt(licenseType.duration) || 1, description: licenseType.law },
           {
             onSuccess: () => { toast.success('เพิ่มประเภทใบอนุญาตสำเร็จ'); setIsModalOpen(false); },
-            onError: (e: any) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
+            onError: (e) => toast.error(e?.message ?? 'เกิดข้อผิดพลาด'),
           },
         );
       }
@@ -222,7 +225,7 @@ export function MasterDataTable() {
                           </span>
                         </td>
                         <td className="px-[16px] py-[12px] text-center">
-                          <button onClick={() => handleEditClick({ id: row.id, code: row.code, nameTh: row.nameTh, nameEn: row.nameEn, dataSource: row.dataSource, apiStatus: row.apiStatus, isActive: row.isActive })}
+                          <button onClick={() => handleEditClick({ id: row.id, code: row.code, nameTh: row.nameTh, nameEn: row.nameEn ?? undefined, dataSource: row.dataSource, apiStatus: row.apiStatus, isActive: row.isActive })}
                             className="text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer">
                             แก้ไข
                           </button>

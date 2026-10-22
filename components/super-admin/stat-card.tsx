@@ -1,8 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, type LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
-  icon: any;
+  icon: LucideIcon;
   title: string;
   subTitle: string;
   value: string | number;

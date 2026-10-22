@@ -69,6 +69,7 @@ export function AdminFormModal({ open, onOpenChange, user, onSave, isSaving }: A
       setShowPassword(false);
       setErrors({});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- form state is initialized only when the modal opens or the edited user changes; re-running on `agencies` refetch (or on the `= []` default, a new array every render) would wipe in-progress user input
   }, [open, user]);
 
   const validate = () => {

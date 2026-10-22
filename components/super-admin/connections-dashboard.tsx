@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   CheckCircle2,
   AlertCircle,
@@ -45,7 +44,6 @@ export function ConnectionsDashboard() {
   const { data: agencies = [] } = useAgencies();
   const triggerDiw = useTriggerDiwImport();
 
-  const diwSync = syncStatuses?.find((s) => s.agency.code === 'DIW');
   const formatSyncDate = (iso: string | null | undefined) => {
     if (!iso) return '—';
     return new Date(iso).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' });
@@ -54,7 +52,7 @@ export function ConnectionsDashboard() {
   const handleTriggerDiw = () => {
     triggerDiw.mutate(undefined, {
       onSuccess: () => { toast.success('เริ่มนำเข้าข้อมูล DIW แล้ว'); refetchSync(); },
-      onError: (e: any) => toast.error(e?.message ?? 'ไม่สามารถเริ่มนำเข้าได้'),
+      onError: (e) => toast.error(e?.message ?? 'ไม่สามารถเริ่มนำเข้าได้'),
     });
   };
 

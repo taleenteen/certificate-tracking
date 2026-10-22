@@ -49,7 +49,7 @@ None expected. Code-quality changes only; auth and API paths are untouched.
 - [x] `bun run typecheck`: pass
 - [x] `bun run build`: pass
 - [x] `git diff --check`: clean
-- [ ] CI green
+- [x] CI green on `0978d45` (runs 39750180027 push, 39750186500 pull_request: `typecheck` + `lint` pass)
 - [ ] Manual smoke test of the areas listed under risks
 
 ## Progress log

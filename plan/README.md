@@ -26,7 +26,7 @@ The goal is to make each task understandable without reading the full chat histo
 
 | Date | Plan | Summary | Status | Current step | Implementation |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-22 | [Repo-wide Lint Cleanup](./2026-10-22-lint-cleanup.md) | Clear all 149 ESLint errors/warnings and add lint to CI. | Implemented | Lint 0 problems; typecheck/build pass; CI run and manual smoke test pending. | Implemented |
+| 2026-10-22 | [Repo-wide Lint Cleanup](./2026-10-22-lint-cleanup.md) | Clear all 149 ESLint errors/warnings and add lint to CI. | Implemented | Lint 0 problems; CI `typecheck` + `lint` green; manual smoke test pending. | Implemented |
 | 2026-10-22 | [CI Typecheck](./2026-10-22-ci-typecheck.md) | Add GitHub Actions `bun run typecheck` (next typegen + tsc) since `next build` skips type checking. | Verified | GitHub Actions typecheck green on PR #1; branch protection not yet enabled. | Verified |
 | 2026-10-22 | [Legacy Code Cleanup](./2026-10-22-legacy-code-cleanup.md) | Remove unused axios, `NEXT_PUBLIC_API_URL`, `package-lock.json`, `/expired-licenses` and the `app/(legacy)` redirect group. | Verified | Phase 2 removal done; tsc and production build passed. Old prototype URLs now 404. | Verified |
 | 2026-09-29 | [License Clipboard Legacy Fallback](./2026-09-29-license-clipboard-legacy-fallback.md) | Support copying through older Android WebViews. | Implemented | Synchronous legacy path in `release/v1`; tsc/build pass on `release/v1`. Regression root cause unconfirmed; Huawei paste check pending. | Implemented |

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start -p 3003",
     "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit --incremental false",
     "build:tokens": "node scripts/generate-tokens-css.mjs",
     "gen:api": "openapi-typescript ../../Backend/certificate-tracking-backend/openapi.json -o types/api.d.ts"
   },

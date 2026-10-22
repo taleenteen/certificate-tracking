@@ -2,8 +2,8 @@
 
 import {
   EXPIRED_LICENSE_TABS,
-  LegacyLicenseListPageView,
-} from "@/components/app/licenses/license-list-page";
+  ExpiredLicenseListView,
+} from "@/components/app/licenses/expired-license-list-view";
 import type { LicenseCardItem } from "@/components/app/licenses/license-certificate-card";
 import { useLicenses } from "@/hooks/useLicenses";
 import { useMemo } from "react";
@@ -55,7 +55,7 @@ export default function ExpiredLicensesPage() {
   }
 
   return (
-    <LegacyLicenseListPageView
+    <ExpiredLicenseListView
       items={expiredLicenses}
       defaultTab="all"
       tabs={EXPIRED_LICENSE_TABS}

@@ -363,7 +363,7 @@ API/hooks:
 ไฟล์:
 
 - `app/(app)/expired-licenses/page.tsx`
-- ใช้ `LicenseListPageView`
+- ใช้ `ExpiredLicenseListView` + `EXPIRED_LICENSE_TABS` จาก `components/app/licenses/expired-license-list-view.tsx`
 
 ทำหน้าที่:
 
@@ -1100,7 +1100,8 @@ Best practice:
 
 | File | ทำหน้าที่ | ใช้ใน |
 |---|---|---|
-| `components/app/licenses/license-list-page.tsx` | list + tab/filter ใบอนุญาต | `/licenses`, `/expired-licenses` |
+| `components/app/licenses/license-list-page.tsx` | list + tab/filter ใบอนุญาต | `/licenses` |
+| `components/app/licenses/expired-license-list-view.tsx` | list + tab ใบอนุญาตหมดอายุ/ถูกระงับ | `/expired-licenses` |
 | `components/app/licenses/license-certificate-card.tsx` | card ใบอนุญาต | license list/search |
 | `components/app/licenses/license-detail-page.tsx` | detail/action ใบอนุญาต | `/licenses/[id]` |
 | `components/app/licenses/license-preview.tsx` | preview เอกสาร/ใบอนุญาต | license detail |

@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Pencil, Trash2, Loader2, Palette, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -129,7 +128,6 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
   // Refs
   const mapRef = useRef<MapRef>(null);
   const drawRef = useRef<MapboxDraw | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
 
   // Draw styles with dynamic color
   const getDrawStyles = useCallback(
@@ -198,7 +196,6 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
 
       map.addControl(draw as unknown as mapboxgl.IControl);
       drawRef.current = draw;
-      setIsMapReady(true);
 
       // Load existing polygon into draw
       if (zone.geometry?.coordinates) {
@@ -260,7 +257,7 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
     } catch (err) {
       console.error("Error initializing MapboxDraw:", err);
     }
-  }, [color, getDrawStyles, zone.geometry]);
+  }, [color, getDrawStyles, zone.geometry, setPolygonGeometry]);
 
   // Start drawing new polygon
   const startDrawingPolygon = () => {
@@ -357,7 +354,7 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
               }
               className="bg-gray-50"
             />
-            <FieldError errors={[errors.name as any]} />
+            <FieldError errors={[errors.name]} />
           </Field>
 
           {/* Zone Type */}
@@ -384,7 +381,7 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <FieldError errors={[errors.zoneType as any]} />
+            <FieldError errors={[errors.zoneType]} />
           </Field>
 
           {/* Color Picker */}
@@ -410,7 +407,7 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
                 />
               ))}
             </div>
-            <FieldError errors={[errors.color as any]} />
+            <FieldError errors={[errors.color]} />
           </Field>
 
           {/* Description */}
@@ -429,7 +426,7 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
               }
               className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
-            <FieldError errors={[errors.description as any]} />
+            <FieldError errors={[errors.description]} />
           </Field>
 
           {/* Area Info */}
@@ -502,7 +499,7 @@ export function ZoneEditCard({ zone, onClose, onSuccess }: ZoneEditCardProps) {
               ลากจุดเพื่อแก้ไขรูปร่าง
             </div>
           )}
-          <FieldError errors={[errors.polygonGeometry as any]} />
+          <FieldError errors={[errors.polygonGeometry]} />
         </div>
       </div>
 

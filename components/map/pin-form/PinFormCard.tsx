@@ -5,7 +5,7 @@ import { Card, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
-import { MapRef, ViewState } from "react-map-gl/mapbox";
+import { MapRef, ViewState, MapMouseEvent } from "react-map-gl/mapbox";
 
 import { useMapActions } from "@/stores/useMapStore";
 import { useExistingPins } from "@/hooks/useExistingPins";
@@ -43,7 +43,7 @@ export function PinFormCard({
   const [pinMode, setPinMode] = useState<"device" | "info">(initialPinMode);
   const [dataId, setDataId] = useState(initialData?.dataId || "");
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [, setIsDrawing] = useState(false);
 
   // GeoJSON parsing
   const initialPoints = (() => {
@@ -150,7 +150,7 @@ export function PinFormCard({
     initialParcelId: initialData?.parcelId,
   });
 
-  const { startDrawingPolygon, clearPolygon } = useMapDrawControls({
+  useMapDrawControls({
     mapRef,
     locationType,
     onPolygonDrawn: (polygon, newPoints) => {
@@ -203,7 +203,7 @@ export function PinFormCard({
 
   // Map Click Handler for Point mode
   const handleMapClick = useCallback(
-    (event: any) => {
+    (event: MapMouseEvent) => {
       if (locationType !== "pin") return;
       const { lng, lat } = event.lngLat;
       const newPoint = { id: Date.now(), lat, lng };
@@ -214,7 +214,7 @@ export function PinFormCard({
 
   // Point Deletion Fix
   const handleDeletePoint = (id: number) => {
-    const updated = points.filter((p: any) => p.id !== id);
+    const updated = points.filter((p: { id: number }) => p.id !== id);
     setValue("points", updated, { shouldValidate: true });
   };
 

@@ -3,9 +3,18 @@ import { Popup } from "react-map-gl/mapbox";
 import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { Pin } from "@/types/map";
+
+type MapPopupInfo = Pin & {
+  category?: string;
+  description?: string;
+  dataId?: string;
+  ownerName?: string;
+  attributes?: Record<string, unknown> | null;
+};
 
 interface MapPopupProps {
-  popupInfo: any;
+  popupInfo: MapPopupInfo;
   onClose: () => void;
   onEdit?: () => void;
 }
@@ -15,7 +24,10 @@ export default function MapPopup({
   onClose,
   onEdit,
 }: MapPopupProps) {
-  const getAttr = (key: string, defaultValue: any = "") => {
+  const getAttr = (
+    key: "ownerName" | "owner" | "location",
+    defaultValue: string = "",
+  ) => {
     return popupInfo[key] || defaultValue;
   };
 

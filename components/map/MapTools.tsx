@@ -64,8 +64,6 @@ export function MapTools({
   onZoomIn,
   onZoomOut,
   onReset,
-  onCreatePin,
-  isCreatePinMode,
   activeCard,
   onActiveCardChange,
   editingPin,
@@ -73,8 +71,6 @@ export function MapTools({
 }: MapToolsProps) {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   // Internal state removed, using props
-
-  const isAdmin = !!onCreatePin;
 
   // Helper to set active card
   const setActiveCard = onActiveCardChange;

@@ -10,7 +10,6 @@ import {
   Calendar,
   Layers,
   Edit,
-  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiZone } from "@/services/zone.service";

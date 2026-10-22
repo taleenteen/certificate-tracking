@@ -33,8 +33,14 @@ export function useExistingPins(excludePinId?: string) {
             : data;
           setExistingPins(pins);
         }
-      } catch (error: any) {
-        if (error?.name === "AbortError") return;
+      } catch (error: unknown) {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          error.name === "AbortError"
+        )
+          return;
         console.error("Failed to fetch existing pins:", error);
       } finally {
         if (!controller.signal.aborted) {

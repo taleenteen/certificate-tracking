@@ -1,5 +1,12 @@
 import React, { useMemo } from "react";
-import Map, { Source, Layer, Marker, ViewState } from "react-map-gl/mapbox";
+import Map, {
+  Source,
+  Layer,
+  Marker,
+  ViewState,
+  MapRef,
+  MapMouseEvent,
+} from "react-map-gl/mapbox";
 import {
   LocateFixed,
   MapPin,
@@ -9,13 +16,11 @@ import {
   Sun,
   Zap,
 } from "lucide-react";
-import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import { IconWrapper } from "@/components/icons/IconWrapper";
 import { PIN_ICON_MAP } from "../pin-icon-map";
 import { ExistingPinsLayer } from "../ExistingPinsLayer";
 import { ApiZone } from "@/services/zone.service";
 import { ApiParcel } from "@/services/parcel.service";
-import { GeometryType } from "@/types/api";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -26,7 +31,7 @@ interface Point {
 }
 
 interface PinFormMapPreviewProps {
-  mapRef: React.RefObject<any>;
+  mapRef: React.RefObject<MapRef | null>;
   viewState: ViewState;
   setViewState: React.Dispatch<React.SetStateAction<ViewState>>;
   // Layers Data
@@ -34,7 +39,7 @@ interface PinFormMapPreviewProps {
   parcels: ApiParcel[];
   selectedZoneId?: string;
   selectedParcelId?: string;
-  existingPinsGeoJson: any;
+  existingPinsGeoJson: GeoJSON.FeatureCollection;
   // Current Drawing Data
   locationType: "pin" | "area";
   points: Point[];
@@ -45,7 +50,7 @@ interface PinFormMapPreviewProps {
   subtype: string;
   pinMode: "device" | "info";
   // Actions
-  onMapClick: (e: any) => void;
+  onMapClick: (e: MapMouseEvent) => void;
   triggerRefresh: () => void;
 }
 
@@ -62,7 +67,6 @@ export function PinFormMapPreview({
   points,
   polygonGeometry,
   type,
-  category,
   subtype,
   pinMode,
   onMapClick,
@@ -70,7 +74,7 @@ export function PinFormMapPreview({
   // Icon resolution mapping
   const resolveIcon = () => {
     let color = "#3B82F6"; // Default blue
-    let IconComponent: any = MapPin;
+    let IconComponent: React.ElementType = MapPin;
 
     if (pinMode === "device") {
       switch (type) {
@@ -138,13 +142,13 @@ export function PinFormMapPreview({
                 type: "Feature",
                 geometry: {
                   type: "Polygon",
-                  coordinates: (selectedZone.geometry as any).coordinates,
+                  coordinates: selectedZone.geometry.coordinates,
                 },
                 properties: {
                   name: selectedZone.name,
                   color: selectedZone.color,
                 },
-              } as any
+              } as GeoJSON.Feature<GeoJSON.Polygon>
             }
           >
             <Layer
@@ -184,10 +188,11 @@ export function PinFormMapPreview({
                     properties: { id: z.id, name: z.name, color: z.color },
                     geometry: {
                       type: "Polygon",
-                      coordinates: (z.geometry as any).coordinates,
+                      coordinates: (z.geometry as NonNullable<ApiZone["geometry"]>)
+                        .coordinates,
                     },
                   })),
-              } as any
+              } as GeoJSON.FeatureCollection<GeoJSON.Polygon>
             }
           >
             <Layer
@@ -229,10 +234,11 @@ export function PinFormMapPreview({
                     },
                     geometry: {
                       type: "Polygon",
-                      coordinates: (p.geometry as any).coordinates,
+                      coordinates: (p.geometry as NonNullable<ApiParcel["geometry"]>)
+                        .coordinates,
                     },
                   })),
-              } as any
+              } as GeoJSON.FeatureCollection<GeoJSON.Polygon>
             }
           >
             <Layer

@@ -1,12 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
-
-const MapContainer = dynamic(
-  () => import("@/components/map").then((mod) => mod.MapContainer),
-  { ssr: false },
-);
 
 export default function MapPage() {
   return (

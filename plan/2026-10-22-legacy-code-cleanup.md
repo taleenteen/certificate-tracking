@@ -1,4 +1,4 @@
-# Legacy Code Cleanup (Phase 1)
+# Legacy Code Cleanup
 
 - Status: Verified
 - Owner: agent (next decision: user/team)
@@ -20,14 +20,20 @@ An audit of `legacy` names and old fallback code (2026-10-22) found:
 
 ## Scope
 
+Phase 2 (decided 2026-10-22, see progress log):
+
+- Delete `/expired-licenses` (page, `expired-license-list-view.tsx`, navbar title entry). `/licenses` already filters expired / suspended (incl. `REVOKED`).
+- Delete the whole `app/(legacy)` route group (11 redirect-only pages). Old URLs now return 404.
+
+Phase 1:
+
 - Remove `axios` (`bun remove axios`) and `package-lock.json`.
 - Remove `NEXT_PUBLIC_API_URL` from `.env.example`, `Dockerfile`, `docker-compose.yml` and `docker-compose.example.yml`.
 - Move the view to `components/app/licenses/expired-license-list-view.tsx` as `ExpiredLicenseListView`, with no change to its behavior.
 
-## Out of scope (pending decision)
+## Out of scope
 
-- Whether `/expired-licenses` should be kept: no in-app link points to it, only the navbar title map does.
-- The `app/(legacy)/*` redirect routes: they could be kept, moved to `next.config` `redirects()`, or removed depending on access logs. `/my-licenses/[slug]/inspection` redirects a license id to `/inspection-tasks/{id}`, which is probably wrong.
+- ~~Whether `/expired-licenses` should be kept~~ and ~~the `app/(legacy)/*` redirect routes~~: both were decided and removed in phase 2.
 - The legacy Tang Rat handoff redirects in `app/page.tsx` and `app/auth/login/page.tsx`. Keep them until DGA registration URLs are confirmed.
 - The legacy WebView path in `hooks/useLicenseCopy.ts`. It is still needed, and the Huawei check is pending.
 - Sharing the clipboard fallback with `license-document-export-dialog.tsx` `copyDiagnostic`.
@@ -60,8 +66,9 @@ None. No auth, role or API paths changed. Removing an unused public env var redu
 
 ## Progress log
 
-- 2026-10-22: Audit completed, then the phase-1 cleanup was implemented and validated on `release/v1`. Nothing has been committed yet.
+- 2026-10-22: Audit completed, then the phase-1 cleanup was implemented and validated on `release/v1`. Nothing has been committed yet. (Committed later in `e3001e4`, `0fb9253`, `b352c0a`.)
 - 2026-10-22: Docs aligned. Removed `NEXT_PUBLIC_API_URL` from the README env samples (README.th now shows `BACKEND_INTERNAL_URL`) and pointed the component reference at `ExpiredLicenseListView`. Older plan files were left unchanged because they are history.
+- 2026-10-22: Phase 2. Options considered: keep the redirects, move them to `next.config` `redirects()`, or delete them. The user chose deletion and said they do not want a `(legacy)` group kept. A repo-wide check found no references in links, navigation, middleware/proxy, `next.config.ts`, tests or `public/`. Tang Rat entry (`/`, `/auth/login`) is outside `(legacy)` and unchanged. The user was asked to check for external links (QR, email, DGA registration) and confirmed the deletion. Deleted `app/(legacy)` and `/expired-licenses`, then updated the navbar and docs. `bun run build` (no removed routes in output), `bunx tsc --noEmit` and ESLint on `app-navbar.tsx` (0 errors, 4 pre-existing warnings) passed.
 
 ## Changed files
 
@@ -71,8 +78,11 @@ None. No auth, role or API paths changed. Removing an unused public env var redu
 - `components/app/licenses/expired-license-list-view.tsx` (new)
 - `app/(app)/expired-licenses/page.tsx`
 - `README.md`, `README.th.md`, `docs/AI_PROJECT_SURFACE_COMPONENT_REFERENCE.md`
+- Phase 2: `app/(legacy)/**` (deleted), `app/(app)/expired-licenses/page.tsx` (deleted), `components/app/licenses/expired-license-list-view.tsx` (deleted), `components/app-shell/app-navbar.tsx`, `docs/FRONTEND_BUILD_ROADMAP.md`
 
 ## Open questions and risks
+
+- Bookmarks of prototype-era URLs (`/dashboard`, `/my-licenses`, `/establishment`, etc.) now 404. The user accepted this; if one is needed again, add it to `next.config.ts` `redirects()` rather than restoring a route group.
 
 - If an external build pipeline passes `--build-arg NEXT_PUBLIC_API_URL`, Docker prints an unused-arg warning but does not fail.
 - `bun.lock` re-hoisted `https-proxy-agent` (5.0.1 → 7.0.6, previously nested under `@redocly/openapi-core`). The build passed, but `bun run gen:api` was not run.

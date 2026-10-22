@@ -60,3 +60,7 @@ Redesign the "แจ้งเรื่องร้องเรียน" (Submit
 
 ## Changed files
 - [app/(app)/complaints/new/page.tsx](file:///Users/mac/Frontend/certificate-tracking/app/(app)/complaints/new/page.tsx)
+
+## Superseded (2026-10-22)
+
+The in-app complaints flow was removed: `/complaints/new`, `/complaints/track` and `ComplaintsSheetOverlay` were deleted, and the home complaints entry links to https://www.1111.go.th/. Complaints are outside the current Prisma scope (AGENTS.md). See `plan/2026-10-22-lint-cleanup.md`.

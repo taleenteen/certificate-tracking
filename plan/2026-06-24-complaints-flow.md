@@ -61,3 +61,7 @@ Additionally, design and create two sub-pages corresponding to the choices in th
 - **2026-06-24**: Created plan for complaints overlay and routes.
 - **2026-06-24**: Implemented `ComplaintsSheetOverlay` bottom sheet dialog with smooth slide-up animation. Linked megaphone card on home page to trigger drawer. Created form pages at `/complaints/new` and listing tracking timelines at `/complaints/track`. Verified all compilation checks.
 
+
+## Superseded (2026-10-22)
+
+The in-app complaints flow was removed: `/complaints/new`, `/complaints/track` and `ComplaintsSheetOverlay` were deleted, and the home complaints entry links to https://www.1111.go.th/. Complaints are outside the current Prisma scope (AGENTS.md). See `plan/2026-10-22-lint-cleanup.md`.

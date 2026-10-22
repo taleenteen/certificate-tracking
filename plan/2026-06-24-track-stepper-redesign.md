@@ -47,3 +47,7 @@ Redesign the `/complaints/track` page to match the exact mockup layout, includin
 - **2026-06-24**: Drafted plan and initiated redesign.
 - **2026-06-24**: Redesigned `complaints/track` page structure with new form fields and layout. Coded custom 3-step horizontal progress stepper rendering conditionally when query is active. Integrated type interfaces for simple backend adaptation. Passed compilation checks.
 
+
+## Superseded (2026-10-22)
+
+The in-app complaints flow was removed: `/complaints/new`, `/complaints/track` and `ComplaintsSheetOverlay` were deleted, and the home complaints entry links to https://www.1111.go.th/. Complaints are outside the current Prisma scope (AGENTS.md). See `plan/2026-10-22-lint-cleanup.md`.

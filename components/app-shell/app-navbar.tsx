@@ -115,8 +115,7 @@ export function AppNavbar() {
       pathname === "/licenses" ||
       pathname === "/license-search" ||
       pathname.startsWith("/licenses/") ||
-      pathname.startsWith("/businesses/") ||
-      pathname.startsWith("/complaints")) &&
+      pathname.startsWith("/businesses/")) &&
       usesServiceHome);
 
   const searchPageConfig = SEARCH_PAGE_CONFIG[pathname];

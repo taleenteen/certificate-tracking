@@ -3,7 +3,7 @@
 - Status: Verified
 - Owner: Frontend implementation agent
 - Date created: 2026-09-29
-- Last updated: 2026-09-29
+- Last updated: 2026-10-22
 
 ## Objective
 
@@ -11,7 +11,7 @@ Show an on-page diagnostic log for license-number copy actions so a tester can d
 
 ## Context and constraints
 
-- License cards and the detail view currently call `navigator.clipboard.writeText` and silently discard failures.
+- At the start of this plan, license cards and the detail view called `navigator.clipboard.writeText` and silently discarded failures. They now use `hooks/useLicenseCopy.ts` and show `copyError` (see the legacy fallback plan).
 - The same site copies correctly in a Huawei browser; failure occurs inside the Tang Rat WebView.
 - The user supplied a physical Huawei/Tang Rat WebView diagnostic log after deployment.
 - Keep ordinary copy behavior and avoid logging license numbers, tokens, or user identity.
@@ -24,7 +24,7 @@ Show an on-page diagnostic log for license-number copy actions so a tester can d
 
 ## Out of scope
 
-- Changing the copy mechanism or adding a fallback before the failure mode is known.
+- Changing the copy mechanism or adding a fallback before the failure mode is known. (The fallback was later added under `plan/2026-09-29-license-clipboard-legacy-fallback.md`.)
 - Changing Tang Rat native app code or SDK integration.
 - Sending diagnostics to a server.
 
@@ -58,6 +58,7 @@ Show an on-page diagnostic log for license-number copy actions so a tester can d
 - 2026-09-29: Initially planned URL opt-in with `?clipboardDebug=1`. Changed to an always-visible temporary block because testers may be unable to edit the URL inside Tang Rat WebView; otherwise the diagnostic would be inaccessible through the normal app flow.
 - 2026-09-29: User supplied a device log identifying Android 10 / Huawei AGS6-W09 / Chromium WebView 114.0.5735.196 inside CitizenPortal. The tap reached `onClick`, the page was HTTPS and focused with transient activation, and `navigator.clipboard.writeText` rejected with `NotAllowedError: Write permission denied.` Chromium added gesture-based sanitized clipboard writing to Android WebView after version 114 (commit `1c68b3c5be460478836d5693bf6528f16f07b3f2`, August 2023). Diagnosis is consistent with the older embedded WebView denying this API; no copy-path fix has been made.
 - 2026-09-29: The user confirmed the subsequent fallback copied successfully on Huawei. At the user's request, the temporary on-page log and its component were removed; the copy helper was retained in `hooks/useLicenseCopy.ts`.
+- 2026-10-22: Follow-up. The retained no-log hook (`a92c0e6`) failed again on Huawei and was changed to a synchronous legacy WebView path in `fdd55bf`. The "confirmed working" result above applies to the diagnostic build only. Current status and the pending device check are tracked in `plan/2026-09-29-license-clipboard-legacy-fallback.md`. This plan's own objective, diagnosing the failure mode, remains Verified.
 
 ## Changed files
 
@@ -70,3 +71,4 @@ Show an on-page diagnostic log for license-number copy actions so a tester can d
 ## Open questions and risks
 
 - The temporary diagnostic block is removed. The Huawei device outcome is recorded above; other WebView versions may behave differently.
+- Copy behavior after diagnostics removal is not verified on Huawei; see the legacy fallback plan.

@@ -3,7 +3,7 @@
 - Status: Implemented
 - Owner: Frontend implementation agent
 - Date created: 2026-09-29
-- Last updated: 2026-09-29
+- Last updated: 2026-10-22
 
 ## Objective
 
@@ -20,7 +20,7 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 
 - Add a synchronous textarea selection and `execCommand("copy")` fallback in the shared copy hook.
 - Attempt fallback if the Clipboard API is unavailable or rejects.
-- Check the fallback's boolean result, log its outcome, and show copied state only on success.
+- Check the fallback's boolean result and show copied state only on success. (Original scope also logged the outcome; that logging was removed in `a92c0e6`, so the shipped hook does no logging.)
 - Preserve the current card and detail button wiring.
 - After the user confirmed copying works on Huawei, remove the temporary diagnostic UI and event log while keeping the shared fallback and user-facing failure message.
 - Route the observed pre-fix Chromium Android WebView to the synchronous selection copy path during the click handler, while leaving the modern Clipboard API first for other engines.
@@ -34,7 +34,7 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 ## Proposed workflow
 
 1. Add the fallback helper and error handling to the shared hook.
-2. Review both button paths and the diagnostic output.
+2. Review both button paths. (Originally also reviewed the on-page diagnostic output; that output no longer exists, so device rechecks rely on the user's paste result.)
 3. Run proportional static validation and record the pending Huawei paste test.
 
 ## Security and permission considerations
@@ -59,6 +59,7 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - [x] User confirmed copying works in the Huawei Tang Rat WebView with the fallback before log removal.
 - [ ] Recheck copying and paste on Huawei Tang Rat WebView after the synchronous legacy path change.
 - [ ] Confirm modern browser copy still succeeds through `writeText`.
+- [x] Legacy retry and reset-timer fix: tsc, ESLint and build passed (2026-10-22).
 
 ## Progress log
 
@@ -69,6 +70,9 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - 2026-09-29: User reported that copying fails again in the no-log build. Git history shows the no-log version on `log/huawei-copy` still attempts `execCommand` after awaiting the denied `writeText` call, while the earlier diagnostic build copied successfully. This disproves the prior assumption that removing diagnostics left the device behavior unchanged. The exact timing mechanism is unconfirmed; move the known old WebView path into the synchronous click phase and preserve the failed attempt as a fallback for other engines.
 - 2026-09-29: On `log/huawei-copy`, added a WebView and Chromium-major check in `hooks/useLicenseCopy.ts`. WebView versions before 118 attempt `execCommand("copy")` synchronously during the tap, then try `writeText` if that fails. Other engines still try `writeText` first and selection copy after failure. No diagnostic UI was reintroduced. TypeScript, focused ESLint, and `git diff --check` passed; device paste is pending.
 - 2026-09-29: Fast-forwarded `release/v1` from `a02833c` to `fdd55bf` to include the fallback, diagnostic cleanup, and synchronous legacy WebView fix. Device paste validation remains pending.
+- 2026-10-22: Correction to the 2026-09-29 regression entry. Git history shows the diagnostic build (`8a1b67c`, `license-copy-diagnostics.tsx`) also awaited the denied `writeText` before calling `execCommand("copy")`. The no-log build (`a92c0e6`, `hooks/useLicenseCopy.ts`) used the same order. "Awaited `writeText` before `execCommand`" therefore does not explain why one build copied and the other did not. The real cause is **unknown**. Differences between the two builds include the diagnostic `setEntries` calls, the 3-second pending timer, reads of `navigator.userActivation` / `document.hasFocus()`, the rendered diagnostic block, and possibly a different app session or cache on the device. The synchronous legacy path in `fdd55bf` is a hypothesis, not a confirmed root-cause fix. If the Huawei paste check fails, revisit these differences instead of assuming the timing explanation.
+- 2026-10-22: Static validation on `release/v1` itself: `bunx tsc --noEmit` and `bun run build` passed during the legacy code cleanup (`plan/2026-10-22-legacy-code-cleanup.md`). `hooks/useLicenseCopy.ts` was unchanged by that cleanup. Earlier tsc/ESLint runs were recorded on `log/huawei-copy`.
+- 2026-10-22: Addressed two review risks in `hooks/useLicenseCopy.ts`. (1) On the legacy path, if the synchronous `execCommand` fails, the hook now retries selection copy after the awaited `writeText`, which was the order that copied in the diagnostic build. The `!legacyWebView` guard was removed. (2) The `isCopied` reset timer is now held in a ref, cleared before each new copy, and cleared on unmount. `bunx tsc --noEmit`, file-scoped ESLint and `bun run build` passed on `release/v1`. Huawei paste check still pending.
 
 ## Changed files
 
@@ -84,3 +88,7 @@ Copy license numbers in an older Android WebView when `navigator.clipboard.write
 - `execCommand` remains a deprecated compatibility path. The user confirmed copying worked in the diagnostic build but reported failure after the no-log refactor; other older WebViews may differ.
 - The modern browser path has not been manually retested after diagnostic cleanup; the hook still calls `writeText` first.
 - The device report after this synchronous path has not yet been collected; do not call the regression resolved until the user confirms pasted text.
+- The root cause of the no-log regression is unconfirmed (see the 2026-10-22 correction). The current fix may not address it.
+- `isLegacyAndroidWebView()` requires `; wv)` in the user agent. If Tang Rat/CitizenPortal sets a custom UA without this token, the Huawei device takes the modern path (`writeText` first). Capture the real UA from the device to confirm.
+- ~~On the legacy path, a failed synchronous `execCommand` is not retried after awaiting `writeText`.~~ Fixed 2026-10-22: the legacy path now retries.
+- ~~The `isCopied` reset timer is not stored or cleared.~~ Fixed 2026-10-22: it is held in a ref, cleared on each copy and on unmount.

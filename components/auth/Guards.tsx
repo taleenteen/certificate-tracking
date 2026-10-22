@@ -19,6 +19,7 @@ export function RoleGate({ children, roles, fallback = null }: RoleGateProps) {
   // making any role decision — this prevents a flash of "Access Denied" on
   // the first render when the user is actually logged in.
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional post-mount flag: keeps SSR and first client render identical (null) so hydration matches before reading the sessionStorage-persisted auth store
   useEffect(() => setMounted(true), []);
 
   // Use ?? (not ||) with the stable module-level constant so the selector
@@ -46,6 +47,7 @@ const ROLE_RANK = {
 
 export function JuristicGate({ children, minRole = 'MEMBER', fallback = null }: JuristicGateProps) {
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional post-mount flag: keeps SSR and first client render identical (null) so hydration matches before reading the sessionStorage-persisted auth store
   useEffect(() => setMounted(true), []);
 
   const activeJuristicId = useAuthStore((s) => s.activeJuristicId);

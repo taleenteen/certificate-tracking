@@ -5,10 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
-  Bell,
-  BellOff,
   Check,
-  CheckCheck,
   ChevronDown,
   CircleUserRound,
   LogOut,
@@ -19,7 +16,7 @@ import {
   User,
   UserRound,
 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
@@ -58,10 +55,6 @@ interface NotificationPage {
   meta: { total: number; unread: number };
 }
 
-type LicenseListItem = {
-  id: string;
-};
-
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 
 function useNotifications() {
@@ -69,14 +62,6 @@ function useNotifications() {
     queryKey: ["my-notifications"],
     queryFn: () => http.get<NotificationPage>("my/notifications"),
     staleTime: 30_000,
-  });
-}
-
-function useMarkAllRead() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => http.patch("notifications/read-all", {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["my-notifications"] }),
   });
 }
 
@@ -151,10 +136,9 @@ export function AppNavbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const { data: notifData } = useNotifications();
-  const markAllRead = useMarkAllRead();
-
-  const unreadCount = notifData?.meta?.unread ?? 0;
+  // Notifications UI is not rendered yet; the query is kept so the
+  // "my-notifications" fetch/cache behaviour stays unchanged.
+  useNotifications();
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -536,101 +520,6 @@ export function AppNavbar() {
       : pathname;
     router.replace(nextUrl, { scroll: false });
   }
-}
-
-// ─── Notifications panel ──────────────────────────────────────────────────────
-
-function NotificationsPanel({
-  notifications,
-  unreadCount,
-  onMarkAll,
-}: {
-  notifications: Notification[];
-  unreadCount: number;
-  onMarkAll: () => void;
-}) {
-  return (
-    <DropdownCard className="right-0 w-80">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <div>
-          <p className="text-sm font-semibold text-slate-900">การแจ้งเตือน</p>
-          {unreadCount > 0 && (
-            <p className="text-xs text-slate-500">
-              ยังไม่ได้อ่าน {unreadCount} รายการ
-            </p>
-          )}
-        </div>
-        {unreadCount > 0 && (
-          <button
-            type="button"
-            onClick={onMarkAll}
-            className="flex items-center gap-1 rounded-xl bg-[#0c6d66]/8 px-2.5 py-1.5 text-xs font-medium text-[#0c6d66] transition hover:bg-[#0c6d66]/15"
-          >
-            <CheckCheck className="h-3.5 w-3.5" />
-            อ่านทั้งหมด
-          </button>
-        )}
-      </div>
-
-      <div className="mx-4 h-px bg-slate-100" />
-
-      {/* List */}
-      <div className="max-h-72 overflow-y-auto">
-        {notifications.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-              <BellOff className="h-5 w-5" />
-            </div>
-            <p className="text-sm font-medium text-slate-700">
-              ไม่มีการแจ้งเตือน
-            </p>
-            <p className="text-xs text-slate-400">
-              การแจ้งเตือนใหม่จะปรากฏที่นี่
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-slate-100 px-2 py-1.5">
-            {notifications.map((n) => (
-              <li
-                key={n.id}
-                className={cn(
-                  "relative flex gap-3 rounded-2xl px-3 py-3 transition hover:bg-slate-50",
-                )}
-              >
-                {!n.isRead && (
-                  <span className="absolute right-3 top-3.5 h-2 w-2 rounded-full bg-[#0c6d66]" />
-                )}
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#0c6d66]/10 text-[#0c6d66]">
-                  <Bell className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 pr-4">
-                  <p
-                    className={cn(
-                      "text-sm leading-snug text-slate-900",
-                      !n.isRead && "font-medium",
-                    )}
-                  >
-                    {n.title}
-                  </p>
-                  <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
-                    {n.body}
-                  </p>
-                  <p className="mt-1 text-[10px] text-slate-400">
-                    {new Date(n.createdAt).toLocaleDateString("th-TH", {
-                      day: "numeric",
-                      month: "short",
-                      year: "2-digit",
-                    })}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </DropdownCard>
-  );
 }
 
 // ─── Profile panel ────────────────────────────────────────────────────────────

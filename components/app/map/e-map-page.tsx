@@ -160,6 +160,7 @@ export function EMapPageView() {
   useEffect(() => {
     if (!selectedPin) return;
     if (!pins.some((pin) => pin.id === selectedPin.id)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- prunes selection after async map data / filters change; deriving it in render would need a selection-state refactor
       setIsInfoCardOpen(false);
       setSelectedPin(null);
     }
@@ -198,9 +199,9 @@ export function EMapPageView() {
     if (!selectedBusinessId || pins.length === 0) return;
     const selected = pins.find((pin) => pin.id === selectedBusinessId);
     if (selected) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- deep-link selection must wait for async pins and also drives imperative map flyTo
       handlePinSelect(selected);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when pins/selected id change
   }, [pins, selectedBusinessId]);
 
   // After search/filter settles: fly to first match (or selected)
@@ -221,6 +222,7 @@ export function EMapPageView() {
     if (selectedBusinessId) {
       const selected = pins.find((pin) => pin.id === selectedBusinessId);
       if (selected) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-select after search settles; drives imperative map flyTo/fitBounds on async pins
         handlePinSelect(selected);
         return;
       }
@@ -253,7 +255,6 @@ export function EMapPageView() {
       ],
       { padding: 80, duration: 900, maxZoom: 14 },
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isBusy,
     pins,

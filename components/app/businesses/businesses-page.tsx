@@ -72,7 +72,7 @@ export function BusinessesPageView() {
   // Hook enabled when search query OR filters are active
   const hasFilters = categoriesList.length > 0 || !!regionFilter;
   const { data, isLoading } = useBusinesses(debouncedQuery, hasFilters);
-  const results = data?.data ?? [];
+  const results = useMemo(() => data?.data ?? [], [data]);
   const isDebouncing = Boolean(query) && query !== debouncedQuery;
 
   // Filter businesses (combine real backend data with mock list for full category & province coverage)

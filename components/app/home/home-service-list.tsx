@@ -18,7 +18,6 @@ interface HomeServiceListProps {
 export function HomeServiceList({
   role,
   onOfficerScanClick,
-  onComplaintsClick,
 }: HomeServiceListProps) {
   const isOfficer = role === "officer";
 

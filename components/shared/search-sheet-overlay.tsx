@@ -11,7 +11,6 @@ import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { useExternalQrLink } from "@/components/shared/external-qr-link-dialog";
 import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
 import { QrScannerIcon } from "@/components/icons/AppIcons";
-import { http } from "@/lib/http";
 
 interface SearchSheetOverlayProps {
   isOpen: boolean;
@@ -52,10 +51,18 @@ export function SearchSheetOverlay({
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync state and autofocus input on open
+  // Reset the query to initialQuery whenever the sheet opens (or initialQuery
+  // changes while open). Done during render ("adjust state when props change")
+  // instead of in an effect to avoid an extra cascading render.
+  const [syncedProps, setSyncedProps] = useState({ isOpen, initialQuery });
+  if (syncedProps.isOpen !== isOpen || syncedProps.initialQuery !== initialQuery) {
+    setSyncedProps({ isOpen, initialQuery });
+    if (isOpen) setSearchQuery(initialQuery);
+  }
+
+  // Autofocus input on open
   useEffect(() => {
     if (isOpen) {
-      setSearchQuery(initialQuery);
       // Small timeout to allow slide-up animation to complete before keyboard autofocus pops up
       const timer = setTimeout(() => {
         inputRef.current?.focus();

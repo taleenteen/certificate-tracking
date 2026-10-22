@@ -11,8 +11,7 @@ import { officerVerifyPath } from "@/lib/officer-qr-token";
 import { AppBreadcrumb } from "@/components/shared/app-breadcrumb";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShieldCheck, AlertCircle, RefreshCw, User } from "lucide-react";
-import { toast } from "sonner";
+import { AlertCircle, RefreshCw, User } from "lucide-react";
 
 export default function OfficerCardPage() {
   const router = useRouter();

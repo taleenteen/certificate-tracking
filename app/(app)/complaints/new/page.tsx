@@ -6,7 +6,6 @@ import Image from "next/image";
 import { 
   ChevronLeft, 
   ChevronRight,
-  Upload, 
   CheckCircle2, 
   Building2, 
   MapPin, 
@@ -20,7 +19,6 @@ import {
   FilePenLine, 
   Image as ImageIcon, 
   ImagePlus,
-  Send,
   Check,
   X
 } from "lucide-react";

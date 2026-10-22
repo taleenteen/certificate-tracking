@@ -54,6 +54,9 @@ export default function TrackComplaintsPage() {
   // Input states
   const [ticketIdInput, setTicketIdInput] = useState(queryTicketId);
   const [businessInput, setBusinessInput] = useState(queryBusiness);
+  // Random suffix for the mock fallback ticket id, generated once per mount
+  // (lazy initializer) so render stays pure.
+  const [fallbackTicketSuffix] = useState(() => Math.floor(1000 + Math.random() * 9000));
 
   // Determine if a search was performed
   const isSearched = Boolean(queryTicketId || queryBusiness);
@@ -74,7 +77,7 @@ export default function TrackComplaintsPage() {
 
     // 2. Dynamic fallback to allow testing any inputs (highly developer friendly!)
     // Generates a mock complaint based on the user's search inputs
-    const generatedTicketId = queryTicketId || `CP-2569-${Math.floor(1000 + Math.random() * 9000)}`;
+    const generatedTicketId = queryTicketId || `CP-2569-${fallbackTicketSuffix}`;
     const generatedBusinessName = queryBusiness || "บริษัท ทดสอบจำกัด (ผลการค้นหาตัวอย่าง)";
     
     // Choose step dynamically based on ticket pattern to let users test all step views
@@ -89,7 +92,7 @@ export default function TrackComplaintsPage() {
       date: "21/06/2569 16:45",
       currentStep: step,
     };
-  }, [isSearched, queryTicketId, queryBusiness]);
+  }, [isSearched, queryTicketId, queryBusiness, fallbackTicketSuffix]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

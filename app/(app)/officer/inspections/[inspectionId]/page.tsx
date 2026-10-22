@@ -422,6 +422,7 @@ export default function OfficerInspectionDetailPage() {
                             }
                             className="relative h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
                           >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- evidence src is a dynamic authenticated BFF stream path or API-provided https (MinIO) URL; next/image optimizer would need remotePatterns and cannot forward the session cookie */}
                             <img
                               src={displayUrl}
                               alt={evidence.fileName}
@@ -481,6 +482,7 @@ export default function OfficerInspectionDetailPage() {
               แสดงภาพหลักฐานขนาดเต็ม
             </DialogDescription>
             {previewImage ? (
+              // eslint-disable-next-line @next/next/no-img-element -- evidence src is a dynamic authenticated BFF stream path or API-provided https (MinIO) URL; next/image optimizer would need remotePatterns and cannot forward the session cookie
               <img
                 src={previewImage.url}
                 alt={previewImage.fileName}

@@ -13,7 +13,6 @@ import {
   Building2,
   KeyRound,
   ChevronRight,
-  Fingerprint,
   ArrowLeft,
   LogOut,
   Briefcase,

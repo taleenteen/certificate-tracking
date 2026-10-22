@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 import buddhistEra from "dayjs/plugin/buddhistEra";
@@ -50,7 +48,6 @@ export function LicenseListPageView({
   onTabChange,
   devSeedButton,
 }: LicenseListPageViewProps) {
-  const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedCompanies, setExpandedCompanies] = useState<Record<string, boolean>>({});
   const [expandedBusinesses, setExpandedBusinesses] = useState<Record<string, boolean>>({});

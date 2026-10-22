@@ -31,7 +31,6 @@ import { useLicenses } from "@/hooks/useLicenses";
 import dayjs from "dayjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { http } from "@/lib/http";
 import { QrScannerDialog } from "@/components/app-shell/qr-scanner-dialog";
 import { useExternalQrLink } from "@/components/shared/external-qr-link-dialog";
 import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";

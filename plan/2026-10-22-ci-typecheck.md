@@ -55,6 +55,7 @@ Catch TypeScript errors in CI. `next build` skips type checking (`typescript.ign
 
 - 2026-10-22: Found no existing CI. Verified that tsc passes on a clean checkout both with and without `next typegen`, and chose typegen so route `PageProps` types are checked too. Added the script and workflow and validated locally.
 - 2026-10-22: First GitHub Actions runs on `f270e99` (push and PR #1) succeeded.
+- 2026-10-22: Renamed the workflow to `.github/workflows/ci.yml` (name `CI`) and added a `lint` job (see `plan/2026-10-22-lint-cleanup.md`). For branch protection, require the `typecheck` and `lint` checks.
 
 ## Changed files
 

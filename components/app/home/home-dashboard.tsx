@@ -40,7 +40,6 @@ import {
 } from "@/lib/officer-qr-token";
 import { SearchSheetOverlay } from "@/components/shared/search-sheet-overlay";
 import { HomepageService } from "@/components/app/home/homepage-service";
-import { ComplaintsSheetOverlay } from "@/components/shared/complaints-sheet-overlay";
 
 type InspectionTrendDotProps = {
   key?: string | number;
@@ -351,7 +350,6 @@ export function HomeDashboard() {
   const entry = activePortalMode ?? urlEntry ?? "public";
   const usesServiceHome = entry === "public" || entry === "officer";
   const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
-  const [isComplaintsSheetOpen, setIsComplaintsSheetOpen] = useState(false);
   const [selectedTrendRange, setSelectedTrendRange] =
     useState<(typeof trendRanges)[number]["value"]>("month");
 
@@ -501,7 +499,6 @@ export function HomeDashboard() {
             setScannerMode("officer");
             void startScanner();
           }}
-          onComplaintsClick={() => setIsComplaintsSheetOpen(true)}
         />
 
         {externalQrLinkDialog}
@@ -525,11 +522,6 @@ export function HomeDashboard() {
         <SearchSheetOverlay
           isOpen={isSearchSheetOpen}
           onClose={() => setIsSearchSheetOpen(false)}
-        />
-
-        <ComplaintsSheetOverlay
-          isOpen={isComplaintsSheetOpen}
-          onClose={() => setIsComplaintsSheetOpen(false)}
         />
       </>
     );

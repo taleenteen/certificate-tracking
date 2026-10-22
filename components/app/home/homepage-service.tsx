@@ -8,14 +8,12 @@ type HomepageServiceProps = {
   role?: string;
   onLicenseScanClick: () => void;
   onOfficerScanClick: () => void;
-  onComplaintsClick: () => void;
 };
 
 export function HomepageService({
   role,
   onLicenseScanClick,
   onOfficerScanClick,
-  onComplaintsClick,
 }: HomepageServiceProps) {
   const router = useRouter();
 
@@ -40,7 +38,6 @@ export function HomepageService({
       <HomeServiceList
         role={role}
         onOfficerScanClick={onOfficerScanClick}
-        onComplaintsClick={onComplaintsClick}
       />
     </main>
   );

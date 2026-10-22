@@ -12,7 +12,6 @@ import officerCardIcon from "@/assets/hero/officer-card-icon.svg";
 interface HomeServiceListProps {
   role?: string;
   onOfficerScanClick: () => void;
-  onComplaintsClick: () => void;
 }
 
 export function HomeServiceList({

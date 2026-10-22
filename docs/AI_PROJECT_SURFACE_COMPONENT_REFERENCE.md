@@ -34,11 +34,6 @@
      - `/zone-supervisor`
    - ไม่ต้องบังคับ mobile-first เพราะเป็นหน้าจัดการข้อมูล/table-heavy บน desktop
 
-4. Legacy Compatibility Redirect
-   - route group: `app/(legacy)`
-   - ไม่มี UI จริง
-   - มีไว้ redirect path เก่าไป path ใหม่ เพื่อกัน link/bookmark เก่าพัง
-
 ---
 
 ## 2. Role และ route ownership
@@ -872,28 +867,9 @@ API/hooks:
 
 ---
 
-### 3.5 Legacy redirects
+### 3.5 Legacy redirects (removed)
 
-ไฟล์ใน `app/(legacy)` ไม่มี UI จริง ใช้ redirect เท่านั้น:
-
-| Path เก่า | Path ใหม่ |
-|---|---|
-| `/dashboard` | `/super-admin/dashboard` |
-| `/admin-accounts` | `/super-admin/admin-accounts` |
-| `/agencies` | `/super-admin/agencies` |
-| `/audit-logs` | `/super-admin/audit-logs` |
-| `/connections` | `/super-admin/connections` |
-| `/admin/inspections` | `/agency-admin/inspections` |
-| `/establishment` | `/businesses` |
-| `/establishment/[slug]` | `/businesses/[slug]` |
-| `/my-licenses` | `/licenses` |
-| `/my-licenses/[slug]` | `/licenses/[slug]` |
-| `/my-licenses/[slug]/inspection` | `/inspection-tasks/[slug]` |
-
-ข้อควรระวัง:
-
-- ถ้าแน่ใจว่าไม่มี external link/bookmark แล้วค่อยพิจารณาลบ legacy route
-- ก่อนลบต้องตรวจ `rg` references ทั้ง codebase และเอกสาร
+`app/(legacy)` ถูกลบเมื่อ 2026-10-22 (ดู `plan/2026-10-22-legacy-code-cleanup.md`) path เก่า เช่น `/dashboard`, `/my-licenses`, `/establishment` จะได้ 404 ห้ามเพิ่ม route group สำหรับ redirect กลับมา ถ้าจำเป็นต้องรองรับ URL เก่า ให้ใช้ `redirects()` ใน `next.config.ts`
 
 ---
 
@@ -1336,7 +1312,6 @@ Types:
 1. ระบุ surface ก่อน:
    - mobile app → `app/(app)`
    - back-office → `app/(back-office)`
-   - compatibility redirect → `app/(legacy)`
 
 2. ระบุ role owner:
    - public/business owner

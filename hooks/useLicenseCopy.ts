@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function isLegacyAndroidWebView() {
   const userAgent = navigator.userAgent;
@@ -44,6 +44,9 @@ function copyWithSelection(value: string) {
 export function useLicenseCopy() {
   const [isCopied, setIsCopied] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
+  const resetTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(resetTimerRef.current), []);
 
   const copy = async (licenseNumber: string) => {
     setCopyError(null);
@@ -70,7 +73,9 @@ export function useLicenseCopy() {
       }
     }
 
-    if (!copied && !legacyWebView) {
+    // Legacy WebViews retry here too: selection copy after the awaited
+    // writeText is the order that succeeded in the diagnostic build.
+    if (!copied) {
       try {
         copied = copyWithSelection(licenseNumber);
       } catch {
@@ -78,9 +83,10 @@ export function useLicenseCopy() {
       }
     }
 
+    window.clearTimeout(resetTimerRef.current);
     setIsCopied(copied);
     if (copied) {
-      window.setTimeout(() => setIsCopied(false), 1_500);
+      resetTimerRef.current = window.setTimeout(() => setIsCopied(false), 1_500);
     } else {
       setCopyError("ไม่สามารถคัดลอกเลขใบอนุญาตได้ใน WebView นี้");
     }

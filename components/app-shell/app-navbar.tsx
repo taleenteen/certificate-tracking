@@ -97,7 +97,6 @@ const DETAIL_PAGE_TITLES: Record<string, string> = {
 
 const STANDALONE_PAGE_TITLES: Record<string, string> = {
   "/licenses": "ใบอนุญาตของฉัน",
-  "/expired-licenses": "ใบอนุญาตหมดอายุ",
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────

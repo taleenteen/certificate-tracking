@@ -358,25 +358,6 @@ API/hooks:
 
 ---
 
-#### `/expired-licenses`
-
-ไฟล์:
-
-- `app/(app)/expired-licenses/page.tsx`
-- ใช้ `ExpiredLicenseListView` + `EXPIRED_LICENSE_TABS` จาก `components/app/licenses/expired-license-list-view.tsx`
-
-ทำหน้าที่:
-
-- แสดงเฉพาะใบอนุญาตหมดอายุ
-- ใช้ card/list pattern เดียวกับ `/licenses`
-
-ปุ่ม/ลิงก์/action:
-
-- เหมือน `LicenseListPageView`
-- card detail ไป `/licenses/[id]`
-
----
-
 #### `/reports`
 
 ไฟล์:
@@ -956,7 +937,6 @@ Path config สำคัญ:
 | `DETAIL_PAGE_TITLES` | `/businesses` | title รายละเอียดสถานประกอบการ |
 | `DETAIL_PAGE_TITLES` | `/licenses` | title รายละเอียดใบอนุญาต |
 | `STANDALONE_PAGE_TITLES` | `/licenses` | title ใบอนุญาตของฉัน |
-| `STANDALONE_PAGE_TITLES` | `/expired-licenses` | title ใบอนุญาตหมดอายุ |
 
 ปุ่ม/action:
 
@@ -1101,7 +1081,6 @@ Best practice:
 | File | ทำหน้าที่ | ใช้ใน |
 |---|---|---|
 | `components/app/licenses/license-list-page.tsx` | list + tab/filter ใบอนุญาต | `/licenses` |
-| `components/app/licenses/expired-license-list-view.tsx` | list + tab ใบอนุญาตหมดอายุ/ถูกระงับ | `/expired-licenses` |
 | `components/app/licenses/license-certificate-card.tsx` | card ใบอนุญาต | license list/search |
 | `components/app/licenses/license-detail-page.tsx` | detail/action ใบอนุญาต | `/licenses/[id]` |
 | `components/app/licenses/license-preview.tsx` | preview เอกสาร/ใบอนุญาต | license detail |

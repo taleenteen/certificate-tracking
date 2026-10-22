@@ -99,7 +99,7 @@ produces `types/api.d.ts`; `npx tsc --noEmit` = 0.
 | C2 | `/licenses/[slug]` — `components/back-office/license-detail-page.tsx` | `useLicense(id)` → `GET /licenses/{id}` | **RNG4:** `expiresAt === null` → "ไม่มีวันหมดอายุ (ชำระค่าธรรมเนียมรายปี)", never "Invalid Date". SUSPENDED → show `suspensionReason`. Docs via presigned URL; MinIO 403 → refetch detail. |
 | C3 | `/businesses` + `/businesses/[businessId]` + `/businesses/[businessId]/licenses` | `useBusinesses()` → `GET /businesses`; `useBusiness(id)` → `GET /businesses/{id}` | Context-aware list. Active context belongs in `sessionStorage` and route params where practical. |
 | C4 | `/license-search` | search input + `GET /licenses/{id}/qr-verify` | Debounce 400ms. QR scan: dynamic-import `ssr:false`; scanned text = license UUID → `/licenses/{id}`; invalid → Thai toast "QR ไม่ถูกต้อง". |
-| C5 | `/expired-licenses` | reuse `useLicenses` filtered `status=EXPIRED` | Thin variant of the list page. |
+| C5 | ~~`/expired-licenses`~~ | Removed 2026-10-22 | Use the status filter on `/licenses` (expired / suspended). |
 | C6 | `/reports` — `components/back-office/reports-page.tsx` | `useInspectionTasks()` → `GET /inspection-tasks` | Inspection history; filter by status. |
 | C7 | `/licenses/[slug]/inspection` | `useInspectionTask(id)` → `GET /inspection-tasks/{id}`; submit via `PUT /inspection-reports/{id}` + `PATCH .../submit`; photos `POST .../evidence`, `DELETE .../evidence/{docId}` | Checklist rendered from `checklistTemplate.items` (never hardcode). Photo client-validate ≤10MB jpeg/png/pdf. Submit disabled until `result` chosen. RETURNED task → show `reviewComment` banner. |
 | C8 | `/map` + `/e-map` | `useBusinessesMap()` → `GET /businesses/map` | Mapbox is already wired to `services/mock-map-data.ts`; swap the data source. Pin color: ACTIVE green / SUSPENDED amber / EXPIRED red / else grey. "นำทาง" → Google Maps directions URL. |
@@ -142,6 +142,6 @@ The actual wireframe is being realigned into a mobile-first app plus web-only ba
 Use Prisma-aligned business routes such as `/businesses`,
 `/businesses/[businessId]`, and `/businesses/[businessId]/licenses` instead of
 legacy `/businesses` routes. Other existing routes include `/home`,
-`/licenses`, `/license-search`, `/e-map`, `/expired-licenses`, and `/reports`.
+`/licenses`, `/license-search`, `/e-map`, and `/reports`.
 The **endpoints are the same**; map each back-office page to its endpoint per the
 tables above. When in doubt, the contract (`openapi.json`) wins.

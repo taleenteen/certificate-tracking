@@ -23,8 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-  AlertDialogCancel as AlertDialogCancelBtn, // Alias
-  AlertDialogAction as AlertDialogActionBtn, // Alias
 } from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
 import { PinService } from "@/services/pin.service";
@@ -95,7 +93,6 @@ export function PinManageCard({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
-  const [typeFilter, setTypeFilter] = useState("ALL"); // Added type filter
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -106,7 +103,7 @@ export function PinManageCard({
       try {
         const data = await PinService.getAll();
         // Ensure data is array
-        const pinList = Array.isArray(data) ? data : (data as any).data || [];
+        const pinList = Array.isArray(data) ? data : (data as { data?: ApiPin[] }).data || [];
         setPins(pinList);
       } catch (error) {
         console.error("Failed to fetch pins:", error);
@@ -127,9 +124,6 @@ export function PinManageCard({
 
     const matchesCategory =
       categoryFilter === "ALL" || p.category === categoryFilter;
-
-    // Optional: Filter by type if needed, currently reusing logic
-    const matchesType = typeFilter === "ALL" || p.type === typeFilter;
 
     return matchesSearch && matchesCategory;
   });
@@ -159,9 +153,11 @@ export function PinManageCard({
       await PinService.delete(deleteId);
       toast.success("ลบหมุดเรียบร้อยแล้ว");
       setRefreshKey((prev) => prev + 1); // Refresh list
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to delete pin:", error);
-      toast.error(error.message || "ลบหมุดไม่สำเร็จ");
+      toast.error(
+        (error instanceof Error && error.message) || "ลบหมุดไม่สำเร็จ",
+      );
     } finally {
       setDeleteId(null);
     }

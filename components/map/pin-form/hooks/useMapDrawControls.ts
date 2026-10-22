@@ -129,7 +129,7 @@ export function useMapDrawControls({
       if (drawRef.current && map) {
         try {
           map.removeControl(drawRef.current as unknown as mapboxgl.IControl);
-        } catch (e) {}
+        } catch {}
         drawRef.current = null;
         isDrawInitializedRef.current = false;
       }

@@ -6,7 +6,6 @@ services:
       dockerfile: Dockerfile
       args:
         GOV_API_URL: ${GOV_API_URL:-}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
         NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
     restart: unless-stopped
     environment:
@@ -14,7 +13,6 @@ services:
       PORT: 4003
       HOSTNAME: 0.0.0.0
       GOV_API_URL: ${GOV_API_URL:-}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
       NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
     ports:
       - "${FRONTEND_PORT:-4003}:4003"

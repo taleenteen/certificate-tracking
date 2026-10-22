@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -106,7 +105,7 @@ interface ParcelCreateModalProps {
   zoneId: string;
   zones: ApiZone[];
   onClose: () => void;
-  onSuccess?: (parcel: any) => void;
+  onSuccess?: (parcel: ApiParcel) => void;
 }
 
 export function ParcelCreateModal({
@@ -167,7 +166,6 @@ export function ParcelCreateModal({
   // Refs
   const mapRef = useRef<MapRef>(null);
   const drawRef = useRef<MapboxDraw | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
 
   // Existing parcels in this zone
   const [existingParcels, setExistingParcels] = useState<ApiParcel[]>([]);
@@ -282,7 +280,6 @@ export function ParcelCreateModal({
 
       map.addControl(draw as unknown as mapboxgl.IControl);
       drawRef.current = draw;
-      setIsMapReady(true);
 
       map.on("draw.create", (e: { features: GeoJSON.Feature[] }) => {
         if (e.features.length > 0) {
@@ -315,7 +312,7 @@ export function ParcelCreateModal({
     } catch (err) {
       console.error("Error initializing MapboxDraw:", err);
     }
-  }, [currentColor, getDrawStyles]);
+  }, [currentColor, getDrawStyles, setPolygonGeometry]);
 
   // Start drawing
   const startDrawingPolygon = () => {
@@ -417,7 +414,7 @@ export function ParcelCreateModal({
                 }
                 className="bg-gray-50 h-9"
               />
-              <FieldError errors={[errors.name as any]} />
+              <FieldError errors={[errors.name]} />
             </Field>
 
             {/* Parcel Type */}
@@ -453,7 +450,7 @@ export function ParcelCreateModal({
                   })}
                 </SelectContent>
               </Select>
-              <FieldError errors={[errors.parcelType as any]} />
+              <FieldError errors={[errors.parcelType]} />
             </Field>
 
             {/* Owner Info */}
@@ -472,7 +469,7 @@ export function ParcelCreateModal({
                   }
                   className="bg-gray-50 text-sm h-8"
                 />
-                <FieldError errors={[errors.ownerName as any]} />
+                <FieldError errors={[errors.ownerName]} />
               </Field>
               <Field className="space-y-1">
                 <FieldLabel className="text-xs font-medium">
@@ -488,7 +485,7 @@ export function ParcelCreateModal({
                   }
                   className="bg-gray-50 text-sm h-8"
                 />
-                <FieldError errors={[errors.ownerPhone as any]} />
+                <FieldError errors={[errors.ownerPhone]} />
               </Field>
             </div>
 
@@ -505,7 +502,7 @@ export function ParcelCreateModal({
                 }
                 className="bg-gray-50 h-9"
               />
-              <FieldError errors={[errors.landTitle as any]} />
+              <FieldError errors={[errors.landTitle]} />
             </Field>
 
             {/* Address */}
@@ -519,7 +516,7 @@ export function ParcelCreateModal({
                 }
                 className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm resize-none h-12 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <FieldError errors={[errors.address as any]} />
+              <FieldError errors={[errors.address]} />
             </Field>
 
             {/* Area Info */}
@@ -691,7 +688,7 @@ export function ParcelCreateModal({
             <div className="bg-blue-600/90 text-white text-xs px-3 py-1.5 rounded-full shadow-md max-w-fit">
               📐 วาดแปลง (เส้นประ)
             </div>
-            <FieldError errors={[errors.polygonGeometry as any]} />
+            <FieldError errors={[errors.polygonGeometry]} />
           </div>
         </div>
 

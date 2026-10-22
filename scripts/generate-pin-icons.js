@@ -67,7 +67,7 @@ function walkDir(dir) {
         results.push(fullPath);
       }
     });
-  } catch (e) {
+  } catch {
     console.warn(`Warning: Could not read directory ${dir}`);
   }
   return results;

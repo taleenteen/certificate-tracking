@@ -34,7 +34,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Map, {
   ViewStateChangeEvent,
   MapRef,
@@ -44,7 +44,7 @@ import Map, {
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
-import { ZoneService, ZoneType, ApiZone } from "@/services/zone.service";
+import { ZoneService, ApiZone } from "@/services/zone.service";
 import {
   ParcelService,
   ApiParcel,
@@ -157,7 +157,7 @@ const PARCEL_TYPE_CONFIG = {
 
 interface ZoneCreateCardProps {
   onClose: () => void;
-  onSuccess?: (zone: any) => void;
+  onSuccess?: (created: ApiZone | ApiParcel) => void;
 }
 
 export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
@@ -196,7 +196,6 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
   const description = watch("description") || "";
   const color = watch("color") || ZONE_COLORS[0].value;
   const parcelName = watch("parcelName") || "";
-  const parcelDescription = watch("parcelDescription") || "";
   const parcelType = watch("parcelType") || ParcelType.RESIDENTIAL;
   const parcelOwnerName = watch("parcelOwnerName") || "";
   const parcelOwnerPhone = watch("parcelOwnerPhone") || "";
@@ -248,9 +247,11 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
   const activeTabRef = useRef(activeTab);
   const zonesRef = useRef(zones);
   const isDrawingRef = useRef(isDrawing);
+  const polygonGeometryRef = useRef(polygonGeometry);
   activeTabRef.current = activeTab;
   zonesRef.current = zones;
   isDrawingRef.current = isDrawing;
+  polygonGeometryRef.current = polygonGeometry;
 
   // Fetch zones for parcel dropdown
   useEffect(() => {
@@ -275,7 +276,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
       // Remove the last point if it's the same as first (closing point)
       const uniqueCoords = coords.slice(0, coords.length - 1);
       setManualCoords(
-        uniqueCoords.map(([lng, lat]: any) => ({
+        uniqueCoords.map(([lng, lat]: GeoJSON.Position) => ({
           lat: lat.toFixed(6),
           lng: lng.toFixed(6),
         })),
@@ -464,7 +465,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
     } catch (err) {
       console.error("Error initializing MapboxDraw:", err);
     }
-  }, [currentColor, getDrawStyles]);
+  }, [currentColor, getDrawStyles, activeTab, setPolygonGeometry]);
 
   // Reinitialize draw when tab or color changes
   useEffect(() => {
@@ -475,7 +476,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
     // Remove old draw control
     try {
       map.removeControl(drawRef.current as unknown as mapboxgl.IControl);
-    } catch (e) {
+    } catch {
       // Ignore
     }
 
@@ -492,10 +493,11 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
     drawRef.current = draw;
 
     // Re-add existing polygon if any
-    if (polygonGeometry) {
+    const currentPolygonGeometry = polygonGeometryRef.current;
+    if (currentPolygonGeometry) {
       draw.add({
         type: "Feature",
-        geometry: polygonGeometry,
+        geometry: currentPolygonGeometry,
         properties: {},
       });
     }
@@ -508,7 +510,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
     }
     setPolygonGeometry(null);
     setIsDrawing(false);
-  }, [activeTab]);
+  }, [activeTab, setPolygonGeometry]);
 
   // Start drawing polygon
   const startDrawingPolygon = () => {
@@ -686,7 +688,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                   }
                   className="bg-gray-50"
                 />
-                <FieldError errors={[errors.name as any]} />
+                <FieldError errors={[errors.name]} />
               </Field>
 
               {/* Color Picker */}
@@ -712,7 +714,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                     />
                   ))}
                 </div>
-                <FieldError errors={[errors.color as any]} />
+                <FieldError errors={[errors.color]} />
               </Field>
 
               {/* Description */}
@@ -731,12 +733,12 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                   }
                   className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm resize-none h-16 focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
-                <FieldError errors={[errors.description as any]} />
+                <FieldError errors={[errors.description]} />
               </Field>
 
               {/* Input Mode Toggle */}
               <div className="space-y-1.5">
-                <FieldError errors={[errors.polygonGeometry as any]} />
+                <FieldError errors={[errors.polygonGeometry]} />
                 <Label className="text-sm font-medium flex items-center gap-1">
                   <MapPin className="w-4 h-4" /> วิธีกำหนดพื้นที่{" "}
                   <span className="text-red-500">*</span>
@@ -909,7 +911,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldError errors={[errors.selectedZoneId as any]} />
+                <FieldError errors={[errors.selectedZoneId]} />
               </Field>
 
               {/* Parcel Name */}
@@ -931,7 +933,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                   }
                   className="bg-gray-50"
                 />
-                <FieldError errors={[errors.parcelName as any]} />
+                <FieldError errors={[errors.parcelName]} />
               </Field>
 
               {/* Parcel Type */}
@@ -967,7 +969,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                     })}
                   </SelectContent>
                 </Select>
-                <FieldError errors={[errors.parcelType as any]} />
+                <FieldError errors={[errors.parcelType]} />
               </Field>
 
               {/* Owner Info */}
@@ -986,7 +988,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                     }
                     className="bg-gray-50 text-sm h-9"
                   />
-                  <FieldError errors={[errors.parcelOwnerName as any]} />
+                  <FieldError errors={[errors.parcelOwnerName]} />
                 </Field>
                 <Field className="space-y-1">
                   <FieldLabel className="text-xs font-medium">
@@ -1002,7 +1004,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                     }
                     className="bg-gray-50 text-sm h-9"
                   />
-                  <FieldError errors={[errors.parcelOwnerPhone as any]} />
+                  <FieldError errors={[errors.parcelOwnerPhone]} />
                 </Field>
               </div>
 
@@ -1019,7 +1021,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                   }
                   className="bg-gray-50"
                 />
-                <FieldError errors={[errors.parcelLandTitle as any]} />
+                <FieldError errors={[errors.parcelLandTitle]} />
               </Field>
 
               {/* Address */}
@@ -1035,7 +1037,7 @@ export function ZoneCreateCard({ onClose, onSuccess }: ZoneCreateCardProps) {
                   }
                   className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm resize-none h-14 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <FieldError errors={[errors.parcelAddress as any]} />
+                <FieldError errors={[errors.parcelAddress]} />
               </Field>
             </>
           )}

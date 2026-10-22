@@ -361,7 +361,7 @@ export function ZoneManageCard({ onClose }: ZoneManageCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบโซน</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณต้องการลบโซน "{deleteZone?.name}" หรือไม่?
+              คุณต้องการลบโซน &quot;{deleteZone?.name}&quot; หรือไม่?
               การกระทำนี้ไม่สามารถย้อนกลับได้
             </AlertDialogDescription>
           </AlertDialogHeader>

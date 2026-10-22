@@ -1,4 +1,10 @@
-import { GeometryType, PinCategory, PinType, UpdatePinDto } from "@/types/api";
+import {
+  CreatePinDto,
+  GeometryType,
+  PinCategory,
+  PinType,
+  UpdatePinDto,
+} from "@/types/api";
 import { PinFormValues } from "../../pin-schema";
 import { PinService } from "@/services/pin.service";
 import * as turf from "@turf/turf";
@@ -48,7 +54,7 @@ export async function submitPinForm({
   const finalSubtype =
     pinMode === "info" && data.subtype ? data.subtype : undefined;
 
-  const payload: any = {
+  const payload: UpdatePinDto & { parcelId?: string; floorId?: string } = {
     title: data.title,
     dataId: dataId || undefined,
     type: finalType === PinType.MONITORING ? PinType.INFO : finalType,
@@ -66,8 +72,8 @@ export async function submitPinForm({
   };
 
   if (isEditMode && editingPinId) {
-    await PinService.update(editingPinId, payload as UpdatePinDto);
+    await PinService.update(editingPinId, payload);
   } else {
-    await PinService.create(payload);
+    await PinService.create(payload as CreatePinDto);
   }
 }

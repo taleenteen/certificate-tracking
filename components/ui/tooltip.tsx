@@ -33,7 +33,6 @@ function TooltipTrigger({
 }
 
 function TooltipArrow({
-  className,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Arrow>) {
   return <TooltipPrimitive.Arrow data-slot="tooltip-arrow" {...props} />;

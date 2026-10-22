@@ -1,0 +1,96 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+function isLegacyAndroidWebView() {
+  const userAgent = navigator.userAgent;
+  const chromiumMajor = Number(/Chrome\/(\d+)/i.exec(userAgent)?.[1]);
+  return /;\s*wv\)/i.test(userAgent) && chromiumMajor > 0 && chromiumMajor < 118;
+}
+
+function copyWithSelection(value: string) {
+  const textarea = document.createElement("textarea");
+  const previouslyFocused = document.activeElement;
+  textarea.value = value;
+  textarea.readOnly = true;
+  textarea.setAttribute("aria-hidden", "true");
+  textarea.style.position = "fixed";
+  textarea.style.top = "0";
+  textarea.style.left = "0";
+  textarea.style.width = "1px";
+  textarea.style.height = "1px";
+  textarea.style.opacity = "0";
+  textarea.style.pointerEvents = "none";
+  textarea.style.userSelect = "text";
+  document.body.appendChild(textarea);
+
+  try {
+    textarea.focus({ preventScroll: true });
+    textarea.select();
+    textarea.setSelectionRange(0, value.length);
+    return document.execCommand("copy");
+  } finally {
+    textarea.remove();
+    if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) {
+      try {
+        previouslyFocused.focus({ preventScroll: true });
+      } catch {
+        // Focus restoration must not mask a successful copy.
+      }
+    }
+  }
+}
+
+export function useLicenseCopy() {
+  const [isCopied, setIsCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const resetTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(resetTimerRef.current), []);
+
+  const copy = async (licenseNumber: string) => {
+    setCopyError(null);
+    let copied = false;
+    const legacyWebView = isLegacyAndroidWebView();
+
+    if (legacyWebView) {
+      // This needs to run during the tap, before awaiting the denied Clipboard API.
+      try {
+        copied = copyWithSelection(licenseNumber);
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (!copied) {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(licenseNumber);
+          copied = true;
+        }
+      } catch {
+        // Older WebViews can expose writeText but deny write permission.
+      }
+    }
+
+    // Legacy WebViews retry here too: selection copy after the awaited
+    // writeText is the order that succeeded in the diagnostic build.
+    if (!copied) {
+      try {
+        copied = copyWithSelection(licenseNumber);
+      } catch {
+        copied = false;
+      }
+    }
+
+    window.clearTimeout(resetTimerRef.current);
+    setIsCopied(copied);
+    if (copied) {
+      resetTimerRef.current = window.setTimeout(() => setIsCopied(false), 1_500);
+    } else {
+      setCopyError("ไม่สามารถคัดลอกเลขใบอนุญาตได้ใน WebView นี้");
+    }
+  };
+
+  return { copy, copyError, isCopied };
+}

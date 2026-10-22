@@ -1,50 +1,5 @@
 import React from "react";
 import { Source, Layer } from "react-map-gl/mapbox";
-import { PinType, PinCategory } from "@/types/api";
-
-/**
- * Color mapping for existing pins based on type/category.
- * Uses semi-transparent colors so they don't compete
- * with the pin the user is placing.
- */
-function getPinColor(type: string, category: string): string {
-  const upperType = type?.toUpperCase();
-  const upperCategory = category?.toUpperCase();
-
-  switch (upperType) {
-    case PinType.WATER:
-      return "#3B82F6"; // blue
-    case PinType.FIRE:
-      return "#EF4444"; // red
-    case PinType.CAMERA:
-      return "#8B5CF6"; // purple
-    case PinType.SOLAR:
-      return "#22D3EE"; // cyan
-    case PinType.TAX:
-      return "#F59E0B"; // amber
-    case PinType.MONITORING:
-      return "#fbbf24"; // amber
-  }
-
-  switch (upperCategory) {
-    case PinCategory.INFRASTRUCTURE:
-      return "#92400E"; // brown
-    case PinCategory.ASSET:
-      return "#2563EB"; // blue
-    case PinCategory.SERVICE_POINT:
-      return "#CA8A04"; // yellow
-    case PinCategory.ENVIRONMENT:
-      return "#16A34A"; // green
-    case PinCategory.RISK:
-      return "#DC2626"; // red
-    case PinCategory.ECONOMY:
-      return "#EA580C"; // orange
-    case PinCategory.MANAGEMENT:
-      return "#9333EA"; // purple
-  }
-
-  return "#6B7280"; // gray fallback
-}
 
 interface ExistingPinsLayerProps {
   /** GeoJSON FeatureCollection from useExistingPins hook */

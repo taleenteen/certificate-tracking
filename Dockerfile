@@ -28,9 +28,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build-time environment variables (required for Next.js)
-ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_MAPBOX_TOKEN
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
 
 # Next.js collects completely anonymous telemetry data about general usage.

@@ -1,0 +1,696 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  CircleUserRound,
+  LogOut,
+  ScanSearch,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  User,
+  UserRound,
+} from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import Link from "next/link";
+import Image from "next/image";
+
+import {
+  BusinessFilterPanel,
+  type BusinessCategory,
+} from "@/components/app/businesses/business-filter-panel";
+import { QrScannerDialog } from "./qr-scanner-dialog";
+import { useExternalQrLink } from "@/components/shared/external-qr-link-dialog";
+import { useNativeQrScanner } from "@/hooks/useNativeQrScanner";
+import { SearchSuggestions } from "./search-suggestions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/stores/auth";
+import { useLogout } from "@/hooks/useAuth";
+import { useAgencies } from "@/hooks/useAgencies";
+import { useIsStaff } from "@/hooks/useIsStaff";
+import type { BusinessSummary } from "@/hooks/useBusinesses";
+import { http } from "@/lib/http";
+import { cn } from "@/lib/utils";
+import mainLogo from "@/assets/icon/main-logo.svg";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface NotificationPage {
+  data: Notification[];
+  meta: { total: number; unread: number };
+}
+
+// ─── Hooks ───────────────────────────────────────────────────────────────────
+
+function useNotifications() {
+  return useQuery({
+    queryKey: ["my-notifications"],
+    queryFn: () => http.get<NotificationPage>("my/notifications"),
+    staleTime: 30_000,
+  });
+}
+
+// ─── Route config ─────────────────────────────────────────────────────────────
+
+const SEARCH_PAGE_CONFIG: Record<
+  string,
+  { placeholder: string; action: "filter" | "scan" }
+> = {
+  "/e-map": { placeholder: "ค้นหาในแผนที่", action: "filter" },
+  "/businesses": { placeholder: "ค้นหาสถานประกอบการ", action: "filter" },
+};
+
+const DETAIL_PAGE_TITLES: Record<string, string> = {
+  "/businesses": "รายละเอียดสถานประกอบการ",
+  "/licenses": "รายละเอียดใบอนุญาต",
+};
+
+const STANDALONE_PAGE_TITLES: Record<string, string> = {
+  "/licenses": "ใบอนุญาตของฉัน",
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export function AppNavbar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const user = useAuthStore((s) => s.user);
+  const activePortalMode = useAuthStore((s) => s.activePortalMode);
+  const canLogout = useAuthStore((s) => s.canLogout);
+  const setActivePortalMode = useAuthStore((s) => s.setActivePortalMode);
+  const logout = useLogout();
+  const queryClient = useQueryClient();
+  const { data: agencies = [] } = useAgencies();
+  const userAgencyName = agencies.find((a) => a.id === user?.agencyId)?.nameTh;
+  const isStaff = useIsStaff();
+  const isHome = pathname === "/home";
+  const entry = activePortalMode ?? searchParams.get("entry") ?? "public";
+  const usesServiceHome = entry === "public" || entry === "officer";
+  const canSwitchPortalMode = Boolean(user?.roles?.includes("officer"));
+  const isPublicHome =
+    pathname === "/role-select" ||
+    pathname === "/profile" ||
+    pathname === "/officer-card" ||
+    pathname === "/verify-officer" ||
+    pathname.startsWith("/inspection-tasks/") ||
+    pathname.startsWith("/officer/inspections/") ||
+    pathname === "/reports" ||
+    ((isHome ||
+      pathname === "/licenses" ||
+      pathname === "/license-search" ||
+      pathname.startsWith("/licenses/") ||
+      pathname.startsWith("/businesses/")) &&
+      usesServiceHome);
+
+  const searchPageConfig = SEARCH_PAGE_CONFIG[pathname];
+  const searchPlaceholder = searchPageConfig?.placeholder;
+  const detailPageTitle = getDetailPageTitle(pathname, entry);
+  const rawQuery = searchParams.get("q") ?? "";
+  const selectedCategories = parseCategories(searchParams.get("categories"));
+  const selectedRegion = searchParams.get("region") ?? "";
+
+  const [draftValues, setDraftValues] = useState<Record<string, string>>({});
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState<
+    "profile" | "notifications" | null
+  >(null);
+
+  const notifRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Notifications UI is not rendered yet; the query is kept so the
+  // "my-notifications" fetch/cache behaviour stays unchanged.
+  useNotifications();
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        notifRef.current?.contains(target) ||
+        profileRef.current?.contains(target)
+      )
+        return;
+      setOpenPanel(null);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Close dropdowns on route change
+  useEffect(() => {
+    setOpenPanel(null);
+    setIsSuggestionsOpen(false);
+    setIsFilterOpen(false);
+  }, [pathname]);
+
+  const value = useMemo(
+    () => draftValues[pathname] ?? rawQuery,
+    [draftValues, pathname, rawQuery],
+  );
+  const activeFilterCount =
+    selectedCategories.length + Number(Boolean(selectedRegion));
+
+  const updateSearch = (nextValue: string) => {
+    setDraftValues((current) => ({ ...current, [pathname]: nextValue }));
+    if (!searchPlaceholder) return;
+    // Clear pin selection when the user types a new query
+    updateUrlParams({ q: nextValue.trim() || null, selected: null });
+    if (nextValue.trim()) {
+      setIsSuggestionsOpen(true);
+      setIsFilterOpen(false);
+    } else {
+      setIsSuggestionsOpen(false);
+    }
+  };
+
+  const handleSuggestionSelect = (business: BusinessSummary) => {
+    setDraftValues((current) => ({
+      ...current,
+      [pathname]: business.nameTh,
+    }));
+
+    if (pathname === "/e-map") {
+      updateUrlParams({
+        q: business.nameTh,
+        selected: business.id,
+      });
+    } else if (pathname === "/businesses") {
+      updateUrlParams({ q: business.nameTh, selected: null });
+    } else {
+      updateUrlParams({ q: business.nameTh, selected: null });
+    }
+
+    setIsSuggestionsOpen(false);
+    setIsFilterOpen(false);
+  };
+
+  const { requestOpen: requestExternalQrLink, dialog: externalQrLinkDialog } =
+    useExternalQrLink();
+
+  const handleMockScan = useCallback(
+    (value: string) => {
+      if (!requestExternalQrLink(value)) {
+        toast.error("QR Code นี้ไม่มีลิงก์เว็บไซต์ที่เปิดได้");
+      }
+    },
+    [requestExternalQrLink],
+  );
+  const {
+    isBrowserScannerOpen,
+    setIsBrowserScannerOpen,
+    startScanner,
+  } = useNativeQrScanner(handleMockScan);
+
+  const togglePanel = (panel: "profile" | "notifications") => {
+    setOpenPanel((current) => (current === panel ? null : panel));
+  };
+
+  const roleLabel = user?.roles?.includes("super_admin")
+    ? "ผู้ดูแลระบบสูงสุด"
+    : user?.roles?.includes("admin")
+      ? "ผู้ดูแลระบบ"
+      : user?.roles?.includes("officer")
+        ? activePortalMode === "public"
+          ? "บุคคลธรรมดา (บัญชีเจ้าหน้าที่)"
+          : "เจ้าหน้าที่ผู้มีอำนาจตรวจสอบ"
+        : "บุคคลธรรมดา";
+
+  const buttonRoleLabel = user?.roles?.includes("officer")
+    ? activePortalMode === "public"
+      ? "บุคคลธรรมดา"
+      : "เจ้าหน้าที่"
+    : user?.roles?.includes("super_admin") || user?.roles?.includes("admin")
+      ? "ผู้ดูแลระบบ"
+      : "บุคคลธรรมดา";
+
+  const switchPortalMode = () => {
+    const nextMode = activePortalMode === "officer" ? "public" : "officer";
+    setActivePortalMode(nextMode);
+    queryClient.clear();
+    router.push(`/home?entry=${nextMode}`);
+  };
+
+  return (
+    <header className="sticky top-0 z-30 border-white/10 bg-white text-black backdrop-blur">
+      <div className="relative mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:max-w-[1536px]">
+        {searchPlaceholder ? (
+          <>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-label="Go back"
+                onClick={() => router.back()}
+                className="h-10 w-10 rounded-full border border-white/15 bg-white/5 text-black hover:bg-white/10 hover:text-black"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+
+              <SearchSuggestions
+                className="min-w-0 flex-1"
+                value={value}
+                open={isSuggestionsOpen}
+                onOpenChange={setIsSuggestionsOpen}
+                onSelect={handleSuggestionSelect}
+              >
+                <div className="flex w-full min-w-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-slate-700 shadow-sm">
+                  <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                  <Input
+                    className="h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] leading-5 shadow-none focus-visible:ring-0"
+                    placeholder={searchPlaceholder}
+                    value={value}
+                    autoComplete="off"
+                    role="combobox"
+                    aria-expanded={isSuggestionsOpen && value.trim().length > 0}
+                    aria-autocomplete="list"
+                    onChange={(event) => updateSearch(event.target.value)}
+                    onFocus={() => {
+                      if (value.trim()) {
+                        setIsSuggestionsOpen(true);
+                        setIsFilterOpen(false);
+                      }
+                    }}
+                  />
+                  {searchPageConfig?.action === "filter" ? (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Open filters"
+                      onClick={() => {
+                        setIsFilterOpen((current) => !current);
+                        setIsSuggestionsOpen(false);
+                      }}
+                      className="relative h-9 w-9 shrink-0 rounded-xl text-[#114e4b] hover:bg-slate-100 hover:text-[#114e4b]"
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                      {activeFilterCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#114e4b] px-1 text-[10px] font-semibold text-black">
+                          {activeFilterCount}
+                        </span>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Scan QR code"
+                      onClick={startScanner}
+                      className="h-9 w-9 shrink-0 rounded-xl text-[#114e4b] hover:bg-slate-100 hover:text-[#114e4b]"
+                    >
+                      <ScanSearch className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </SearchSuggestions>
+            </div>
+
+            {searchPageConfig?.action === "filter" && isFilterOpen && (
+              <div className="pointer-events-none absolute left-0 right-0 top-full z-40 pt-0.5 transition-all duration-300 ease-out">
+                <div className="pointer-events-auto origin-top transition-transform duration-300 ease-out">
+                  <BusinessFilterPanel
+                    initialValue={{
+                      categories: selectedCategories,
+                      region: selectedRegion || undefined,
+                    }}
+                    onApply={(filters) => {
+                      updateUrlParams({
+                        categories:
+                          filters.categories && filters.categories.length > 0
+                            ? filters.categories.join(",")
+                            : null,
+                        region: filters.region ?? null,
+                      });
+                      setIsFilterOpen(false);
+                      setIsSuggestionsOpen(false);
+                    }}
+                    onReset={() => {
+                      updateUrlParams({ categories: null, region: null });
+                      setIsFilterOpen(false);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </>
+        ) : detailPageTitle ? (
+          <div className="grid grid-cols-[40px_1fr_40px] items-center">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              aria-label="Go back"
+              onClick={() => router.back()}
+              className="h-10 w-10 rounded-full text-black hover:bg-white/10 hover:text-black"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-center text-base font-semibold text-black sm:text-[1.125rem]">
+              {detailPageTitle}
+            </h1>
+            <div aria-hidden="true" className="h-10 w-10" />
+          </div>
+        ) : isPublicHome ? (
+          <div className="flex items-center justify-between">
+            {/* Brand Logo */}
+            <Link href="/home?entry=public" className="flex items-center select-none">
+              <Image
+                src={mainLogo}
+                alt="E-License Verification Platform"
+                width={156}
+                height={35}
+                className="w-auto h-8 object-contain"
+                priority
+              />
+            </Link>
+
+            <div className="flex items-center gap-3">
+              {/* Profile dropdown selector box */}
+              <div ref={profileRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => togglePanel("profile")}
+                  className={cn(
+                    "flex flex-col items-start border border-slate-200 rounded-2xl px-3 py-1.5 bg-white shadow-sm hover:bg-slate-50 transition-all select-none text-left cursor-pointer",
+                    openPanel === "profile" && "border-slate-300 bg-slate-50"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 w-full justify-between">
+                    <span className="text-[12px] font-bold text-slate-800 line-clamp-1 max-w-[80px]">
+                      {user?.fullName?.split(" ")[0] || "นายชนรัญ"}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-500 transition-transform duration-200" style={{ transform: openPanel === "profile" ? 'rotate(180deg)' : 'none' }} />
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#1e7c75] text-white">
+                      <Check className="h-2 w-2" />
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-500">{buttonRoleLabel}</span>
+                  </div>
+                </button>
+
+                {openPanel === "profile" && (
+                  <ProfilePanel
+                    user={user}
+                    agencyName={userAgencyName}
+                    roleLabel={roleLabel}
+                    activePortalMode={activePortalMode}
+                    canSwitchPortalMode={canSwitchPortalMode}
+                    canLogout={canLogout}
+                    onNavigate={(href) => {
+                      setOpenPanel(null);
+                      router.push(href);
+                    }}
+                    onSwitchPortalMode={() => {
+                      setOpenPanel(null);
+                      switchPortalMode();
+                    }}
+                    onLogout={() => {
+                      setOpenPanel(null);
+                      logout.mutate();
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-semibold leading-tight">
+                  ยินดีต้อนรับ, {user?.fullName || "ผู้เข้าใช้งาน"}
+                </p>
+                {isStaff && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-100 text-teal-700 border border-teal-200 shrink-0">
+                    เจ้าหน้าที่
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-black/70">
+                {userAgencyName || roleLabel}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Profile button */}
+              <div ref={profileRef} className="relative">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Profile"
+                  onClick={() => togglePanel("profile")}
+                  className={cn(
+                    "h-9 w-9 text-black hover:bg-white/10 hover:text-black",
+                    openPanel === "profile" && "bg-white/10",
+                  )}
+                >
+                  <CircleUserRound className="size-5" />
+                </Button>
+
+                {openPanel === "profile" && (
+                  <ProfilePanel
+                    user={user}
+                    agencyName={userAgencyName}
+                    roleLabel={roleLabel}
+                    activePortalMode={activePortalMode}
+                    canSwitchPortalMode={canSwitchPortalMode}
+                    canLogout={canLogout}
+                    onNavigate={(href) => {
+                      setOpenPanel(null);
+                      router.push(href);
+                    }}
+                    onSwitchPortalMode={() => {
+                      setOpenPanel(null);
+                      switchPortalMode();
+                    }}
+                    onLogout={() => {
+                      setOpenPanel(null);
+                      logout.mutate();
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {externalQrLinkDialog}
+      <QrScannerDialog
+        open={isBrowserScannerOpen}
+        onOpenChange={setIsBrowserScannerOpen}
+        onScanMock={handleMockScan}
+        id="navbar-qr-scanner"
+      />
+    </header>
+  );
+
+  function updateUrlParams(updates: Record<string, string | null>) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("_rsc");
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
+    const nextUrl = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }
+}
+
+// ─── Profile panel ────────────────────────────────────────────────────────────
+
+function ProfilePanel({
+  user,
+  agencyName,
+  roleLabel,
+  activePortalMode,
+  canSwitchPortalMode,
+  canLogout,
+  onNavigate,
+  onSwitchPortalMode,
+  onLogout,
+}: {
+  user: { fullName: string; roles: string[] } | null;
+  agencyName?: string | null;
+  roleLabel: string;
+  activePortalMode: "public" | "officer" | null;
+  canSwitchPortalMode: boolean;
+  canLogout: boolean;
+  onNavigate: (href: string) => void;
+  onSwitchPortalMode: () => void;
+  onLogout: () => void;
+}) {
+  const initials = user?.fullName
+    ? user.fullName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "?";
+
+  return (
+    <DropdownCard className="right-0 w-64">
+      {/* Avatar + name */}
+      <div className="flex flex-col items-center gap-2 px-4 pt-5 pb-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#114e4b] text-lg font-bold text-black shadow-sm">
+          {initials}
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-semibold text-slate-900 leading-snug">
+            {user?.fullName || "ผู้เข้าใช้งาน"}
+          </p>
+          <p className="text-xs text-slate-500 mt-0.5">{roleLabel}</p>
+          {agencyName && (
+            <p className="mt-0.5 text-xs text-[#0c6d66] font-medium">
+              {agencyName}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mx-4 h-px bg-slate-100" />
+
+      {/* Actions */}
+      <div className="px-2 py-2 space-y-0.5">
+        <ProfileAction
+          icon={<User className="h-4 w-4" />}
+          label="โปรไฟล์ของฉัน"
+          onClick={() => onNavigate("/profile")}
+        />
+        {canSwitchPortalMode && (
+          <ProfileAction
+            icon={
+              activePortalMode === "officer" ? (
+                <UserRound className="h-4 w-4" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )
+            }
+            label={
+              activePortalMode === "officer"
+                ? "เปลี่ยนเป็นบุคคลธรรมดา"
+                : "เปลี่ยนเป็นเจ้าหน้าที่"
+            }
+            onClick={onSwitchPortalMode}
+          />
+        )}
+      </div>
+
+      {canLogout && (
+        <>
+          <div className="mx-4 h-px bg-slate-100" />
+          <div className="px-2 py-2">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
+                <LogOut className="h-3.5 w-3.5" />
+              </div>
+              ออกจากระบบ
+            </button>
+          </div>
+        </>
+      )}
+    </DropdownCard>
+  );
+}
+
+// ─── Shared dropdown shell ────────────────────────────────────────────────────
+
+function DropdownCard({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "absolute top-[calc(100%+10px)] z-50 overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.12)]",
+        "animate-in fade-in-0 zoom-in-95 duration-150",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function ProfileAction({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+    >
+      <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+        {icon}
+      </div>
+      {label}
+    </button>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getDetailPageTitle(pathname: string, entry?: string) {
+  const usesServiceHome = entry === "public" || entry === "officer";
+  if (usesServiceHome && (pathname.startsWith("/licenses/") || pathname.startsWith("/businesses/"))) {
+    return null;
+  }
+  if (
+    (pathname === "/licenses" || pathname === "/license-search") &&
+    usesServiceHome
+  )
+    return null;
+  if (STANDALONE_PAGE_TITLES[pathname]) return STANDALONE_PAGE_TITLES[pathname];
+  const matchedPrefix = Object.keys(DETAIL_PAGE_TITLES).find(
+    (prefix) => pathname.startsWith(`${prefix}/`) && pathname !== prefix,
+  );
+  return matchedPrefix ? DETAIL_PAGE_TITLES[matchedPrefix] : null;
+}
+
+function parseCategories(value: string | null): BusinessCategory[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .filter((category): category is BusinessCategory =>
+      ["hotel", "hospital", "factory", "education"].includes(category),
+    );
+}

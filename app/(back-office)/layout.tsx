@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
-import { BackOfficeShell } from "@/components/back-office/back-office-shell";
+import { BackOfficeAuthGuard } from "@/components/auth/BackOfficeAuthGuard";
 
 export default function BackOfficeLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  return <BackOfficeShell>{children}</BackOfficeShell>;
+  return (
+    <BackOfficeAuthGuard requireAdmin>
+      <div className="min-h-screen bg-slate-100">{children}</div>
+    </BackOfficeAuthGuard>
+  );
 }

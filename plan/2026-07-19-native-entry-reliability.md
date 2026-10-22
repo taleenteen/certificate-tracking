@@ -1,0 +1,95 @@
+# Native Entry Reliability
+
+- Status: Verified
+- Owner: Codex
+- Date created: 2026-07-19
+- Last updated: 2026-07-20
+
+## Objective
+
+Ensure a Tang Rat mToken handoff that opens the legacy root URL reaches
+`/auth/dga` without waiting for the external SDK, and ensure SDK credential
+reads cannot keep the login UI pending indefinitely.
+
+## Context and constraints
+
+- The root page is server-rendered as a green loading screen and only redirects
+  after client hydration.
+- The DGA SDK is currently global with `beforeInteractive`, so an external SDK
+  delay can prevent the root redirect from running.
+- Legacy root handoffs use URL parameters; SDK-only handoffs must use the DGA
+  landing URL `/auth/dga` because an ordinary root visit cannot safely be
+  distinguished from a native SDK-only visit.
+- Tokens must not be logged or persisted in browser storage.
+
+## Scope
+
+- Load the global DGA SDK after the page becomes interactive so it cannot block
+  root-route hydration while remaining available to native features.
+- Use a full-document replacement for root URL handoffs.
+- Bound SDK credential reads and present a retryable missing-credential state.
+- Resolve mToken handoff values from the parameter aliases and SDK URL accessor
+  used by the device-proven reference implementation.
+- Use the stable production Citizen Portal SDK URL for every environment.
+
+## Out of scope
+
+- DGA app-console landing URL registration.
+- Backend mToken validation and OIDC.
+
+## Security and permission considerations
+
+- Preserve URL-first mToken handling and never log the mToken.
+- Keep tokens in memory only until the BFF exchanges them.
+
+## Implementation checklist
+
+- [x] Change global DGA SDK loading to run after the page becomes interactive.
+- [x] Make root URL handoffs use parameter-aware hard navigation.
+- [x] Add bounded SDK credential polling and retry UI.
+- [x] Accept handoff parameter aliases and the SDK URL-parameter accessor.
+- [x] Replace the conditional UAT SDK URL with the stable production SDK URL.
+
+## Validation checklist
+
+- [x] TypeScript check.
+- [x] File-scoped ESLint.
+- [x] Production build.
+
+## Progress log
+
+- 2026-07-19: Identified the root-screen failure path: global
+  `beforeInteractive` SDK loading can delay hydration, while the root redirect
+  only recognizes URL-based handoffs.
+- 2026-07-19: Changed the SDK to `afterInteractive`, made root URL handoffs use
+  a parameter-aware full-document transition, and bounded each native bridge
+  credential read. `bunx tsc --noEmit --incremental false`, file-scoped ESLint,
+  and `bun run build` compiled successfully. Physical Tang Rat verification is
+  still required.
+- 2026-07-20: Compared the mToken resolver with the device-proven reference
+  implementation. Added its supported URL aliases and `getParameterByName()`
+  fallback and its 20-second native-handoff wait window, while intentionally
+  excluding its browser `sessionStorage` token persistence. `bunx tsc --noEmit
+  --incremental false`, focused ESLint, and `bun run build` passed.
+- 2026-07-20: The owner chose the production Citizen Portal SDK URL as the
+  single supported source because the UAT script is unstable in native WebViews.
+- 2026-07-20: Replaced the conditional SDK source with the production Citizen
+  Portal SDK URL. `bunx tsc --noEmit --incremental false`, focused ESLint, and
+  `bun run build` passed.
+
+## Changed files
+
+- `app/layout.tsx`
+- `app/page.tsx`
+- `app/auth/dga/page.tsx`
+- `lib/dga-native.ts`
+- `plan/README.md`
+
+## Open questions and risks
+
+- DGA must register `/auth/dga` as the landing URL for SDK-only launches; a
+  no-parameter root request is intentionally treated as a normal browser visit.
+- A device test must confirm that the configured DGA SDK environment loads and
+  that a URL handoff reaches `/auth/dga` before the 20-second bridge deadline.
+- UAT now also loads the production SDK; it must be compatible with the target
+  Tang Rat app registration and backend environment.

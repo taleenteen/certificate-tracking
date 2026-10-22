@@ -6,8 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
-import { Search, MapPinned, Trash2, Loader2, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MapPinned, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -50,6 +49,8 @@ interface PinFormSidebarProps {
   currentAttributes: AttributeConfig[];
 }
 
+type FormPoint = { id: number; lat: number; lng: number };
+
 export function PinFormSidebar({
   form,
   pinMode,
@@ -67,8 +68,6 @@ export function PinFormSidebar({
   onZoneChange,
   onParcelChange,
   onDeletePoint,
-  onSubmit,
-  isLoadingSubmit,
   isEditMode,
   currentAttributes,
 }: PinFormSidebarProps) {
@@ -88,8 +87,6 @@ export function PinFormSidebar({
   const selectedFloorId = watch("floorId");
   const attributes = watch("attributes") || {};
   const points = watch("points") || [];
-  const polygonGeometry = watch("polygonGeometry");
-  const locationType = watch("locationType");
 
   const currentSubtypes = React.useMemo(() => {
     return categories.find((c) => c.category === category)?.subtypes || [];
@@ -451,7 +448,7 @@ export function PinFormSidebar({
             </div>
           )}
 
-          {points.map((point: any, index: number) => (
+          {points.map((point: FormPoint, index: number) => (
             <div
               key={point.id || index}
               className="space-y-1 p-2 border rounded-lg bg-gray-50 relative"

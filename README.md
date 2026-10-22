@@ -52,9 +52,6 @@ NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1Ijoi...your_mapbox_token...
 # ใช้ระบุที่อยู่ของเครื่อง Backend Server ภายในระบบ (Browser จะเข้าถึงผ่าน proxy /api เท่านั้น)
 BACKEND_INTERNAL_URL=http://localhost:3001
 
-# ตัวเลือกเสริม (สำหรับบางฟังก์ชันที่ต้องการเรียกใช้ API แบบดั้งเดิม)
-NEXT_PUBLIC_API_URL=http://localhost:3001
-
 # การเชื่อมต่อระบบตรวจสอบสิทธิ์และข้อมูลประจำตัว (Tang Rat / Identity Service)
 NEXT_PUBLIC_IAM_GOV_FRONTEND_URL=https://auth.govcenter.co
 GOV_API_URL=http://localhost:3001

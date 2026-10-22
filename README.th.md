@@ -41,7 +41,7 @@
 ใช้ไฟล์ `.env` ในโฟลเดอร์ frontend นี้ ค่าเริ่มต้นที่จำเป็นมีตัวอย่างดังนี้:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3003
+BACKEND_INTERNAL_URL=http://localhost:3003
 NEXT_PUBLIC_MAPBOX_TOKEN=...
 NEXT_PUBLIC_DGA_AUTH_FLOW=mtoken
 NEXT_PUBLIC_MTOKEN_DEBUG=false

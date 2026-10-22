@@ -1,7 +1,7 @@
 # CI Typecheck
 
-- Status: Implemented
-- Owner: agent (next: confirm first GitHub Actions run on PR #1)
+- Status: Verified
+- Owner: repo owner (next: enable branch protection)
 - Created: 2026-10-22
 - Last updated: 2026-10-22
 
@@ -42,18 +42,19 @@ Catch TypeScript errors in CI. `next build` skips type checking (`typescript.ign
 
 - [x] Add the `typecheck` script
 - [x] Add the GitHub Actions workflow
-- [ ] First CI run green on GitHub
+- [x] First CI run green on GitHub
 
 ## Validation checklist
 
 - [x] With `.next` removed: `next typegen` then `tsc --noEmit --incremental false` passed
 - [x] `bun install --frozen-lockfile` passed (no lockfile changes)
 - [x] `bun run typecheck` passed (exit 0)
-- [ ] GitHub Actions run on PR #1
+- [x] GitHub Actions on `f270e99`: pull_request run 39748274442 and push run 39748274275 both succeeded
 
 ## Progress log
 
 - 2026-10-22: Found no existing CI. Verified that tsc passes on a clean checkout both with and without `next typegen`, and chose typegen so route `PageProps` types are checked too. Added the script and workflow and validated locally.
+- 2026-10-22: First GitHub Actions runs on `f270e99` (push and PR #1) succeeded.
 
 ## Changed files
 
